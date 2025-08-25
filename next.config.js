@@ -14,25 +14,16 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   output: 'standalone',
-  
-  // Skip type checking during build
+
+  // Skip type and lint errors during build
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
-  // Force standalone output and disable static optimization
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../../'),
-  },
-  
-  // Disable static optimization completely
-  generateStaticParams: false,
-  trailingSlash: false,
-  
-  // Image optimization
+
+  // Image optimization (dynamic app can use it)
   images: {
     remotePatterns: [
       {
@@ -56,7 +47,6 @@ const nextConfig = {
 
   // Webpack configuration
   webpack: (config) => {
-    // Path aliases
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname),
@@ -66,7 +56,6 @@ const nextConfig = {
       '@/stores': path.resolve(__dirname, 'stores'),
       '@/types': path.resolve(__dirname, 'types'),
     }
-
     return config
   },
 
@@ -76,18 +65,9 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
         ],
       },
     ]
