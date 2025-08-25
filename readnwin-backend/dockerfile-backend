@@ -41,10 +41,11 @@ RUN mkdir -p uploads/covers uploads/ebooks uploads/proofs \
 # Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK NONE
 # Expose port
 EXPOSE $PORT
+
+# Disable healthcheck
+HEALTHCHECK NONE
 
 # Run the application
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
