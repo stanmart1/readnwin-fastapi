@@ -17,6 +17,8 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
+        libmagic1 \
+        file \
         libpq-dev \
         curl \
     && rm -rf /var/lib/apt/lists/*
@@ -40,8 +42,6 @@ RUN mkdir -p uploads/covers uploads/ebooks uploads/proofs \
 USER appuser
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:$PORT/health || exit 1
 
 # Expose port
 EXPOSE $PORT
