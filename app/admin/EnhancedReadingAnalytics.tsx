@@ -75,9 +75,9 @@ export default function EnhancedReadingAnalytics() {
       const data = await response.json();
       
       if (data.success) {
-        setAnalytics(data.analytics);
+        setAnalytics((data.data as unknown) as AdminReadingAnalytics || {} as AdminReadingAnalytics);
       } else {
-        setError(data.error || 'Failed to fetch analytics');
+        setError('Failed to fetch analytics');
       }
     } catch (error) {
       console.error('Error fetching admin reading analytics:', error);

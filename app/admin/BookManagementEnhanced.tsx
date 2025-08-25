@@ -70,7 +70,7 @@ export default function BookManagementEnhanced() {
       const response = await Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, data: [] }) });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to load books');
+        throw new Error('Failed to load books');
       }
       return response.json();
     },
@@ -169,12 +169,12 @@ export default function BookManagementEnhanced() {
       
       updateProgress(75, 'Processing data...');
       
-      setBooks(result.books);
+      setBooks(result.data || []);
       setPagination({
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total: result.pagination.total,
-        pages: result.pagination.pages
+        page: 1,
+        limit: 20,
+        total: result.data?.length || 0,
+        pages: 1
       });
       
       updateProgress(100, 'Completed');

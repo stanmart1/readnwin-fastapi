@@ -193,9 +193,9 @@ export default function BlogManagement() {
       const data = await response.json();
       
       if (data.success) {
-        setExistingImages(data.images || []);
+        setExistingImages(data.data || []);
       } else {
-        setImageError(data.error || 'Failed to fetch images');
+        setImageError('Failed to fetch images');
       }
     } catch (error) {
       setImageError('Error fetching images');
@@ -210,7 +210,7 @@ export default function BlogManagement() {
       const postData = {
         ...formData,
         author_id: user?.id,
-        author_name: user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin',
+        author_name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Admin',
         read_time: Math.ceil(formData.content.split(' ').length / 200)
       };
       

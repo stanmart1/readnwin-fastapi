@@ -883,8 +883,7 @@ export default function BookManagement() {
             setShowAssignModal(false);
             loadData();
           }}
-          bookId={selectedBook.id}
-          bookTitle={selectedBook.title}
+          book={selectedBook}
         />
       )}
       

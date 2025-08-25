@@ -1,11 +1,14 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+import { Suspense } from 'react';
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import Header from '@/components/Header';
 import Link from 'next/link';
 
-export default function PaymentCancelledPage() {
+function PaymentCancelledContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderNumber = searchParams.get('order');
@@ -86,5 +89,23 @@ export default function PaymentCancelledPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCancelledPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentCancelledContent />
+    </Suspense>
   );
 } 

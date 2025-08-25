@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import ProfileImageUpload from '@/components/ProfileImageUpload';
 import ReadingAnalytics from '@/components/ReadingAnalytics';
@@ -49,7 +52,7 @@ export default function ProfilePage() {
       return;
     }
     fetchProfile();
-  }, [session]);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {

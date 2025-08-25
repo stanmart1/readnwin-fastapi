@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 
-export default function PaymentVerificationPage() {
+function PaymentVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, status } = useAuth();
@@ -198,5 +198,23 @@ export default function PaymentVerificationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentVerificationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentVerificationContent />
+    </Suspense>
   );
 } 

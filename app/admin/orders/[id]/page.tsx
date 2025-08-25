@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   TrashIcon, 
   ArrowLeftIcon,
@@ -73,7 +74,7 @@ export default function OrderDetailPage() {
     }
 
     fetchOrder();
-  }, [session, orderId]);
+  }, [user, orderId]);
 
   const addNotification = (notification: Omit<Notification, 'id'>) => {
     const id = Date.now().toString();
@@ -95,8 +96,8 @@ export default function OrderDetailPage() {
       const response = await Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, data: [] }) });
       if (response.ok) {
         const data = await response.json();
-        setOrder(data);
-        setNewStatus(data.status);
+        setOrder((data.data as unknown as Order) || null);
+        setNewStatus((data.data as unknown as Order)?.status || '');
       } else {
         addNotification({
           type: 'error',

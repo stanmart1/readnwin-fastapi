@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
+export const dynamic = 'force-dynamic';
+import { useAuth } from '@/hooks/useAuth';
 import { useFlutterwaveInline } from '@/hooks/useFlutterwaveInline';
 import Header from '@/components/Header';
 
@@ -33,7 +36,7 @@ export default function TestInlinePaymentPage() {
       const paymentData = {
         amount: 1000, // 1000 NGN test amount
         currency: 'NGN',
-        email: session.user.email,
+        email: user.email,
         phone_number: '+2348012345678',
         tx_ref: `TEST-${Date.now()}`,
         customizations: {
@@ -43,7 +46,7 @@ export default function TestInlinePaymentPage() {
         },
         meta: {
           test: true,
-          user_id: session.user.id,
+          user_id: user.id,
           timestamp: new Date().toISOString(),
         }
       };

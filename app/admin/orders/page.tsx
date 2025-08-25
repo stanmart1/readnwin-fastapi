@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   TrashIcon, 
   EyeIcon, 
@@ -48,7 +49,7 @@ export default function AdminOrdersPage() {
     }
 
     fetchOrders();
-  }, [session]);
+  }, [user]);
 
   const addNotification = (notification: Omit<Notification, 'id'>) => {
     const id = Date.now().toString();
