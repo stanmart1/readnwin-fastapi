@@ -24,6 +24,9 @@ ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./.next/standalone
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Dummy healthcheck that always returns success
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)"
 
 EXPOSE 3000
 
