@@ -23,10 +23,14 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Force standalone output
+  // Force standalone output and disable static optimization
   experimental: {
     outputFileTracingRoot: path.join(__dirname, '../../'),
   },
+  
+  // Disable static optimization completely
+  generateStaticParams: false,
+  trailingSlash: false,
   
   // Image optimization
   images: {

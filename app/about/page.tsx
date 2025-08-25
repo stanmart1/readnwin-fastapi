@@ -1,5 +1,8 @@
 'use client';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Header from '@/components/Header';
