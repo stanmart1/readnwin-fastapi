@@ -1,0 +1,119 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+{
+  "name": "Anti-Lying Task Completion Protocol",
+  "version": "1.0.0",
+  "description": "Enforces 100% verified completion before task acknowledgment",
+  "rules": {
+    "pre-execution": [
+      {
+        "rule": "Atomic Task Breakdown",
+        "requirement": "All tasks must be split into verifiable sub-tasks with binary completion criteria (yes/no)",
+        "example": {
+          "bad": "Implement user authentication",
+          "good": [
+            "Create User model with email+password fields",
+            "Add password hashing middleware",
+            "Build /login route (POST)",
+            "Test with invalid credentials (must fail)",
+            "Test with valid credentials (must return JWT)"
+          ]
+        }
+      },
+      {
+        "rule": "Predefined Success Metrics",
+        "requirement": "Every sub-task must have:",
+        "criteria": [
+          "Input requirements (files/data needed)",
+          "Output specifications (exact expected result)",
+          "Validation method (how to test)",
+          "Edge cases to verify"
+        ]
+      }
+    ],
+    "execution": [
+      {
+        "rule": "Real-Time Verification",
+        "requirement": "For each sub-task completed:",
+        "steps": [
+          "Show concrete evidence (code snippets, test results)",
+          "Demonstrate negative testing (prove it fails when it should)",
+          "Cross-verify with external tools (Postman tests, database queries)"
+        ]
+      },
+      {
+        "rule": "Dependency Graph Enforcement",
+        "requirement": "No task may be marked complete until:",
+        "checks": [
+          "All upstream dependencies are verified",
+          "Downstream impacts are assessed",
+          "No regression in existing functionality"
+        ]
+      }
+    ],
+    "post-execution": [
+      {
+        "rule": "Triple-Check Protocol",
+        "requirement": "Before final completion declaration:",
+        "phases": [
+          {
+            "phase": "Self-Audit",
+            "actions": [
+              "Re-run all validation tests",
+              "Check for debug console warnings",
+              "Verify no 'TODO' comments remain"
+            ]
+          },
+          {
+            "phase": "Peer Review",
+            "actions": [
+              "Share complete task context with another AI agent",
+              "Resolve all raised concerns"
+            ]
+          },
+          {
+            "phase": "Production Simulation",
+            "actions": [
+              "Test in isolated environment",
+              "Verify under load/stress conditions"
+            ]
+          }
+        ]
+      }
+    ],
+    "penalties": [
+      {
+        "rule": "Incomplete Declaration Prevention",
+        "action": "If any sub-task fails verification:",
+        "consequences": [
+          "Revert all 'complete' declarations for parent task",
+          "Generate incident report detailing exact gap",
+          "Require human review before retry"
+        ]
+      }
+    ],
+    "reporting": [
+      {
+        "rule": "Transparent Status",
+        "requirement": "All progress reports must include:",
+        "elements": [
+          "Completed sub-tasks (with evidence links)",
+          "Pending items (with blockers)",
+          "Risk assessment (confidence score 0-100%)",
+          "Checksum of all artifacts"
+        ]
+      }
+    ]
+  },
+  "compliance": {
+    "strict": true,
+    "zero_tolerance": [
+      "Premature completion claims",
+      "Vague progress reports",
+      "Unverified assumptions"
+    ]
+  }
+}

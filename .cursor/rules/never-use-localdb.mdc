@@ -1,0 +1,48 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+{
+  "$schema": "https://cursor.sh/schema/v1.json",
+  "rules": [
+    {
+      "name": "Force Remote DB Only in Dev",
+      "description": "Ensure only remote DB is used. Never fall back to local DB during development.",
+      "when": {
+        "env": "development"
+      },
+      "enforce": [
+        {
+          "type": "database-connection",
+          "rules": [
+            {
+              "description": "Do not use localhost or 127.0.0.1 as database host",
+              "assert": {
+                "not": {
+                  "host": ["localhost", "127.0.0.1"]
+                }
+              },
+              "on_violation": "error"
+            },
+            {
+              "description": "Database connection string must come from .env.local",
+              "assert": {
+                "envFile": ".env.local",
+                "required": ["DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"]
+              },
+              "on_violation": "error"
+            },
+            {
+              "description": "On network error, pause execution and retry until remote DB is reachable",
+              "assert": {
+                "onNetworkFailure": "pause-and-retry"
+              },
+              "on_violation": "block"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

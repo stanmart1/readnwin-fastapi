@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+{
+  "rules": [
+    {
+      "description": "Prevent Cursor from being overly ambitious or changing anything beyond the specific task. All unrelated actions must be confirmed by the user.",
+      "match": ".*",
+      "requireApproval": true,
+      "checks": [
+        {
+          "type": "no_unrelated_file_changes",
+          "message": "Avoid making changes to files that are not directly related to the task description."
+        },
+        {
+          "type": "no_refactors",
+          "message": "Do not perform refactors or improvements unless they are explicitly requested."
+        },
+        {
+          "type": "no_ui_alterations",
+          "message": "Do not make changes to frontend/UI components unless the task includes them."
+        },
+        {
+          "type": "require_task_confirmation",
+          "message": "Pause and ask for approval before expanding the task scope or acting on assumptions."
+        },
+        {
+          "type": "preserve_existing_functionality",
+          "message": "Ensure no existing functionality is broken or altered without explicit permission."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Auth Data</title>
+</head>
+<body>
+    <h1>Clear Authentication Data</h1>
+    <button onclick="clearAuth()">Clear All Auth Data</button>
+    <div id="result"></div>
+
+    <script>
+        function clearAuth() {
+            // Clear localStorage
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            
+            // Clear cookies
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            
+            document.getElementById('result').innerHTML = '<p style="color: green;">All authentication data cleared!</p>';
+            
+            // Redirect to home page after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

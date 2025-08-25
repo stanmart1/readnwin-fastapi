@@ -1,0 +1,66 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+{
+  "$schema": "https://cursor.sh/schema/v1.json",
+  "rules": [
+    {
+      "name": "Restrict AI to Assigned Tasks Only",
+      "description": "Ensure AI sticks strictly to the assigned task and avoids scope creep or breaking existing code.",
+      "enforce": [
+        {
+          "type": "modification-scope",
+          "rules": [
+            {
+              "description": "Only modify files and logic explicitly related to the current task.",
+              "assert": {
+                "onlyModifySpecified": true
+              },
+              "on_violation": "warn"
+            },
+            {
+              "description": "If task requires modifying other parts of the project, ask for user approval first.",
+              "assert": {
+                "requireApprovalForUnscopedChanges": true
+              },
+              "on_violation": "block"
+            }
+          ]
+        },
+        {
+          "type": "existing-functionality-protection",
+          "rules": [
+            {
+              "description": "Do not remove or alter working features unless explicitly instructed.",
+              "assert": {
+                "preserveExistingFeatures": true
+              },
+              "on_violation": "warn"
+            },
+            {
+              "description": "Do not overwrite or refactor unrelated modules unless approved.",
+              "assert": {
+                "noUnapprovedRefactors": true
+              },
+              "on_violation": "block"
+            }
+          ]
+        },
+        {
+          "type": "communication-behavior",
+          "rules": [
+            {
+              "description": "Always ask for confirmation before performing out-of-scope operations.",
+              "assert": {
+                "promptForScopeExpansion": true
+              },
+              "on_violation": "block"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
