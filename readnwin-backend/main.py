@@ -45,13 +45,12 @@ async def startup_event():
         print(f"❌ Database startup failed: {str(e)[:100]}")
         print("🔄 API will run in limited mode without database")
 
-# CORS configuration - update for production
+# CORS configuration
 allowed_origins = [
     "http://localhost:3000",  # Development
     "http://127.0.0.1:3000",  # Development
-    # Add production domains here:
-    # "https://yourdomain.com",
-    # "https://www.yourdomain.com"
+    "https://readnwin.com",  # Production
+    "https://www.readnwin.com",  # Production with www
 ]
 
 app.add_middleware(
