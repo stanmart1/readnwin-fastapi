@@ -41,10 +41,10 @@ const checks = [
   {
     name: 'Client providers wrapper',
     check: () => {
-      const providersPath = path.join(__dirname, 'app/providers.tsx');
+      const providersPath = path.join(__dirname, 'app/components/Providers.tsx');
       if (!fs.existsSync(providersPath)) return false;
       const providers = fs.readFileSync(providersPath, 'utf8');
-      return providers.includes("'use client'");
+      return providers.includes("'use client'") || providers.includes('"use client"');
     }
   },
   {
@@ -53,7 +53,7 @@ const checks = [
       const layoutPath = path.join(__dirname, 'app/layout.tsx');
       if (!fs.existsSync(layoutPath)) return false;
       const layout = fs.readFileSync(layoutPath, 'utf8');
-      return layout.includes('ClientProviders');
+      return layout.includes('Providers');
     }
   }
 ];

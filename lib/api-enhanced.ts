@@ -1,3 +1,5 @@
+'use client';
+
 import { ApiClient } from "./api";
 import { AppErrorHandler } from "./error-handler";
 
