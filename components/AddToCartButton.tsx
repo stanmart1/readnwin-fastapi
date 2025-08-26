@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 import { useGuestCart } from "@/contexts/GuestCartContext";
 import toast from "react-hot-toast";
 
@@ -36,6 +36,15 @@ export default function AddToCartButton({
   const { addToCart: addToUserCart } = useCart();
   const { addToCart: addToGuestCart } = useGuestCart();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Early return if contexts are not available (SSR safety)
+  if (!addToUserCart || !addToGuestCart) {
+    return (
+      <button className={className} disabled>
+        Loading...
+      </button>
+    );
+  }
 
   const handleAddToCart = async () => {
     // Check if book is active

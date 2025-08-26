@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AddToCartButton from "@/components/AddToCartButton";
 import Header from "@/components/Header";
 import { formatNumber } from "@/lib/dateUtils";
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 import { constructImageUrl } from "@/lib/imageUtils";
 
 interface BookDetails {

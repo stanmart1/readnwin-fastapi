@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { CheckCircle, Truck, Download, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useCart } from '@/contexts/CartContextNew';
+import { useCart } from '@/contexts/CartContext';
 import Header from '@/components/Header';
 
 interface OrderItem {

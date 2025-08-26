@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCart } from '@/contexts/CartContextNew';
+import { useCart } from '@/contexts/CartContext';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 function PaymentCallbackContent() {

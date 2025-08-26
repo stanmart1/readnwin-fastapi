@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, AlertCircle, CreditCard, Banknote, Globe } from 'lucide-react';
-import { useCart } from '@/contexts/CartContextNew';
+import { useCart } from '@/contexts/CartContext';
 import { useGuestCart } from '@/contexts/GuestCartContext';
 import { useFlutterwaveInline } from '@/hooks/useFlutterwaveInline';
 import { useCheckoutFlow } from '@/hooks/useCheckoutFlow';

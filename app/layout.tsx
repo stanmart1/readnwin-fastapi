@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { CartProvider } from '@/contexts/CartContext'
+import { GuestCartProvider } from '@/contexts/GuestCartContext'
 import { Toaster } from 'react-hot-toast'
 
 // Force all pages to be dynamic
@@ -25,10 +26,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <CartProvider>
-            {children}
-            <Toaster position="top-right" />
-          </CartProvider>
+          <GuestCartProvider>
+            <CartProvider>
+              {children}
+              <Toaster position="top-right" />
+            </CartProvider>
+          </GuestCartProvider>
         </AuthProvider>
       </body>
     </html>

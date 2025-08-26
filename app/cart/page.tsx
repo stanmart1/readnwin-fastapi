@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 
 interface CartItem {
   id: number;

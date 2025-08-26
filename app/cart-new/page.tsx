@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 // Using Remix icons for consistency with the design system
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 import { useGuestCart } from "@/contexts/GuestCartContext";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";

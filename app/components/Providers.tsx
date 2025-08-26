@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
-import { CartProvider } from "@/contexts/CartContextNew";
+import { CartProvider } from "@/contexts/CartContext";
 import { GuestCartProvider } from "@/contexts/GuestCartContext";
 import { NotificationContainer } from "@/components/ui/Notification";
 import { ClientOnly } from "@/components/ui/ClientOnly";

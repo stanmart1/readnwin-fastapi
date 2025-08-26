@@ -9,7 +9,7 @@ import {
   ArrowLeft,
   ShoppingCart,
 } from "lucide-react";
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 import { useFlutterwaveInline } from "@/hooks/useFlutterwaveInline";
 import Header from "@/components/Header";
 import NewCheckoutFlow from "@/components/checkout/NewCheckoutFlow";

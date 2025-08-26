@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { useCart } from '@/contexts/CartContextNew';
+import { useCart } from '@/contexts/CartContext';
 import { useGuestCart } from '@/contexts/GuestCartContext';
 import { Book } from '@/types/ecommerce';
 import AddToCartButton from '@/components/AddToCartButton';
@@ -136,9 +136,12 @@ export default function BookCard({
     } else {
       // Use authenticated cart for logged-in users
       try {
-        await addToCart(typeof id === 'string' ? parseInt(id) : id, 1);
-        // Show success message
-        alert('Item added to cart successfully!');
+        const success = await addToCart(typeof id === 'string' ? parseInt(id) : id, 1);
+        if (success) {
+          alert('Item added to cart successfully!');
+        } else {
+          alert('Failed to add item to cart');
+        }
       } catch (error) {
         alert('Failed to add item to cart');
       }

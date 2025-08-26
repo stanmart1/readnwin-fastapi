@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CartItem {
   id: number;
@@ -74,7 +74,7 @@ interface CartProviderProps {
 }
 
 export function CartProvider({ children }: CartProviderProps) {
-  const { data: session, status } = useSession();
+  const { user, isAuthenticated, status } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -161,7 +161,7 @@ export function CartProvider({ children }: CartProviderProps) {
   }, [cartItems, isEbookOnly, isPhysicalOnly]);
 
   const loadCart = useCallback(async () => {
-    if (!session?.user || status !== 'authenticated') {
+    if (!isAuthenticated || status !== 'authenticated') {
       setCartItems([]);
       return;
     }
@@ -183,10 +183,10 @@ export function CartProvider({ children }: CartProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user, status]);
+  }, [isAuthenticated, status]);
 
   const addToCart = async (bookId: number, quantity: number = 1): Promise<boolean> => {
-    if (!session?.user || status !== 'authenticated') {
+    if (!isAuthenticated || status !== 'authenticated') {
       return false;
     }
 
@@ -237,7 +237,7 @@ export function CartProvider({ children }: CartProviderProps) {
   };
 
   const updateQuantity = async (bookId: number, quantity: number): Promise<boolean> => {
-    if (!session?.user || status !== 'authenticated') {
+    if (!isAuthenticated || status !== 'authenticated') {
       return false;
     }
 
@@ -283,7 +283,7 @@ export function CartProvider({ children }: CartProviderProps) {
   };
 
   const removeFromCart = async (bookId: number): Promise<boolean> => {
-    if (!session?.user || status !== 'authenticated') {
+    if (!isAuthenticated || status !== 'authenticated') {
       return false;
     }
 
@@ -316,7 +316,7 @@ export function CartProvider({ children }: CartProviderProps) {
   };
 
   const clearCart = async (): Promise<boolean> => {
-    if (!session?.user || status !== 'authenticated') {
+    if (!isAuthenticated || status !== 'authenticated') {
       return false;
     }
 
@@ -348,26 +348,26 @@ export function CartProvider({ children }: CartProviderProps) {
     await loadCart();
   }, [loadCart]);
 
-  // Load cart when session changes
+  // Load cart when auth status changes
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
+    if (status === 'authenticated' && isAuthenticated) {
       loadCart();
     } else {
       // Clear cart for unauthenticated users or loading state
       setCartItems([]);
     }
-  }, [session, status, loadCart]);
+  }, [isAuthenticated, status, loadCart]);
 
   // Periodic refresh to keep cart in sync (every 30 seconds)
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
+    if (status === 'authenticated' && isAuthenticated) {
       const interval = setInterval(() => {
         loadCart();
       }, 30000); // 30 seconds
 
       return () => clearInterval(interval);
     }
-  }, [session, status, loadCart]);
+  }, [isAuthenticated, status, loadCart]);
 
   const value: CartContextType = {
     cartItems,

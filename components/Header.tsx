@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/contexts/CartContextNew";
+import { useCart } from "@/contexts/CartContext";
 import { useGuestCart } from "@/contexts/GuestCartContext";
 
 export default function Header() {
@@ -11,7 +11,7 @@ export default function Header() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, logout } = useAuth();
-  const { getTotalItems } = useCart();
+  const { cartCount } = useCart();
   const { getTotalItems: getGuestTotalItems } = useGuestCart();
 
   // Close dropdown when clicking outside
@@ -101,7 +101,7 @@ export default function Header() {
               >
                 <i className="ri-shopping-cart-line text-xl"></i>
                 {(() => {
-                  const totalItems = isAuthenticated ? getTotalItems() : getGuestTotalItems();
+                  const totalItems = isAuthenticated ? cartCount : getGuestTotalItems();
                   return totalItems > 0 && (
                     <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {totalItems > 99 ? "99+" : totalItems}

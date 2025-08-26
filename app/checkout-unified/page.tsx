@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle, ArrowLeft, ShoppingCart } from 'lucide-react';
-import { useCart } from '@/contexts/CartContextNew';
+import { useCart } from '@/contexts/CartContext';
 import Header from '@/components/Header';
 import UnifiedCheckoutFlow from '@/components/checkout/UnifiedCheckoutFlow';
 
