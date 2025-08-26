@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { ClientProviders } from './providers'
+import Providers from './components/Providers'
 
 // Force all pages to be dynamic
 export const dynamic = 'force-dynamic'
@@ -22,9 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClientProviders>
+        <Providers>
           {children}
-        </ClientProviders>
+        </Providers>
       </body>
     </html>
   )
