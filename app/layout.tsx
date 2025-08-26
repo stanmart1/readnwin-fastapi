@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { AuthProvider } from '@/hooks/useAuth'
-import { CartProvider } from '@/contexts/CartContext'
-import { GuestCartProvider } from '@/contexts/GuestCartContext'
-import { Toaster } from 'react-hot-toast'
+import { ClientProviders } from './providers'
 
 // Force all pages to be dynamic
 export const dynamic = 'force-dynamic'
@@ -25,14 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <GuestCartProvider>
-            <CartProvider>
-              {children}
-              <Toaster position="top-right" />
-            </CartProvider>
-          </GuestCartProvider>
-        </AuthProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   )

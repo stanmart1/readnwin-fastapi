@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, lazy } from "react";
 import { useRouter } from "next/navigation";
-import Head from "next/head";
+
 import Header from "../../components/Header";
 import AdminSidebar from "./AdminSidebar";
 import { usePermissions } from "../hooks/usePermissions";
