@@ -1,36 +1,20 @@
 "use client";
 
-import { ReactNode } from "react";
-import { Toaster } from "react-hot-toast";
+import React from "react";
+import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import { GuestCartProvider } from "@/contexts/GuestCartContext";
-import { NotificationContainer } from "@/components/ui/Notification";
-import { ClientOnly } from "@/components/ui/ClientOnly";
-import { AuthProvider } from "@/hooks/useAuth";
-import { useGuestCartTransfer } from "@/hooks/useGuestCartTransfer";
 
-interface ProvidersProps {
-  children: ReactNode;
-}
-
-function CartTransferHandler() {
-  useGuestCartTransfer();
-  return null;
-}
-
-export default function Providers({ children }: ProvidersProps) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <CartProvider>
-        <GuestCartProvider>
-          <CartTransferHandler />
+      <GuestCartProvider>
+        <CartProvider>
           {children}
-          <Toaster position="top-right" />
-          <ClientOnly>
-            <NotificationContainer />
-          </ClientOnly>
-        </GuestCartProvider>
-      </CartProvider>
+        </CartProvider>
+      </GuestCartProvider>
     </AuthProvider>
   );
 }
+
+export default Providers;
