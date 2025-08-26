@@ -47,3 +47,4 @@ uvicorn==0.24.0
 reportlab==4.0.7
 Pillow==10.0.1
 bleach==6.1.0
+python-magic-bin==0.4.14
