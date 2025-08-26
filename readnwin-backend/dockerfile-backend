@@ -1,126 +1,36 @@
-# Multi-stage Production Dockerfile for FastAPI Backend
-# Optimized for Coolify deployment
+# syntax=docker/dockerfile:1.7
+FROM python:3.11-slim AS runtime
 
-# ----------------------
-# Builder stage
-# ----------------------
-FROM python:3.11-slim as builder
-
-# Set build environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive
-
-# Install comprehensive build dependencies
+# System deps for common Python packages used in your logs:
+# - file/libmagic for python-magic
+# - libjpeg, zlib, freetype for Pillow/ReportLab
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Core build tools
-    build-essential \
-    gcc \
-    g++ \
-    make \
-    cmake \
-    pkg-config \
-    git \
-    # PostgreSQL
-    libpq-dev \
-    # SSL/TLS and cryptography
-    libssl-dev \
-    libffi-dev \
-    librust-dev \
-    # Image processing (Pillow, reportlab)
-    libjpeg-dev \
-    libjpeg62-turbo-dev \
-    zlib1g-dev \
-    libfreetype6-dev \
-    libtiff5-dev \
-    libwebp-dev \
-    libopenjp2-7-dev \
-    # Additional libraries
-    libxml2-dev \
-    libxslt1-dev \
-    # Python development
-    python3-dev \
-    # Cleanup
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    file libmagic1 libmagic-dev \
+    libjpeg-dev zlib1g-dev libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Upgrade pip and install build tools
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# ----------------------
-# Runtime stage
-# ----------------------
-FROM python:3.11-slim as runtime
-
-# Set runtime environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    PORT=8000 \
-    PATH="/opt/venv/bin:$PATH" \
-    DEBIAN_FRONTEND=noninteractive
-
-# Install only runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # PostgreSQL runtime
-    libpq5 \
-    # SSL/TLS runtime
-    libssl3 \
-    libffi8 \
-    # Image processing runtime
-    libjpeg62-turbo \
-    zlib1g \
-    libfreetype6 \
-    libtiff5 \
-    libwebp7 \
-    libopenjp2-7 \
-    # XML processing runtime
-    libxml2 \
-    libxslt1.1 \
-    # Utilities
-    curl \
-    ca-certificates \
-    # Cleanup
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && apt-get autoremove -y
-
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Copy virtual environment from builder stage
-COPY --from=builder /opt/venv /opt/venv
-
-# Set work directory
+# App setup
 WORKDIR /app
 
-# Copy application code with proper ownership
-COPY --chown=appuser:appuser . .
+# Create and use venv
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Create necessary directories and set permissions
-RUN mkdir -p uploads/covers uploads/ebooks uploads/proofs logs \
-    && chown -R appuser:appuser /app \
-    && chmod -R 755 /app
+# Install Python deps first for better layer caching
+COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install -r requirements.txt
 
-# Switch to non-root user
+# Now copy the app code
+COPY . .
+
+# Security: run as non-root
+RUN useradd -m appuser
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:$PORT/health || exit 1
+# FastAPI default port
+ENV PORT=8000
 
-# Expose port
-EXPOSE $PORT
-
-# Run the application with production settings
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--access-log", "--no-use-colors", "--loop", "uvloop"]
+# Start server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
