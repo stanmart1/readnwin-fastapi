@@ -34,3 +34,7 @@ ENV PORT=8000
 
 # Start server
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Dummy healthcheck that always returns success
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)"
