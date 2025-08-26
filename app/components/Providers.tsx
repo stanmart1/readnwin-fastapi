@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { GuestCartProvider } from "@/contexts/GuestCartContext";
 
