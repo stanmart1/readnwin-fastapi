@@ -33,12 +33,22 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
+      console.log('🔐 AuthService: Starting login request');
+      
       const response = await this.api.request('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('🔐 AuthService: Login response received', {
+        hasToken: !!response.access_token,
+        hasUser: !!response.user,
+        userEmail: response.user?.email
+      });
+
       if (response.access_token && response.user) {
+        console.log('✅ AuthService: Storing auth data');
+        
         // Store all auth data synchronously for immediate access
         this.api.setToken(response.access_token);
         localStorage.setItem('user', JSON.stringify(response.user));
@@ -50,9 +60,6 @@ class AuthService {
         }
         if (response.csrf_token) {
           localStorage.setItem('csrf_token', response.csrf_token);
-        } else {
-          // Fetch CSRF token after login
-          this.fetchCsrfToken();
         }
         
         // Set token expiry time
@@ -62,11 +69,18 @@ class AuthService {
         }
         
         // Set cookie for middleware (non-blocking)
-        document.cookie = `token=${response.access_token}; path=/; samesite=strict; secure=${window.location.protocol === 'https:'}`;
+        const isSecure = window.location.protocol === 'https:';
+        document.cookie = `token=${response.access_token}; path=/; samesite=strict${isSecure ? '; secure' : ''}`;
+        
+        console.log('✅ AuthService: Auth data stored successfully');
+      } else {
+        console.error('❌ AuthService: Invalid response format');
+        throw new Error('Invalid login response');
       }
 
       return response;
     } catch (error) {
+      console.error('❌ AuthService: Login failed', error);
       AppErrorHandler.handle(error, 'Auth Login');
       throw error;
     }
@@ -223,15 +237,24 @@ class AuthService {
     const user = this.getUser();
     const tokenExpiry = localStorage.getItem('token_expiry');
     
+    console.log('🔍 AuthService: Checking authentication', {
+      hasToken: !!token,
+      hasUser: !!user,
+      tokenExpiry: tokenExpiry ? new Date(parseInt(tokenExpiry)).toISOString() : null
+    });
+    
     if (!token || !user) {
+      console.log('❌ AuthService: No token or user');
       return false;
     }
     
     // Check if token is expired
     if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
+      console.log('❌ AuthService: Token expired');
       return false;
     }
     
+    console.log('✅ AuthService: User is authenticated');
     return true;
   }
   

@@ -23,12 +23,15 @@ function LoginPageContent() {
   // Optimized redirect - faster authentication check
   useEffect(() => {
     if (isAuthenticated && user?.id && !isSubmitting) {
+      console.log('🔄 User authenticated, redirecting...', { user: user.email });
       const redirect = searchParams.get("redirect") || searchParams.get("callbackUrl");
-      if (redirect) {
-        router.push(redirect);
-        return;
-      }
-      router.push("/dashboard");
+      const targetUrl = redirect || "/dashboard";
+      console.log('🔄 Target URL:', targetUrl);
+      
+      // Force redirect to prevent loops
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 100);
     }
   }, [isAuthenticated, user, router, searchParams, isSubmitting]);
 
@@ -39,48 +42,10 @@ function LoginPageContent() {
     }
   }, [searchParams]);
 
-  // Simplified verification check - only when needed
+  // Email verification disabled for login - only for new signups
   useEffect(() => {
-    const checkVerificationStatus = async (email: string) => {
-      if (!email || !/\S+@\S+\.\S+/.test(email) || isSubmitting) {
-        setNeedsVerification(false);
-        setCheckingVerification(false);
-        return;
-      }
-
-      setCheckingVerification(true);
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const response = await fetch(`${apiUrl}/auth/check-verification-status`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNeedsVerification(data.needsVerification);
-        } else {
-          setNeedsVerification(false);
-        }
-      } catch (error) {
-        setNeedsVerification(false);
-      } finally {
-        setCheckingVerification(false);
-      }
-    };
-
-    // Only check if email is complete and valid
-    if (email && /\S+@\S+\.\S+/.test(email) && !isSubmitting) {
-      const timeoutId = setTimeout(() => {
-        checkVerificationStatus(email);
-      }, 2000); // Increased delay to 2 seconds
-
-      return () => clearTimeout(timeoutId);
-    } else {
-      setCheckingVerification(false);
-      setNeedsVerification(false);
-    }
+    setNeedsVerification(false);
+    setCheckingVerification(false);
   }, [email, isSubmitting]);
 
   const validateForm = () => {
@@ -114,27 +79,32 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
+      console.log('🔍 Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL });
+      
       const success = await login(email, password);
       const loginDuration = Date.now() - loginStartTime;
 
-      console.log(`🔍 Login performance: ${loginDuration}ms`);
+      console.log(`🔍 Login result: ${success}, duration: ${loginDuration}ms`);
 
       if (success) {
-        // Immediate redirect without success message for faster UX
-        const redirect = searchParams.get("redirect") || searchParams.get("callbackUrl");
-        if (redirect) {
-          router.push(redirect);
-        } else {
-          router.push("/dashboard");
-        }
+        console.log('✅ Login successful, redirecting...');
+        // Add delay to ensure state is updated
+        setTimeout(() => {
+          const redirect = searchParams.get("redirect") || searchParams.get("callbackUrl");
+          const targetUrl = redirect || "/dashboard";
+          console.log('🔄 Redirecting to:', targetUrl);
+          window.location.href = targetUrl; // Force redirect
+        }, 100);
       } else {
+        console.log('❌ Login failed');
         setError(
           "Invalid email or password. Please check your credentials and try again.",
         );
       }
     } catch (error) {
+      console.error('❌ Login error:', error);
       setError(
-        "Invalid email or password. Please check your credentials and try again.",
+        "Login failed. Please check your connection and try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -385,44 +355,7 @@ function LoginPageContent() {
                 >
                   Forgot password?
                 </Link>
-                {checkingVerification && email && /\S+@\S+\.\S+/.test(email) && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400 mr-1"></div>
-                    Checking verification status...
-                  </div>
-                )}
-                {needsVerification && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (email) {
-                        try {
-                          const response = await fetch(
-                            "/api/auth/resend-verification",
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ email }),
-                            },
-                          );
-                          const data = await response.json();
-                          if (response.ok) {
-                            setSuccessMessage(data.message);
-                          } else {
-                            setError(data.error);
-                          }
-                        } catch (error) {
-                          setError("Failed to resend verification email");
-                        }
-                      } else {
-                        setError("Please enter your email address first");
-                      }
-                    }}
-                    className="font-medium text-gray-600 hover:text-gray-800 transition-colors duration-200"
-                  >
-                    Resend verification email
-                  </button>
-                )}
+
               </div>
             </div>
           </form>

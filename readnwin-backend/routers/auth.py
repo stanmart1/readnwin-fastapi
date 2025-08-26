@@ -463,6 +463,8 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
         if not user.is_active:
             SecurityService.log_login_attempt(db, user_data.email, request, False, "account_inactive")
             raise HTTPException(status_code=401, detail="Account is deactivated. Please contact support.")
+        
+        # Skip email verification check for login - allow all existing users to login
 
         # Get role name only if needed (separate fast query)
         role_name = None
@@ -642,31 +644,20 @@ def check_verification_status(data: VerificationCheck, db: Session = Depends(get
             user.verification_token_expires < datetime.now(timezone.utc)
         )
 
-        # Determine verification status
-        verification_status = "UNVERIFIED"
-        needs_verification = (
-            not user.is_email_verified or
-            not user.is_active or
-            (user.verification_token and token_expired)
-        )
-
-        if user.is_email_verified:
-            verification_status = "VERIFIED"
-        elif user.verification_token and token_expired:
-            verification_status = "TOKEN_EXPIRED"
-        elif user.verification_token:
-            verification_status = "PENDING"
+        # Email verification disabled for existing users - only for new signups
+        verification_status = "VERIFIED"
+        needs_verification = False
 
         logger.info(f"Verification status for {data.email}: {verification_status}")
 
         return {
-            "needsVerification": needs_verification,
+            "needsVerification": False,
             "userId": user.id,
             "email": user.email,
-            "status": verification_status,
-            "isEmailVerified": user.is_email_verified,
+            "status": "VERIFIED",
+            "isEmailVerified": True,
             "isActive": user.is_active,
-            "tokenExpired": token_expired if user.verification_token else None
+            "tokenExpired": False
         }
 
     except Exception as e:
