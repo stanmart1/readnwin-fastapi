@@ -25,7 +25,7 @@ class ReadingSessionResponse(ReadingSessionBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class GoalType(str, Enum):
     BOOKS_READ = "books_read"
@@ -51,7 +51,7 @@ class ReadingGoalResponse(ReadingGoalBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TextToSpeechRequest(BaseModel):
     text: str

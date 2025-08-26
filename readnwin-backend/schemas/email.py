@@ -38,7 +38,7 @@ class EmailTemplateResponse(EmailTemplateBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmailGatewayConfigBase(BaseModel):
     provider: EmailGatewayProvider
@@ -55,7 +55,7 @@ class EmailGatewayConfigResponse(EmailGatewayConfigBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmailTestRequest(BaseModel):
     template_id: int

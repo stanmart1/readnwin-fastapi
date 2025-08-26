@@ -28,7 +28,7 @@ class EnhancedCartResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CheckoutSessionCreate(BaseModel):
     cart_id: str
@@ -48,7 +48,7 @@ class CheckoutSessionResponse(BaseModel):
     expires_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ShoppingPreferences(BaseModel):
     preferred_categories: List[str]
@@ -61,4 +61,4 @@ class ShoppingPreferences(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

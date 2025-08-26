@@ -36,9 +36,9 @@ passlib==1.7.4
 psycopg2-binary==2.9.9
 pyasn1==0.6.1
 pycparser==2.22
-pydantic==2.5.0
-pydantic-settings==2.1.0
-pydantic_core==2.14.1
+pydantic==2.9.2
+pydantic-settings==2.5.2
+pydantic_core==2.27.1
 python-decouple==3.8
 python-dotenv==1.1.1
 python-jose==3.3.0
@@ -55,7 +55,7 @@ uvicorn==0.24.0
 reportlab==4.0.7
 Pillow==10.0.1
 bleach==6.1.0
-python-magic==0.4.27
+python-magic-bin==0.4.14
 
 # Production utilities
 gunicorn>=21.2.0
