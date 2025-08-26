@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Admin API utility functions for making authenticated requests to FastAPI backend
  */

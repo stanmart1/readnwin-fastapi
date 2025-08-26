@@ -1,3 +1,5 @@
+'use client';
+
 import { EnhancedApiClient } from './api-enhanced';
 import { AppErrorHandler } from './error-handler';
 

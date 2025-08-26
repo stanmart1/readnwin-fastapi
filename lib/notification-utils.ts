@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Notification utilities for managing notification state across the application
  */

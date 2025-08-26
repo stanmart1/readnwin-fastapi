@@ -1,3 +1,5 @@
+'use client';
+
 export function handlePostCheckoutRedirect(orderId: string): void {
   // Mock implementation for frontend
   window.location.href = `/order-confirmation/${orderId}`;

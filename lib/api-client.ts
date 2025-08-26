@@ -1,3 +1,5 @@
+'use client';
+
 class ApiClient {
   private static instance: ApiClient;
   private baseURL: string;

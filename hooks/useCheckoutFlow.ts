@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { useCheckoutService } from './useCheckoutService';
 import { useCheckoutError } from './useCheckoutError';

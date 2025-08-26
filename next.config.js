@@ -73,6 +73,11 @@ const nextConfig = {
     ]
   },
 
+  // Server Components External Packages
+  experimental: {
+    serverComponentsExternalPackages: ['pg', 'bcryptjs'],
+  },
+
   // Performance optimizations
   poweredByHeader: false,
   compress: true,

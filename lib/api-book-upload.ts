@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Enhanced API service for book upload with full backend integration
  */
