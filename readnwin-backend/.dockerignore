@@ -1,0 +1,51 @@
+# Environment files
+.env
+.env.*
+*.env
+
+# Development files
+.git
+.gitignore
+README.md
+*.md
+Dockerfile*
+docker-compose*
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test files
+tests/
+test_*
+*_test.py
+
+# Development tools
+.mypy_cache
+.flake8
+.black
