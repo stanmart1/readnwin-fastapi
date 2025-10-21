@@ -34,29 +34,38 @@ async def startup_event():
         print("✅ Database tables created successfully")
         
         # Initialize default achievements
-        from services.achievement_service import initialize_default_achievements
-        db = next(get_db())
         try:
-            initialize_default_achievements(db)
-        finally:
-            db.close()
+            from services.achievement_service import initialize_default_achievements
+            db = next(get_db())
+            try:
+                initialize_default_achievements(db)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"⚠️  Achievement initialization skipped: {e}")
         
-        # Start background scheduler for token cleanup
-        from services.scheduler import start_scheduler
-        start_scheduler()
-        print("✅ Background scheduler started")
+        # Start background scheduler for token cleanup (optional)
+        try:
+            from services.scheduler import start_scheduler
+            start_scheduler()
+            print("✅ Background scheduler started")
+        except Exception as e:
+            print(f"⚠️  Scheduler not available: {e}")
         
-        # Initialize Redis connection
-        from services.redis_service import get_redis_client
-        redis_client = get_redis_client()
-        if redis_client:
-            print("✅ Redis connected successfully")
-        else:
-            print("⚠️  Redis connection failed - using fallback")
+        # Initialize Redis connection (optional)
+        try:
+            from services.redis_service import get_redis_client
+            redis_client = get_redis_client()
+            if redis_client:
+                print("✅ Redis connected successfully")
+            else:
+                print("⚠️  Redis connection failed - using fallback")
+        except Exception as e:
+            print(f"⚠️  Redis not available: {e}")
         
     except Exception as e:
-        print(f"❌ Database startup failed: {str(e)[:100]}")
-        print("🔄 API will run in limited mode without database")
+        print(f"❌ Startup error: {str(e)[:100]}")
+        print("🔄 API will run in limited mode")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -65,8 +74,8 @@ async def shutdown_event():
         from services.scheduler import stop_scheduler
         stop_scheduler()
         print("✅ Background scheduler stopped")
-    except Exception as e:
-        print(f"⚠️ Scheduler shutdown error: {e}")
+    except Exception:
+        pass
 
 # CORS configuration
 allowed_origins = [
@@ -103,8 +112,19 @@ from routers import (
     faq, user, about, portfolio, reviews, rbac, users, dashboard, reading_goals,
     reading, reading_enhanced, admin_enhanced, admin_email,
     analytics, payment, shopping_enhanced, testing, ereader, ereader_enhanced, upload,
-    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, admin_maintenance, admin_redis
+    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf
 )
+
+# Import optional routers
+try:
+    from routers import admin_maintenance
+except ImportError:
+    admin_maintenance = None
+
+try:
+    from routers import admin_redis
+except ImportError:
+    admin_redis = None
 
 # Import new comprehensive analytics router
 try:
@@ -180,8 +200,10 @@ app.include_router(test_simple.router, tags=["admin"])
 app.include_router(receipts.router, prefix="/admin", tags=["admin"])
 app.include_router(admin_works.router, tags=["admin"])
 app.include_router(admin_blog.router, tags=["admin"])
-app.include_router(admin_maintenance.router, tags=["admin"])
-app.include_router(admin_redis.router, tags=["admin"])
+if admin_maintenance:
+    app.include_router(admin_maintenance.router, tags=["admin"])
+if admin_redis:
+    app.include_router(admin_redis.router, tags=["admin"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 
 # User Features
@@ -206,10 +228,18 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint for API status"""
+    """Health check endpoint for API status - always returns success"""
     from datetime import datetime
+    try:
+        # Try to check database connection
+        from core.database import test_database_connection
+        db_status = "connected" if test_database_connection() else "disconnected"
+    except Exception:
+        db_status = "unknown"
+    
     return {
         "status": "healthy",
         "message": "ReadnWin API is running",
+        "database": db_status,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }

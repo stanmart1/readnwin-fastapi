@@ -14,11 +14,15 @@ REDIS_URL = settings.redis_url
 # Global Redis client
 _redis_client: Optional[redis.Redis] = None
 
-def get_redis_client() -> redis.Redis:
+def get_redis_client() -> Optional[redis.Redis]:
     """Get or create Redis client"""
     global _redis_client
     
     if _redis_client is None:
+        if not REDIS_URL or REDIS_URL == '':
+            logger.info("⚠️  Redis URL not configured - running without Redis")
+            return None
+        
         try:
             _redis_client = redis.from_url(
                 REDIS_URL,
