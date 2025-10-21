@@ -14,14 +14,14 @@ engine_config = {
     "pool_pre_ping": True,
     "pool_recycle": 3600,  # 1 hour
     "connect_args": {
-        "connect_timeout": 10,
+        "connect_timeout": 30,  # Increased from 10 to 30 seconds
         "application_name": "readnwin_api"
     }
 }
 
-# Add SSL configuration for production
+# Add SSL configuration for production (prefer instead of require)
 if settings.is_production:
-    engine_config["connect_args"]["sslmode"] = "require"
+    engine_config["connect_args"]["sslmode"] = "prefer"  # Changed from "require"
 
 engine = create_engine(
     settings.database_url,
