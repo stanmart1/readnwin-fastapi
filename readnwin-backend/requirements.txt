@@ -59,3 +59,12 @@ python-magic==0.4.27
 # Production utilities
 gunicorn>=21.2.0
 python-json-logger>=2.0.7
+
+# Email service
+resend>=0.8.0
+
+# Background scheduler
+APScheduler>=3.10.4
+
+# Redis for caching and rate limiting
+redis>=5.0.0

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     lockout_duration_minutes: int = config('LOCKOUT_DURATION_MINUTES', default=15, cast=int)
     csrf_secret_key: str = config('CSRF_SECRET_KEY')
     frontend_url: str = config('FRONTEND_URL', default='http://localhost:3000')
+    resend_api_key: str = config('RESEND_API_KEY')
+    redis_url: str = config('REDIS_URL')
     
     @property
     def database_url(self) -> str:

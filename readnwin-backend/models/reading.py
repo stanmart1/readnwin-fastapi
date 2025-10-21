@@ -1,51 +1,36 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime
-
+from sqlalchemy.sql import func
 from core.database import Base
-from schemas.reading import GoalType
 
-class ReadingSession(Base):
-    __tablename__ = "reading_sessions"
-
+class Highlight(Base):
+    __tablename__ = "highlights"
+    
     id = Column(Integer, primary_key=True, index=True)
-    current_page = Column(Integer, nullable=False)
-    total_pages = Column(Integer, nullable=False)
-    reading_time = Column(Integer, default=0)  # in seconds
-    completion_percentage = Column(Float, default=0.0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
+    text = Column(Text, nullable=False)
+    color = Column(String, default="yellow")
+    start_offset = Column(Integer, nullable=False)
+    end_offset = Column(Integer, nullable=False)
+    context = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Foreign Keys
-    book_id = Column(Integer, ForeignKey("books.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User")
+    book = relationship("Book")
 
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    book = relationship("Book", back_populates="reading_sessions")
-    user = relationship("User", back_populates="reading_sessions")
-
-class ReadingGoal(Base):
-    __tablename__ = "reading_goals"
-
+class Note(Base):
+    __tablename__ = "notes"
+    
     id = Column(Integer, primary_key=True, index=True)
-    goal_type = Column(SQLEnum(GoalType), nullable=False)
-    target_value = Column(Integer, nullable=False)
-    current_value = Column(Integer, default=0)
-    completion_percentage = Column(Float, default=0.0)
-    description = Column(String, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    highlight_id = Column(Integer, ForeignKey("highlights.id"), nullable=True)
+    position = Column(Integer)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Time period
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
-    
-    # Foreign Keys
-    user_id = Column(Integer, ForeignKey("users.id"))
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="reading_goals")
+    user = relationship("User")
+    book = relationship("Book")
+    highlight = relationship("Highlight")

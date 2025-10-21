@@ -74,6 +74,30 @@ async def complete_payment(
             
             db.commit()
             
+            # Send order confirmation email
+            try:
+                from services.email_service import send_order_confirmation_email
+                order_items = []
+                for item in ebook_items:
+                    order_items.append({
+                        "title": item.book.title,
+                        "price": float(item.price)
+                    })
+                
+                order_data = {
+                    "order_number": order.order_number,
+                    "total_amount": float(order.total_amount),
+                    "items": order_items
+                }
+                send_order_confirmation_email(
+                    current_user.email,
+                    order_data,
+                    current_user.first_name or current_user.username,
+                    db
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send order confirmation email: {e}")
+            
             return {
                 "success": True,
                 "message": "Payment completed successfully",
@@ -157,6 +181,33 @@ async def admin_complete_payment(
                     db.add(library_item)
             
             db.commit()
+            
+            # Send order confirmation email
+            try:
+                from services.email_service import send_order_confirmation_email
+                from models.user import User
+                user = db.query(User).filter(User.id == payment.user_id).first()
+                if user:
+                    order_items = []
+                    for item in ebook_items:
+                        order_items.append({
+                            "title": item.book.title,
+                            "price": float(item.price)
+                        })
+                    
+                    order_data = {
+                        "order_number": order.order_number,
+                        "total_amount": float(order.total_amount),
+                        "items": order_items
+                    }
+                    send_order_confirmation_email(
+                        user.email,
+                        order_data,
+                        user.first_name or user.username,
+                        db
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to send order confirmation email: {e}")
             
             return {
                 "success": True,

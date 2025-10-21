@@ -33,20 +33,3 @@ class Bookmark(Base):
     # Relationships
     user = relationship("User")
     book = relationship("Book")
-
-class Note(Base):
-    __tablename__ = "notes"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    book_id = Column(Integer, ForeignKey("books.id"))
-    page_number = Column(Integer)
-    content = Column(String)
-    note_type = Column(String, default="annotation")  # annotation, summary, question, highlight
-    is_private = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    user = relationship("User")
-    book = relationship("Book")

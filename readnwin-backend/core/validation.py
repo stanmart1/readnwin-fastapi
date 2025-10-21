@@ -12,8 +12,8 @@ import hashlib
 
 # File security constants
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
-ALLOWED_EBOOK_TYPES = {'application/epub+zip', 'application/pdf'}
-ALLOWED_SAMPLE_TYPES = {'application/pdf'}
+ALLOWED_EBOOK_TYPES = {'text/html', 'application/xhtml+xml'}
+ALLOWED_SAMPLE_TYPES = {'text/html', 'application/xhtml+xml'}
 
 MAX_FILE_SIZES = {
     'image': 5 * 1024 * 1024,  # 5MB

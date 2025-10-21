@@ -6,6 +6,7 @@ from core.security import verify_password, get_password_hash, create_access_toke
 from models.user import User
 from models.role import Role, RolePermission
 from services.security_service import SecurityService
+from services.redis_service import check_rate_limit
 from sqlalchemy.orm import joinedload
 from pydantic import BaseModel, EmailStr, validator, Field
 from typing import Optional, Dict, Any
@@ -15,37 +16,12 @@ import re
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone, timedelta
-from collections import defaultdict
-import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Rate limiting storage (in production, use Redis)
-rate_limit_storage = defaultdict(list)
-
-def check_rate_limit(request: Request, max_attempts: int = 5, window_minutes: int = 15) -> bool:
-    """Simple rate limiting implementation"""
-    client_ip = request.client.host
-    current_time = time.time()
-    window_start = current_time - (window_minutes * 60)
-
-    # Clean old attempts
-    rate_limit_storage[client_ip] = [
-        attempt_time for attempt_time in rate_limit_storage[client_ip]
-        if attempt_time > window_start
-    ]
-
-    # Check if limit exceeded
-    if len(rate_limit_storage[client_ip]) >= max_attempts:
-        return False
-
-    # Add current attempt
-    rate_limit_storage[client_ip].append(current_time)
-    return True
 
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., description="Valid email address")
@@ -321,7 +297,8 @@ async def register(user_data: UserRegister, request: Request, db: Session = Depe
         logger.info(f"🔐 Registration attempt for email: {user_data.email}")
 
         # Rate limiting for registration attempts
-        if not check_rate_limit(request, max_attempts=3, window_minutes=15):
+        rate_key = f"register:{request.client.host}"
+        if not check_rate_limit(rate_key, max_attempts=3, window_seconds=900):  # 15 minutes
             logger.warning(f"❌ Rate limit exceeded for registration from IP: {request.client.host}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -395,9 +372,12 @@ async def register(user_data: UserRegister, request: Request, db: Session = Depe
             "role": user.role.name if user.role else None
         })
 
-        # Send welcome email asynchronously (non-blocking)
-        # This will be handled by a background task to avoid slowing down registration
-        # TODO: Implement background task for email sending
+        # Send welcome email
+        try:
+            from services.email_service import send_welcome_email
+            send_welcome_email(user.email, user.first_name or user.username, db)
+        except Exception as e:
+            logger.warning(f"Failed to send welcome email: {e}")
 
         return {
             "access_token": token,
@@ -676,7 +656,8 @@ async def request_password_reset(data: PasswordReset, request: Request, db: Sess
         logger.info(f"Password reset requested for: {data.email}")
 
         # Rate limiting for password reset requests
-        if not check_rate_limit(request, max_attempts=3, window_minutes=60):
+        rate_key = f"reset:{request.client.host}"
+        if not check_rate_limit(rate_key, max_attempts=3, window_seconds=3600):  # 60 minutes
             logger.warning(f"❌ Rate limit exceeded for password reset from IP: {request.client.host}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -696,9 +677,12 @@ async def request_password_reset(data: PasswordReset, request: Request, db: Sess
 
         db.commit()
 
-        # Send password reset email asynchronously (non-blocking)
-        # This will be handled by a background task to avoid slowing down the request
-        # TODO: Implement background task for email sending
+        # Send password reset email
+        try:
+            from services.email_service import send_password_reset_email
+            send_password_reset_email(user.email, reset_token, user.first_name or user.username, db)
+        except Exception as e:
+            logger.warning(f"Failed to send password reset email: {e}")
 
         logger.info(f"Password reset token generated for: {user.email}")
 

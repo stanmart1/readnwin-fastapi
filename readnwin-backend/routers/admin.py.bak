@@ -539,7 +539,7 @@ def update_order_status(
         raise HTTPException(status_code=400, detail="Status is required")
     
     # Validate status
-    valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled"]
+    valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", ]
     if new_status not in valid_statuses:
         raise HTTPException(
             status_code=400,
@@ -614,7 +614,7 @@ def update_order(
     
     # Update fields if provided
     if order_data.status is not None:
-        valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled"]
+        valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", ]
         if order_data.status not in valid_statuses:
             raise HTTPException(
                 status_code=400,
@@ -800,7 +800,7 @@ def bulk_order_action(
             if not new_status:
                 raise HTTPException(status_code=400, detail="Status is required for update_status action")
             
-            valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled"]
+            valid_statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", ]
             if new_status not in valid_statuses:
                 raise HTTPException(
                     status_code=400,
