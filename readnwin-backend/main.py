@@ -13,7 +13,14 @@ from core.error_handlers import (
 from logging_config import setup_logging
 # Database tables will be created when first accessed
 
-app = FastAPI(title="ReadnWin API", version="1.0.0")
+app = FastAPI(
+    title="ReadnWin API",
+    version="1.0.0",
+    description="E-book platform API with reading, purchasing, and management features",
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json"
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -132,99 +139,107 @@ try:
 except ImportError:
     analytics_comprehensive = None
 
+# API Version prefix
+API_V1_PREFIX = "/api/v1"
+
 # Authentication and Authorization
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(auth_log.router, prefix="/auth", tags=["auth"])
-app.include_router(rbac.router, prefix="/rbac", tags=["rbac"])
-app.include_router(csrf.router, prefix="/auth", tags=["auth"])
+app.include_router(auth.router, prefix=f"{API_V1_PREFIX}/auth", tags=["auth"])
+app.include_router(auth_log.router, prefix=f"{API_V1_PREFIX}/auth", tags=["auth"])
+app.include_router(rbac.router, prefix=f"{API_V1_PREFIX}/rbac", tags=["rbac"])
+app.include_router(csrf.router, prefix=f"{API_V1_PREFIX}/auth", tags=["auth"])
 
 # Enhanced Features
-app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
-app.include_router(reading_goals.router, prefix="/reading-goals", tags=["reading-goals"])
-app.include_router(reading_enhanced.router, tags=["reading"])
-app.include_router(admin_enhanced.router, prefix="/admin", tags=["admin"])
-app.include_router(admin_email.router, prefix="/admin/email", tags=["admin"])
-app.include_router(orders_enhanced.router, prefix="/orders", tags=["orders"])
-app.include_router(shopping_enhanced.router, prefix="/shopping", tags=["shopping"])
-app.include_router(analytics.router, tags=["analytics"])
+app.include_router(dashboard.router, prefix=f"{API_V1_PREFIX}/dashboard", tags=["dashboard"])
+app.include_router(reading_goals.router, prefix=f"{API_V1_PREFIX}/reading-goals", tags=["reading-goals"])
+app.include_router(reading_enhanced.router, prefix=API_V1_PREFIX, tags=["reading"])
+app.include_router(admin_enhanced.router, prefix=f"{API_V1_PREFIX}/admin", tags=["admin"])
+app.include_router(admin_email.router, prefix=f"{API_V1_PREFIX}/admin/email", tags=["admin"])
+app.include_router(orders_enhanced.router, prefix=f"{API_V1_PREFIX}/orders", tags=["orders"])
+app.include_router(shopping_enhanced.router, prefix=f"{API_V1_PREFIX}/shopping", tags=["shopping"])
+app.include_router(analytics.router, prefix=API_V1_PREFIX, tags=["analytics"])
 if analytics_comprehensive:
-    app.include_router(analytics_comprehensive.router, tags=["analytics"])
-app.include_router(user.router, prefix="/user", tags=["user"])
-app.include_router(user_library.router, tags=["user-library"])
+    app.include_router(analytics_comprehensive.router, prefix=API_V1_PREFIX, tags=["analytics"])
+app.include_router(user.router, prefix=f"{API_V1_PREFIX}/user", tags=["user"])
+app.include_router(user_library.router, prefix=API_V1_PREFIX, tags=["user-library"])
 
 # Image Optimization
-app.include_router(images.router, tags=["images"])
+app.include_router(images.router, prefix=API_V1_PREFIX, tags=["images"])
 
 # Core Features
-app.include_router(books.router, prefix="/books", tags=["books"])
-app.include_router(ereader.router, tags=["ereader"])
-app.include_router(ereader_enhanced.router, tags=["ereader-enhanced"])
-app.include_router(reader_settings.router, tags=["reader"])
-app.include_router(cart.router, prefix="/cart", tags=["cart"])
-app.include_router(checkout.router, prefix="/checkout-legacy", tags=["checkout"])
-app.include_router(checkout_enhanced.router, prefix="/checkout-enhanced", tags=["checkout"])
-app.include_router(checkout_fixed.router, prefix="/checkout-fixed", tags=["checkout"])
-app.include_router(checkout_unified.router, tags=["checkout"])
-app.include_router(test_checkout.router, tags=["test"])
-app.include_router(payment_verification.router, prefix="/payment", tags=["payment"])
-app.include_router(orders.router, prefix="/orders", tags=["orders"])
-app.include_router(reading.router, tags=["reading"])
-app.include_router(payment.router, tags=["payment"])
-app.include_router(flutterwave.router, tags=["payment"])
-app.include_router(bank_transfer.router, tags=["payment"])
-app.include_router(payment_completion.router, tags=["payment"])
-app.include_router(upload.router, tags=["upload"])
-app.include_router(file_upload.router, tags=["upload"])
+app.include_router(books.router, prefix=f"{API_V1_PREFIX}/books", tags=["books"])
+app.include_router(ereader.router, prefix=API_V1_PREFIX, tags=["ereader"])
+app.include_router(ereader_enhanced.router, prefix=API_V1_PREFIX, tags=["ereader-enhanced"])
+app.include_router(reader_settings.router, prefix=API_V1_PREFIX, tags=["reader"])
+app.include_router(cart.router, prefix=f"{API_V1_PREFIX}/cart", tags=["cart"])
+app.include_router(checkout.router, prefix=f"{API_V1_PREFIX}/checkout-legacy", tags=["checkout"])
+app.include_router(checkout_enhanced.router, prefix=f"{API_V1_PREFIX}/checkout-enhanced", tags=["checkout"])
+app.include_router(checkout_fixed.router, prefix=f"{API_V1_PREFIX}/checkout-fixed", tags=["checkout"])
+app.include_router(checkout_unified.router, prefix=API_V1_PREFIX, tags=["checkout"])
+app.include_router(test_checkout.router, prefix=API_V1_PREFIX, tags=["test"])
+app.include_router(payment_verification.router, prefix=f"{API_V1_PREFIX}/payment", tags=["payment"])
+app.include_router(orders.router, prefix=f"{API_V1_PREFIX}/orders", tags=["orders"])
+app.include_router(reading.router, prefix=API_V1_PREFIX, tags=["reading"])
+app.include_router(payment.router, prefix=API_V1_PREFIX, tags=["payment"])
+app.include_router(flutterwave.router, prefix=API_V1_PREFIX, tags=["payment"])
+app.include_router(bank_transfer.router, prefix=API_V1_PREFIX, tags=["payment"])
+app.include_router(payment_completion.router, prefix=API_V1_PREFIX, tags=["payment"])
+app.include_router(upload.router, prefix=API_V1_PREFIX, tags=["upload"])
+app.include_router(file_upload.router, prefix=API_V1_PREFIX, tags=["upload"])
 
 # Admin Features
-app.include_router(admin.router, prefix="/admin", tags=["admin"])
-app.include_router(admin_payment_proofs.router, prefix="/admin", tags=["admin"])
-app.include_router(admin_stats.router, tags=["admin"])
-app.include_router(admin_stats_fast.router, prefix="/admin/stats", tags=["admin"])
-app.include_router(admin_books.router, tags=["admin"])
-app.include_router(admin_payment_settings.router, tags=["admin"])
-app.include_router(payment_settings.router, tags=["payment"])  # Public endpoints
-app.include_router(shipping.router, tags=["shipping"])
-app.include_router(admin_shipping.router, tags=["admin"])
-app.include_router(admin_reviews.router, tags=["admin"])
-app.include_router(admin_reports.router, tags=["admin"])
-app.include_router(admin_notifications.router, tags=["admin"])
-app.include_router(admin_email_templates.router, tags=["admin"])
-app.include_router(admin_email_test.router, prefix="/admin/email-templates", tags=["admin"])
-app.include_router(admin_email_categories.router, tags=["admin"])
-app.include_router(admin_email_functions.router, tags=["admin"])
-app.include_router(admin_email_gateways.router, tags=["admin"])
-app.include_router(admin_system_settings.router, tags=["admin"])
-app.include_router(admin_authors_categories.router, tags=["admin"])
-app.include_router(test_simple.router, tags=["admin"])
-app.include_router(receipts.router, prefix="/admin", tags=["admin"])
-app.include_router(admin_works.router, tags=["admin"])
-app.include_router(admin_blog.router, tags=["admin"])
+app.include_router(admin.router, prefix=f"{API_V1_PREFIX}/admin", tags=["admin"])
+app.include_router(admin_payment_proofs.router, prefix=f"{API_V1_PREFIX}/admin", tags=["admin"])
+app.include_router(admin_stats.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_stats_fast.router, prefix=f"{API_V1_PREFIX}/admin/stats", tags=["admin"])
+app.include_router(admin_books.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_payment_settings.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(payment_settings.router, prefix=API_V1_PREFIX, tags=["payment"])  # Public endpoints
+app.include_router(shipping.router, prefix=API_V1_PREFIX, tags=["shipping"])
+app.include_router(admin_shipping.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_reviews.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_reports.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_notifications.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_email_templates.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_email_test.router, prefix=f"{API_V1_PREFIX}/admin/email-templates", tags=["admin"])
+app.include_router(admin_email_categories.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_email_functions.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_email_gateways.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_system_settings.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_authors_categories.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(test_simple.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(receipts.router, prefix=f"{API_V1_PREFIX}/admin", tags=["admin"])
+app.include_router(admin_works.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(admin_blog.router, prefix=API_V1_PREFIX, tags=["admin"])
 if admin_maintenance:
-    app.include_router(admin_maintenance.router, tags=["admin"])
+    app.include_router(admin_maintenance.router, prefix=API_V1_PREFIX, tags=["admin"])
 if admin_redis:
-    app.include_router(admin_redis.router, tags=["admin"])
-app.include_router(users.router, prefix="/users", tags=["users"])
+    app.include_router(admin_redis.router, prefix=API_V1_PREFIX, tags=["admin"])
+app.include_router(users.router, prefix=f"{API_V1_PREFIX}/users", tags=["users"])
 
 # User Features
-app.include_router(contact.router, prefix="/contact", tags=["contact"])
-app.include_router(user_activation.router, tags=["user"])
-app.include_router(email.router, tags=["email"])
+app.include_router(contact.router, prefix=f"{API_V1_PREFIX}/contact", tags=["contact"])
+app.include_router(user_activation.router, prefix=API_V1_PREFIX, tags=["user"])
+app.include_router(email.router, prefix=API_V1_PREFIX, tags=["email"])
 
 # Content Features
-app.include_router(blog.router, prefix="/blog", tags=["blog"])
-app.include_router(about.router, prefix="/about", tags=["about"])
-app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
-app.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
-app.include_router(faq.router, prefix="/faq", tags=["faq"])
+app.include_router(blog.router, prefix=f"{API_V1_PREFIX}/blog", tags=["blog"])
+app.include_router(about.router, prefix=f"{API_V1_PREFIX}/about", tags=["about"])
+app.include_router(portfolio.router, prefix=f"{API_V1_PREFIX}/portfolio", tags=["portfolio"])
+app.include_router(reviews.router, prefix=f"{API_V1_PREFIX}/reviews", tags=["reviews"])
+app.include_router(faq.router, prefix=f"{API_V1_PREFIX}/faq", tags=["faq"])
 
 # Testing (only for development)
 if app.debug:
-    app.include_router(testing.router, prefix="/testing", tags=["testing"])
+    app.include_router(testing.router, prefix=f"{API_V1_PREFIX}/testing", tags=["testing"])
 
 @app.get("/")
 def read_root():
-    return {"message": "ReadnWin API is running"}
+    return {
+        "message": "ReadnWin API is running",
+        "version": "1.0.0",
+        "docs": "/api/v1/docs",
+        "redoc": "/api/v1/redoc"
+    }
 
 @app.get("/health")
 def health_check():
