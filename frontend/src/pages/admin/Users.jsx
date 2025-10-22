@@ -44,7 +44,7 @@ const AdminUsers = () => {
 
   const { selectedUsers, selectAll, toggleUser } = useUserSelection();
 
-  const { roles } = useRoles();
+  const { roles, fetchRoles } = useRoles();
 
   const {
     showCreateModal,
