@@ -16,59 +16,12 @@ router = APIRouter()
 def get_about_content(db: Session = Depends(get_db)):
     """Get about content for public page"""
     try:
-        # Get all about content sections from database
+        # Try to get content from database
         content_sections = db.query(AboutContent).filter(AboutContent.is_active == True).all()
         
-        # If no content exists, return default content structure
+        # If no content exists, return empty object
         if not content_sections:
-            return {
-                "hero": {
-                    "title": "About ReadnWin",
-                    "subtitle": "Revolutionizing the way people discover, read, and engage with books through innovative technology and community-driven experiences."
-                },
-                "mission": {
-                    "title": "Our Mission",
-                    "description": "At ReadnWin, we believe that reading should be accessible, engaging, and rewarding for everyone.",
-                    "features": ["Discover new books", "Win exciting prizes", "Join reading communities", "Track your progress"]
-                },
-                "missionGrid": [
-                    {"icon": "ri-book-line", "title": "Digital Library", "description": "Access millions of books", "color": "text-blue-600"},
-                    {"icon": "ri-brain-line", "title": "Smart Learning", "description": "AI-powered insights", "color": "text-purple-600"},
-                    {"icon": "ri-group-line", "title": "Community", "description": "Connect with readers", "color": "text-cyan-600"},
-                    {"icon": "ri-device-line", "title": "Multi-Platform", "description": "Read anywhere", "color": "text-green-600"}
-                ],
-                "stats": [
-                    {"number": "10K+", "label": "Active Readers"},
-                    {"number": "5K+", "label": "Books Available"},
-                    {"number": "1M+", "label": "Pages Read"},
-                    {"number": "500+", "label": "Prizes Won"}
-                ],
-                "values": [
-                    {"icon": "ri-book-open-line", "title": "Accessibility", "description": "Making reading accessible to everyone"},
-                    {"icon": "ri-lightbulb-line", "title": "Innovation", "description": "Cutting-edge technology"},
-                    {"icon": "ri-heart-line", "title": "Community", "description": "Building connections"},
-                    {"icon": "ri-shield-check-line", "title": "Quality", "description": "Highest standards"}
-                ],
-                "story": {
-                    "title": "Our Story",
-                    "description": "ReadnWin was born from a vision to democratize reading through technology.",
-                    "timeline": [
-                        {"year": "2019", "title": "Founded", "description": "Started with a vision"},
-                        {"year": "2021", "title": "Growth", "description": "Reached 10,000 readers"},
-                        {"year": "2023", "title": "Innovation", "description": "Launched AI features"},
-                        {"year": "2025", "title": "Expansion", "description": "Global platform"}
-                    ]
-                },
-                "team": [
-                    {"name": "Sarah Johnson", "role": "CEO", "bio": "Passionate about reading", "image": null, "linkedin": "#", "twitter": "#"}
-                ],
-                "cta": {
-                    "title": "Join the Reading Revolution",
-                    "description": "Start your journey with ReadnWin today.",
-                    "primaryButton": "Get Started Free",
-                    "secondaryButton": "Learn More"
-                }
-            }
+            return {}
         
         # Build response from database content
         result = {}
@@ -77,8 +30,9 @@ def get_about_content(db: Session = Depends(get_db)):
         
         return result
     except Exception as e:
-        print(f"Error fetching about content: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch about content")
+        print(f"Error in get_about_content: {e}")
+        # Return empty object on error
+        return {}
 
 @router.get("/admin")
 def get_admin_about_content(
