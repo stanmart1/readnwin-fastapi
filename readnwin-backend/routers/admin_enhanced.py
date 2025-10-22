@@ -442,13 +442,37 @@ def get_enhanced_analytics(
     check_admin_access(current_user)
 
     try:
+        from datetime import datetime, timedelta
+        
+        # Current month start
+        now = datetime.utcnow()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+        
         # Get comprehensive analytics
-        total_revenue = db.query(func.coalesce(func.sum(Order.total_amount), 0)).scalar()
+        total_revenue = db.query(func.coalesce(func.sum(Order.total_amount), 0)).scalar() or 0
         total_orders = db.query(Order).count()
         total_books = db.query(Book).count()
         total_users = db.query(User).count()
+        
+        # Last month stats
+        last_month_users = db.query(User).filter(User.created_at < current_month_start).count()
+        last_month_books = db.query(Book).filter(Book.created_at < current_month_start).count() if hasattr(Book, 'created_at') else total_books
+        last_month_orders = db.query(Order).filter(Order.created_at < current_month_start).count()
+        last_month_revenue = db.query(func.coalesce(func.sum(Order.total_amount), 0)).filter(Order.created_at < current_month_start).scalar() or 0
+        
+        # Calculate growth percentages
+        def calc_growth(current, previous):
+            if previous == 0:
+                return 100 if current > 0 else 0
+            return round(((current - previous) / previous) * 100, 1)
+        
+        user_growth = calc_growth(total_users, last_month_users)
+        book_growth = calc_growth(total_books, last_month_books)
+        order_growth = calc_growth(total_orders, last_month_orders)
+        revenue_growth = calc_growth(float(total_revenue), float(last_month_revenue))
 
-        # Monthly trends
+        # Monthly trends for orders
         monthly_data = db.execute(text("""
             SELECT
                 DATE_TRUNC('month', created_at) as month,
@@ -460,24 +484,49 @@ def get_enhanced_analytics(
             ORDER BY month
         """)).fetchall()
 
+        # User growth trends
+        user_growth_data = db.execute(text("""
+            SELECT
+                DATE_TRUNC('month', created_at) as month,
+                COUNT(*) as users
+            FROM users
+            WHERE created_at >= NOW() - INTERVAL '12 months'
+            GROUP BY DATE_TRUNC('month', created_at)
+            ORDER BY month
+        """)).fetchall()
+
         return {
             "overview": {
                 "total_revenue": float(total_revenue),
                 "total_orders": total_orders,
                 "total_books": total_books,
                 "total_users": total_users,
-                "avg_order_value": float(total_revenue / total_orders) if total_orders > 0 else 0
+                "avg_order_value": float(total_revenue / total_orders) if total_orders > 0 else 0,
+                "user_growth": user_growth,
+                "book_growth": book_growth,
+                "order_growth": order_growth,
+                "revenue_growth": revenue_growth
             },
             "monthly_trends": [
                 {
                     "month": row.month.strftime("%Y-%m") if row.month else "",
                     "orders": row.orders,
-                    "revenue": float(row.revenue)
+                    "revenue": float(row.revenue),
+                    "users": next((u.users for u in user_growth_data if u.month == row.month), 0)
                 }
                 for row in monthly_data
-            ]
+            ] if monthly_data else [],
+            "user_growth": [
+                {
+                    "month": row.month.strftime("%b") if row.month else "",
+                    "users": row.users
+                }
+                for row in user_growth_data
+            ] if user_growth_data else []
         }
 
     except Exception as e:
         print(f"Error fetching enhanced analytics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch analytics")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {str(e)}")
