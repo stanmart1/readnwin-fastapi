@@ -1,39 +1,10 @@
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useOrders } from '../../hooks';
+import { OrderCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function Orders() {
-  const orders = [
-    {
-      id: 'ORD-001',
-      date: '2025-01-15',
-      total: 29.99,
-      status: 'completed',
-      items: [
-        { title: 'The Great Gatsby', price: 14.99 },
-        { title: '1984', price: 15.00 }
-      ]
-    },
-    {
-      id: 'ORD-002',
-      date: '2025-01-10',
-      total: 19.99,
-      status: 'completed',
-      items: [
-        { title: 'To Kill a Mockingbird', price: 19.99 }
-      ]
-    },
-    {
-      id: 'ORD-003',
-      date: '2025-01-05',
-      total: 45.97,
-      status: 'processing',
-      items: [
-        { title: 'Pride and Prejudice', price: 12.99 },
-        { title: 'The Catcher in the Rye', price: 14.99 },
-        { title: 'Brave New World', price: 17.99 }
-      ]
-    }
-  ];
+  const { orders, loading } = useOrders();
 
   const getStatusColor = (status) => {
     const colors = {
@@ -53,14 +24,17 @@ export default function Orders() {
         </div>
 
         <div className="space-y-6">
-          {orders.map((order, index) => (
-            <motion.div
-              key={order.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-md overflow-hidden"
-            >
+          {loading ? (
+            [...Array(3)].map((_, i) => <OrderCardSkeleton key={i} />)
+          ) : (
+            orders.map((order, index) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-md overflow-hidden"
+              >
               {/* Order Header */}
               <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                 <div className="flex gap-8">
@@ -118,10 +92,11 @@ export default function Orders() {
                 </div>
               </div>
             </motion.div>
-          ))}
+            ))
+          )}
         </div>
 
-        {orders.length === 0 && (
+        {!loading && orders.length === 0 && (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <i className="ri-shopping-bag-line text-6xl text-gray-300 mb-4"></i>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No orders yet</h3>

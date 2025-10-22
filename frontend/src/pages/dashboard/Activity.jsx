@@ -1,81 +1,10 @@
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useActivity } from '../../hooks';
+import { ActivitySkeleton } from '../../components/SkeletonLoader';
 
 export default function Activity() {
-  const activities = [
-    {
-      id: 1,
-      type: 'completed',
-      title: 'Completed "The Great Gatsby"',
-      description: 'Finished reading in 5 days',
-      time: '2 hours ago',
-      icon: 'ri-check-line',
-      color: 'green'
-    },
-    {
-      id: 2,
-      type: 'review',
-      title: 'Posted a review',
-      description: 'Reviewed "1984" - 5 stars',
-      time: '5 hours ago',
-      icon: 'ri-star-line',
-      color: 'yellow'
-    },
-    {
-      id: 3,
-      type: 'started',
-      title: 'Started reading',
-      description: 'Began "To Kill a Mockingbird"',
-      time: '1 day ago',
-      icon: 'ri-book-open-line',
-      color: 'blue'
-    },
-    {
-      id: 4,
-      type: 'milestone',
-      title: 'Reading milestone',
-      description: 'Read 100 pages this week!',
-      time: '2 days ago',
-      icon: 'ri-trophy-line',
-      color: 'purple'
-    },
-    {
-      id: 5,
-      type: 'purchase',
-      title: 'Purchased new book',
-      description: 'Added "Pride and Prejudice" to library',
-      time: '3 days ago',
-      icon: 'ri-shopping-bag-line',
-      color: 'pink'
-    },
-    {
-      id: 6,
-      type: 'streak',
-      title: '7-day reading streak!',
-      description: 'Keep up the great work',
-      time: '3 days ago',
-      icon: 'ri-fire-line',
-      color: 'orange'
-    },
-    {
-      id: 7,
-      type: 'completed',
-      title: 'Completed "Brave New World"',
-      description: 'Finished reading in 7 days',
-      time: '5 days ago',
-      icon: 'ri-check-line',
-      color: 'green'
-    },
-    {
-      id: 8,
-      type: 'goal',
-      title: 'Goal achieved',
-      description: 'Read 5 books this month',
-      time: '1 week ago',
-      icon: 'ri-flag-line',
-      color: 'blue'
-    }
-  ];
+  const { activities, loading, hasMore, loadMore } = useActivity();
 
   const getIconBg = (color) => {
     const colors = {
@@ -116,7 +45,10 @@ export default function Activity() {
 
           {/* Activities */}
           <div className="space-y-6">
-            {activities.map((activity, index) => (
+            {loading ? (
+              [...Array(5)].map((_, i) => <ActivitySkeleton key={i} />)
+            ) : activities.length > 0 ? (
+              activities.map((activity, index) => (
               <motion.div
                 key={activity.id}
                 initial={{ opacity: 0, x: -20 }}
@@ -138,16 +70,27 @@ export default function Activity() {
                   <p className="text-gray-600">{activity.description}</p>
                 </div>
               </motion.div>
-            ))}
+            ))
+            ) : (
+              <div className="text-center py-12">
+                <i className="ri-time-line text-6xl text-gray-300 mb-4"></i>
+                <p className="text-gray-600">No activities yet</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Load More */}
-        <div className="text-center mt-8">
-          <button className="px-6 py-3 bg-white border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50">
-            Load More Activities
-          </button>
-        </div>
+        {hasMore && !loading && (
+          <div className="text-center mt-8">
+            <button 
+              onClick={loadMore}
+              className="px-6 py-3 bg-white border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Load More Activities
+            </button>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

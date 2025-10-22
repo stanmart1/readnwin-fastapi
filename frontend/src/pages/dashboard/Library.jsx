@@ -2,59 +2,12 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useLibrary } from '../../hooks';
 import { BookCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function Library() {
   const [filter, setFilter] = useState('all');
-  const [loading, setLoading] = useState(false);
-
-  const books = [
-    { 
-      id: 1, 
-      title: 'The Great Gatsby', 
-      author: 'F. Scott Fitzgerald', 
-      status: 'reading', 
-      progress: 75,
-      format: 'ebook',
-      readingTime: 450 // minutes
-    },
-    { 
-      id: 2, 
-      title: '1984', 
-      author: 'George Orwell', 
-      status: 'reading', 
-      progress: 45,
-      format: 'physical',
-      readingTime: 320
-    },
-    { 
-      id: 3, 
-      title: 'To Kill a Mockingbird', 
-      author: 'Harper Lee', 
-      status: 'completed', 
-      progress: 100,
-      format: 'ebook',
-      readingTime: 680
-    },
-    { 
-      id: 4, 
-      title: 'Pride and Prejudice', 
-      author: 'Jane Austen', 
-      status: 'completed', 
-      progress: 100,
-      format: 'hybrid',
-      readingTime: 720
-    },
-    { 
-      id: 5, 
-      title: 'The Catcher in the Rye', 
-      author: 'J.D. Salinger', 
-      status: 'not-started', 
-      progress: 0,
-      format: 'physical',
-      readingTime: 0
-    }
-  ];
+  const { books, loading } = useLibrary();
 
   const filteredBooks = filter === 'all' ? books : books.filter(b => b.status === filter);
 

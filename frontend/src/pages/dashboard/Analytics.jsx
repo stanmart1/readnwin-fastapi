@@ -1,29 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useAnalytics } from '../../hooks';
+import { StatCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function Analytics() {
   const [period, setPeriod] = useState('week');
+  const { stats, weeklyData, goals, loading } = useAnalytics(period);
 
-  const readingStats = {
-    totalTime: 1250, // minutes
-    booksCompleted: 3,
-    pagesRead: 450,
-    currentStreak: 7,
-    longestStreak: 14
-  };
-
-  const weeklyData = [
-    { day: 'Mon', minutes: 45, pages: 30 },
-    { day: 'Tue', minutes: 60, pages: 40 },
-    { day: 'Wed', minutes: 30, pages: 20 },
-    { day: 'Thu', minutes: 75, pages: 50 },
-    { day: 'Fri', minutes: 90, pages: 60 },
-    { day: 'Sat', minutes: 120, pages: 80 },
-    { day: 'Sun', minutes: 100, pages: 70 }
-  ];
-
-  const maxMinutes = Math.max(...weeklyData.map(d => d.minutes));
+  const maxMinutes = weeklyData.length > 0 ? Math.max(...weeklyData.map(d => d.minutes || 0)) : 100;
 
   return (
     <DashboardLayout>
@@ -52,13 +37,21 @@ export default function Analytics() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          {[
-            { label: 'Reading Time', value: `${Math.floor(readingStats.totalTime / 60)}h ${readingStats.totalTime % 60}m`, icon: 'ri-time-line', color: 'blue' },
-            { label: 'Books Completed', value: readingStats.booksCompleted, icon: 'ri-book-line', color: 'green' },
-            { label: 'Pages Read', value: readingStats.pagesRead, icon: 'ri-file-list-line', color: 'purple' },
-            { label: 'Current Streak', value: `${readingStats.currentStreak} days`, icon: 'ri-fire-line', color: 'orange' },
-            { label: 'Longest Streak', value: `${readingStats.longestStreak} days`, icon: 'ri-trophy-line', color: 'yellow' }
-          ].map((stat, index) => (
+          {loading ? (
+            [...Array(5)].map((_, i) => <StatCardSkeleton key={i} />)
+          ) : (
+            [
+              { 
+                label: 'Reading Time', 
+                value: stats?.total_time ? `${Math.floor(stats.total_time / 60)}h ${stats.total_time % 60}m` : '0m', 
+                icon: 'ri-time-line', 
+                color: 'blue' 
+              },
+              { label: 'Books Completed', value: stats?.books_completed || 0, icon: 'ri-book-line', color: 'green' },
+              { label: 'Pages Read', value: stats?.pages_read || 0, icon: 'ri-file-list-line', color: 'purple' },
+              { label: 'Current Streak', value: `${stats?.current_streak || 0} days`, icon: 'ri-fire-line', color: 'orange' },
+              { label: 'Longest Streak', value: `${stats?.longest_streak || 0} days`, icon: 'ri-trophy-line', color: 'yellow' }
+            ].map((stat, index) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
@@ -72,7 +65,7 @@ export default function Analytics() {
               <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
               <p className="text-sm text-gray-600">{stat.label}</p>
             </motion.div>
-          ))}
+          )))}
         </div>
 
         {/* Reading Time Chart */}
@@ -119,14 +112,10 @@ export default function Analytics() {
           </div>
 
           <div className="space-y-6">
-            {[
-              { goal: 'Read 5 books this month', current: 3, target: 5, unit: 'books' },
-              { goal: 'Read 30 minutes daily', current: 210, target: 210, unit: 'minutes' },
-              { goal: 'Finish 500 pages this week', current: 350, target: 500, unit: 'pages' }
-            ].map((goal, index) => (
+            {goals.length > 0 ? goals.map((goal, index) => (
               <div key={index}>
                 <div className="flex justify-between mb-2">
-                  <span className="font-medium text-gray-900">{goal.goal}</span>
+                  <span className="font-medium text-gray-900">{goal.title || goal.goal}</span>
                   <span className="text-sm text-gray-600">
                     {goal.current}/{goal.target} {goal.unit}
                   </span>
@@ -134,11 +123,13 @@ export default function Analytics() {
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
                     className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all"
-                    style={{ width: `${(goal.current / goal.target) * 100}%` }}
+                    style={{ width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="text-center text-gray-500 py-4">No reading goals set yet</p>
+            )}
           </div>
         </motion.div>
       </div>
