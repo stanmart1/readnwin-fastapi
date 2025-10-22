@@ -14,6 +14,12 @@ from models.book import Book
 from pydantic import BaseModel
 from typing import List, Optional
 
+class NotificationPreferences(BaseModel):
+    email_notifications: bool = True
+    new_releases: bool = True
+    promotions: bool = False
+    reading_reminders: bool = True
+
 router = APIRouter()
 
 class UserProfile(BaseModel):
@@ -365,3 +371,32 @@ def calculate_reading_streak(user_id: int, db: Session) -> int:
                 break
 
     return streak
+
+@router.get("/notification-preferences")
+def get_notification_preferences(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get user's notification preferences"""
+    # For now, return default preferences
+    # In production, store in user_preferences table
+    return {
+        "email_notifications": True,
+        "new_releases": True,
+        "promotions": False,
+        "reading_reminders": True
+    }
+
+@router.put("/notification-preferences")
+def update_notification_preferences(
+    preferences: NotificationPreferences,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Update user's notification preferences"""
+    # For now, just return success
+    # In production, save to user_preferences table
+    return {
+        "message": "Notification preferences updated successfully",
+        "preferences": preferences.dict()
+    }

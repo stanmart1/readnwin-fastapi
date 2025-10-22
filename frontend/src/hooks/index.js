@@ -12,3 +12,4 @@ export { useWishlist } from './useWishlist';
 export { useAnalytics } from './useAnalytics';
 export { useActivity } from './useActivity';
 export { useDashboard } from './useDashboard';
+export { useSettings } from './useSettings';
