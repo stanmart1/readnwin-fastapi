@@ -213,7 +213,7 @@ app.include_router(user_activation.router, tags=["user"])
 app.include_router(email.router, tags=["email"])
 
 # Content Features
-app.include_router(blog.router, prefix="/blog", tags=["blog"])
+app.include_router(blog.router, prefix="/api/blog", tags=["blog"])
 app.include_router(about.router, prefix="/api/about", tags=["about"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
