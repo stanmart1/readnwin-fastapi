@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AdminRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Books from './pages/Books';
 import BookDetail from './pages/BookDetail';
@@ -71,24 +72,24 @@ function App() {
         <Route path="/dashboard/orders" element={<DashboardOrders />} />
         <Route path="/dashboard/settings" element={<DashboardSettings />} />
         
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/roles" element={<Roles />} />
-        <Route path="/admin/audit" element={<AdminAudit />} />
-        <Route path="/admin/books" element={<AdminBooks />} />
-        <Route path="/admin/reviews" element={<AdminReviews />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
-        <Route path="/admin/shipping" element={<AdminShipping />} />
-        <Route path="/admin/reading" element={<AdminReading />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
-        <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
-        <Route path="/admin/blog" element={<AdminBlog />} />
-        <Route path="/admin/works" element={<AdminWorks />} />
-        <Route path="/admin/about" element={<AdminAbout />} />
-        <Route path="/admin/contact" element={<AdminContact />} />
-        <Route path="/admin/faq" element={<AdminFAQ />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
+        {/* Admin Routes - Protected */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+        <Route path="/admin/roles" element={<AdminRoute><Roles /></AdminRoute>} />
+        <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
+        <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
+        <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
+        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+        <Route path="/admin/shipping" element={<AdminRoute><AdminShipping /></AdminRoute>} />
+        <Route path="/admin/reading" element={<AdminRoute><AdminReading /></AdminRoute>} />
+        <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+        <Route path="/admin/email-templates" element={<AdminRoute><AdminEmailTemplates /></AdminRoute>} />
+        <Route path="/admin/blog" element={<AdminRoute><AdminBlog /></AdminRoute>} />
+        <Route path="/admin/works" element={<AdminRoute><AdminWorks /></AdminRoute>} />
+        <Route path="/admin/about" element={<AdminRoute><AdminAbout /></AdminRoute>} />
+        <Route path="/admin/contact" element={<AdminRoute><AdminContact /></AdminRoute>} />
+        <Route path="/admin/faq" element={<AdminRoute><AdminFAQ /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

@@ -49,24 +49,25 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Title Card */}
-        <div className="sticky top-0 z-10 bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your ReadnWin platform</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your ReadnWin platform</p>
         </div>
 
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
-              <p className="text-gray-600 mt-1">Real-time insights and performance metrics</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Analytics Overview</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Real-time insights and performance metrics</p>
             </div>
             <button
               onClick={() => fetchAnalytics()}
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 flex items-center"
+              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
             >
               <i className="ri-refresh-line mr-2"></i>
-              Refresh Data
+              <span className="hidden sm:inline">Refresh Data</span>
+              <span className="sm:hidden">Refresh</span>
             </button>
           </div>
         </div>

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token
 from models.user import User
 from models.role import Role, Permission, RolePermission
+from services.audit_service import AuditService
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -542,3 +543,130 @@ def check_user_permission(permission_name: str, current_user: User = Depends(get
     except Exception as e:
         print(f"Check permission error: {e}")
         return {"has_permission": False}
+
+# User Role Assignment
+@router.post("/users/{user_id}/assign-role")
+def assign_role_to_user(
+    user_id: int, 
+    role_id: int, 
+    request: Request,
+    current_user: User = Depends(require_permission("manage_roles")), 
+    db: Session = Depends(get_db)
+):
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        role = db.query(Role).filter(Role.id == role_id).first()
+        if not role:
+            raise HTTPException(status_code=404, detail="Role not found")
+        
+        old_role_id = user.role_id
+        user.role_id = role_id
+        db.commit()
+        
+        # Audit log
+        AuditService.log_action(
+            db=db,
+            user_id=current_user.id,
+            action="assign_role",
+            resource="user",
+            resource_id=str(user_id),
+            details={"old_role_id": old_role_id, "new_role_id": role_id, "role_name": role.name},
+            request=request
+        )
+        
+        return {"success": True, "message": f"Role {role.display_name} assigned to user"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Assign role error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to assign role")
+
+# Get User Permissions
+@router.get("/users/{user_id}/permissions")
+def get_user_permissions(
+    user_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if not user.role:
+            return {"permissions": [], "role": None}
+        
+        permissions = [
+            {
+                "id": rp.permission.id,
+                "name": rp.permission.name,
+                "display_name": rp.permission.display_name,
+                "resource": rp.permission.resource,
+                "action": rp.permission.action
+            }
+            for rp in user.role.permissions
+        ]
+        
+        return {
+            "permissions": permissions,
+            "role": {
+                "id": user.role.id,
+                "name": user.role.name,
+                "display_name": user.role.display_name
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Get user permissions error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get user permissions")
+
+# Get Audit Logs
+@router.get("/audit-logs")
+def get_audit_logs(
+    skip: int = 0,
+    limit: int = 50,
+    user_id: Optional[int] = None,
+    resource: Optional[str] = None,
+    action: Optional[str] = None,
+    current_user: User = Depends(require_permission("view_audit_logs")),
+    db: Session = Depends(get_db)
+):
+    try:
+        from models.audit_log import AuditLog
+        
+        query = db.query(AuditLog)
+        
+        if user_id:
+            query = query.filter(AuditLog.user_id == user_id)
+        if resource:
+            query = query.filter(AuditLog.resource == resource)
+        if action:
+            query = query.filter(AuditLog.action == action)
+        
+        total = query.count()
+        logs = query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+        
+        return {
+            "logs": [
+                {
+                    "id": log.id,
+                    "user_id": log.user_id,
+                    "action": log.action,
+                    "resource": log.resource,
+                    "resource_id": log.resource_id,
+                    "details": log.details,
+                    "ip_address": log.ip_address,
+                    "status": log.status,
+                    "created_at": log.created_at.isoformat() if log.created_at else None
+                }
+                for log in logs
+            ],
+            "total": total
+        }
+    except Exception as e:
+        print(f"Get audit logs error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get audit logs")

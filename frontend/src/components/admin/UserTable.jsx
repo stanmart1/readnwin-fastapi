@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, onEdit, onStatusChange, onDelete, onAnalytics, onAssignBooks, onPasswordReset }) => {
+const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, onEdit, onStatusChange, onDelete, onAnalytics, onAssignBooks, onPasswordReset, onAssignRole }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'admin': return 'bg-purple-100 text-purple-800';
@@ -84,6 +84,13 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                       title="View"
                     >
                       <i className="ri-eye-line"></i>
+                    </button>
+                    <button
+                      onClick={() => onAssignRole?.(user)}
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Assign Role"
+                    >
+                      <i className="ri-shield-user-line"></i>
                     </button>
                     <button
                       onClick={() => onAnalytics(user.id)}

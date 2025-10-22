@@ -71,15 +71,15 @@ const Roles = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Role Management</h2>
-              <p className="text-gray-600 mt-1">Manage system roles and permissions</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Role Management</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Manage system roles and permissions</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+              className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
             >
               <i className="ri-add-line mr-2"></i>
               Create Role

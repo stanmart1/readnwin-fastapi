@@ -10,6 +10,7 @@ import UserDetailModal from '../../components/admin/UserDetailModal';
 import PasswordResetModal from '../../components/admin/PasswordResetModal';
 import UserAnalyticsModal from '../../components/admin/UserAnalyticsModal';
 import AssignBooksModal from '../../components/admin/AssignBooksModal';
+import AssignRoleModal from '../../components/admin/AssignRoleModal';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import Pagination from '../../components/admin/Pagination';
 import { useUsers } from '../../hooks/useUsers';
@@ -155,9 +156,9 @@ const AdminUsers = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Title */}
-        <div className="sticky top-0 z-10 bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Manage user accounts and permissions</p>
         </div>
 
         {/* Filters */}
@@ -173,7 +174,7 @@ const AdminUsers = () => {
         />
 
         {/* Desktop Table View */}
-        <div className="hidden xl:block">
+        <div className="hidden lg:block">
           <UserTable
             users={users}
             selectedUsers={selectedUsers}
@@ -185,12 +186,13 @@ const AdminUsers = () => {
             onDelete={handleDeleteUser}
             onAnalytics={openAnalyticsModal}
             onAssignBooks={openAssignBooksModal}
+            onAssignRole={openAssignRoleModal}
             onPasswordReset={openPasswordModal}
           />
         </div>
 
         {/* Mobile Card View */}
-        <div className="xl:hidden space-y-4">
+        <div className="lg:hidden space-y-4">
           {users.map((user) => (
             <UserMobileCard
               key={user.id}
@@ -259,6 +261,14 @@ const AdminUsers = () => {
           user={selectedUser}
           onSubmit={handleAssignBooks}
         />
+
+        {showAssignRoleModal && (
+          <AssignRoleModal
+            user={selectedUser}
+            onClose={closeAssignRoleModal}
+            onSuccess={() => fetchUsers(currentPage, { searchTerm, filterRole, filterStatus })}
+          />
+        )}
 
         <ConfirmDialog
           isOpen={showDeleteConfirm}

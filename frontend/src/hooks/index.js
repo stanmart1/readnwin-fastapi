@@ -12,4 +12,5 @@ export { useWishlist } from './useWishlist';
 export { useAnalytics } from './useAnalytics';
 export { useActivity } from './useActivity';
 export { useDashboard } from './useDashboard';
+export { usePermissions } from './usePermissions';
 export { useSettings } from './useSettings';

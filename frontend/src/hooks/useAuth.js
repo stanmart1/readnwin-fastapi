@@ -14,6 +14,12 @@ export const useAuth = () => {
       if (response.data.access_token) {
         localStorage.setItem('token', response.data.access_token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Cache permissions for quick access
+        if (response.data.user.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(response.data.user.permissions));
+        }
+        
         return response.data;
       }
       return null;
@@ -60,6 +66,7 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('permissions');
     window.location.href = '/';
   };
 
@@ -72,6 +79,11 @@ export const useAuth = () => {
     return user ? JSON.parse(user) : null;
   };
 
+  const getPermissions = () => {
+    const permissions = localStorage.getItem('permissions');
+    return permissions ? JSON.parse(permissions) : [];
+  };
+
   return {
     login,
     signup,
@@ -79,6 +91,7 @@ export const useAuth = () => {
     logout,
     isAuthenticated,
     getUser,
+    getPermissions,
     loading,
     error
   };

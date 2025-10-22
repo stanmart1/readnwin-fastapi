@@ -20,14 +20,33 @@ export default function DashboardLayout({ children }) {
       {/* Use Header from landing page */}
       <Header />
 
-      <div className="flex">
+      <div className="flex relative">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all"
+        >
+          <i className={`${sidebarOpen ? 'ri-close-line' : 'ri-menu-line'} text-2xl`}></i>
+        </button>
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          ></div>
+        )}
+
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-64 bg-white border-r min-h-screen`}>
+        <aside className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:static w-64 bg-white border-r min-h-screen transition-transform duration-300 z-40`}>
           <nav className="p-4 space-y-2">
             {menuItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   location.pathname === item.path
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'

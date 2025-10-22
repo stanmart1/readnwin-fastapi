@@ -7,6 +7,7 @@ export const useUserModals = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [showAssignBooksModal, setShowAssignBooksModal] = useState(false);
+  const [showAssignRoleModal, setShowAssignRoleModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
@@ -58,6 +59,15 @@ export const useUserModals = () => {
     setSelectedUser(null);
   };
 
+  const openAssignRoleModal = (user) => {
+    setSelectedUser(user);
+    setShowAssignRoleModal(true);
+  };
+  const closeAssignRoleModal = () => {
+    setShowAssignRoleModal(false);
+    setSelectedUser(null);
+  };
+
   return {
     showCreateModal,
     showViewModal,
@@ -65,6 +75,7 @@ export const useUserModals = () => {
     showPasswordModal,
     showAnalyticsModal,
     showAssignBooksModal,
+    showAssignRoleModal,
     selectedUser,
     selectedUserId,
     openCreateModal,
@@ -78,6 +89,8 @@ export const useUserModals = () => {
     openAnalyticsModal,
     closeAnalyticsModal,
     openAssignBooksModal,
-    closeAssignBooksModal
+    closeAssignBooksModal,
+    openAssignRoleModal,
+    closeAssignRoleModal
   };
 };

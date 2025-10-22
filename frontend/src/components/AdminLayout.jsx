@@ -59,7 +59,7 @@ const AdminLayout = ({ children }) => {
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 80 : 288 }}
-        className={`fixed left-0 bg-white shadow-lg z-30 transform transition-all duration-300 ${
+        className={`fixed left-0 bg-white shadow-lg z-50 transform transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 overflow-y-auto overflow-x-hidden border-r border-gray-200`}
         style={{ top: '4rem', height: 'calc(100vh - 4rem)' }}
@@ -128,20 +128,20 @@ const AdminLayout = ({ children }) => {
       <motion.main
         initial={false}
         animate={{ marginLeft: collapsed ? 80 : 288 }}
-        className="flex-1 lg:ml-72 transition-all duration-300"
+        className="flex-1 lg:ml-72 ml-0 transition-all duration-300"
       >
         {/* Mobile Menu Button */}
-        <div className="lg:hidden fixed top-20 left-4 z-20">
+        <div className="lg:hidden fixed bottom-6 right-6 z-20">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50"
+            className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl"
           >
-            <i className="ri-menu-line text-xl text-gray-700"></i>
+            <i className="ri-menu-line text-2xl"></i>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 mt-1">
+        <div className="p-4 sm:p-6 mt-1">
           {children}
         </div>
       </motion.main>
