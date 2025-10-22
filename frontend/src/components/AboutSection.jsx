@@ -1,29 +1,9 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { useAbout } from '../hooks';
 
 export default function AboutSection() {
-  const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchAboutContent();
-  }, []);
-
-  const fetchAboutContent = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/about');
-      setContent(response.data);
-    } catch (error) {
-      console.error('Error fetching about content:', error);
-      // Use fallback content
-      setContent(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { content, loading } = useAbout();
 
   // Fallback content
   const defaultContent = {

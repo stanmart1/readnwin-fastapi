@@ -1,5 +1,6 @@
 """
 Redis Service for caching and rate limiting
+Redis is OPTIONAL - app works fully without it
 """
 import redis
 import logging
@@ -13,29 +14,58 @@ REDIS_URL = settings.redis_url
 
 # Global Redis client
 _redis_client: Optional[redis.Redis] = None
+_redis_available = None  # Track if Redis is available
 
 def get_redis_client() -> Optional[redis.Redis]:
-    """Get or create Redis client"""
-    global _redis_client
+    """Get or create Redis client - returns None if unavailable"""
+    global _redis_client, _redis_available
+    
+    # If we already know Redis is unavailable, don't retry
+    if _redis_available is False:
+        return None
     
     if _redis_client is None:
         if not REDIS_URL or REDIS_URL == '':
-            logger.info("⚠️  Redis URL not configured - running without Redis")
+            _redis_available = False
             return None
         
         try:
-            _redis_client = redis.from_url(
-                REDIS_URL,
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5
-            )
+            # Parse URL to check if SSL is needed
+            is_ssl = REDIS_URL.startswith('rediss://')
+            
+            if is_ssl:
+                import ssl
+                # Create SSL context with relaxed verification
+                ssl_context = ssl.create_default_context()
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+                
+                _redis_client = redis.from_url(
+                    REDIS_URL,
+                    decode_responses=True,
+                    socket_connect_timeout=3,  # Reduced timeout
+                    socket_timeout=3,
+                    socket_keepalive=True,
+                    ssl_cert_reqs=None,
+                    ssl_ca_certs=None,
+                    ssl_check_hostname=False
+                )
+            else:
+                _redis_client = redis.from_url(
+                    REDIS_URL,
+                    decode_responses=True,
+                    socket_connect_timeout=3,
+                    socket_timeout=3
+                )
+            
             # Test connection
             _redis_client.ping()
+            _redis_available = True
             logger.info("✅ Redis connected successfully")
         except Exception as e:
-            logger.error(f"❌ Redis connection failed: {e}")
+            _redis_available = False
             _redis_client = None
+            logger.info("ℹ️  Redis unavailable - using in-memory fallback (this is normal for local development)")
     
     return _redis_client
 

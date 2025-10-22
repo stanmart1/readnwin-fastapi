@@ -5,6 +5,7 @@ import FeaturedBooks from '../components/FeaturedBooks';
 import EReaderShowcase from '../components/EReaderShowcase';
 import WorksCarousel from '../components/WorksCarousel';
 import BlogSection from '../components/BlogSection';
+import TestimonialsSection from '../components/TestimonialsSection';
 import Footer from '../components/Footer';
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
       <EReaderShowcase />
       <WorksCarousel />
       <BlogSection />
+      <TestimonialsSection />
       <Footer />
     </div>
   );

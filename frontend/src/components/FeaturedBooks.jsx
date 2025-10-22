@@ -1,41 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useBooks } from '../hooks';
 
 export default function FeaturedBooks() {
-  const [books, setBooks] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('featured');
-  const [loading, setLoading] = useState(true);
+  
+  const params = { 
+    page: 1, 
+    limit: 8, 
+    status: 'published',
+    ...(selectedCategory === 'featured' && { is_featured: true }),
+    ...(selectedCategory === 'bestsellers' && { is_bestseller: true }),
+    ...(selectedCategory === 'new' && { is_new_release: true })
+  };
+  
+  const { books, loading } = useBooks(params);
 
   const categories = [
     { id: 'featured', name: 'Featured Books', icon: 'ri-star-line' },
     { id: 'bestsellers', name: 'Bestsellers', icon: 'ri-fire-line' },
     { id: 'new', name: 'New Releases', icon: 'ri-flashlight-line' }
   ];
-
-  useEffect(() => {
-    loadBooks();
-  }, [selectedCategory]);
-
-  const loadBooks = async () => {
-    try {
-      setLoading(true);
-      const params = { page: 1, limit: 8, status: 'published' };
-      
-      if (selectedCategory === 'featured') params.is_featured = true;
-      else if (selectedCategory === 'bestsellers') params.is_bestseller = true;
-      else if (selectedCategory === 'new') params.is_new_release = true;
-
-      const response = await axios.get('/api/books', { params });
-      setBooks(response.data.books || []);
-    } catch (error) {
-      console.error('Error loading books:', error);
-      setBooks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getBookImage = (book) => {
     if (book.cover_image_url) return book.cover_image_url;

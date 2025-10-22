@@ -112,7 +112,7 @@ from routers import (
     faq, user, about, portfolio, reviews, rbac, users, dashboard, reading_goals,
     reading, reading_enhanced, admin_enhanced, admin_email,
     analytics, payment, shopping_enhanced, testing, ereader, ereader_enhanced, upload,
-    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf
+    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials
 )
 
 # Import optional routers
@@ -156,7 +156,7 @@ app.include_router(user_library.router, tags=["user-library"])
 app.include_router(images.router, tags=["images"])
 
 # Core Features
-app.include_router(books.router, prefix="/books", tags=["books"])
+app.include_router(books.router, prefix="/api/books", tags=["books"])
 app.include_router(ereader.router, tags=["ereader"])
 app.include_router(ereader_enhanced.router, tags=["ereader-enhanced"])
 app.include_router(reader_settings.router, tags=["reader"])
@@ -200,6 +200,7 @@ app.include_router(test_simple.router, tags=["admin"])
 app.include_router(receipts.router, prefix="/admin", tags=["admin"])
 app.include_router(admin_works.router, tags=["admin"])
 app.include_router(works.router, prefix="/api", tags=["public"])
+app.include_router(testimonials.router, prefix="/api", tags=["public"])
 app.include_router(admin_blog.router, tags=["admin"])
 if admin_maintenance:
     app.include_router(admin_maintenance.router, tags=["admin"])

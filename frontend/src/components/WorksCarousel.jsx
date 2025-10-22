@@ -1,62 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { useWorks } from '../hooks';
 
 export default function WorksCarousel() {
-  const [works, setWorks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { works, loading } = useWorks();
   const [selectedWork, setSelectedWork] = useState(null);
   const carouselRef = useRef(null);
-
-  useEffect(() => {
-    fetchWorks();
-  }, []);
-
-  const fetchWorks = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/works');
-      
-      if (response.data.success) {
-        setWorks(response.data.works || []);
-      }
-    } catch (error) {
-      console.error('Error fetching works:', error);
-      // Fallback to sample data if API fails
-      setWorks([
-        {
-          id: 1,
-          title: 'Digital Library Platform',
-          description: 'A comprehensive digital library system with advanced search and recommendation features.',
-          image_path: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800',
-          category: 'Platform'
-        },
-        {
-          id: 2,
-          title: 'Reading Analytics Dashboard',
-          description: 'Real-time analytics and insights for tracking reading habits and progress.',
-          image_path: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800',
-          category: 'Analytics'
-        },
-        {
-          id: 3,
-          title: 'Mobile Reading App',
-          description: 'Cross-platform mobile application for seamless reading on the go.',
-          image_path: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800',
-          category: 'Mobile'
-        },
-        {
-          id: 4,
-          title: 'E-Book Marketplace',
-          description: 'Secure marketplace for buying, selling, and trading digital books.',
-          image_path: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=800',
-          category: 'E-commerce'
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const scroll = (direction) => {
     if (carouselRef.current) {

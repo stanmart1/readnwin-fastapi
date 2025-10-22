@@ -1,61 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { useBlog } from '../hooks';
 
 export default function BlogSection() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { posts, loading } = useBlog(6);
   const carouselRef = useRef(null);
-
-  useEffect(() => {
-    fetchBlogPosts();
-  }, []);
-
-  const fetchBlogPosts = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/blog/posts?limit=6');
-      setPosts(response.data || []);
-    } catch (error) {
-      console.error('Error fetching blog posts:', error);
-      // Fallback sample data
-      setPosts([
-        {
-          id: 1,
-          title: 'The Power of Reading: Transform Your Life',
-          excerpt: 'Discover how reading can change your perspective and open new opportunities.',
-          author_name: 'Sarah Johnson',
-          category: 'Self-Improvement',
-          read_time: 5,
-          created_at: '2025-01-15T00:00:00Z',
-          cover_image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'
-        },
-        {
-          id: 2,
-          title: '10 Must-Read Books for 2025',
-          excerpt: 'Our curated list of the most anticipated books this year.',
-          author_name: 'Michael Chen',
-          category: 'Reviews',
-          read_time: 8,
-          created_at: '2025-01-10T00:00:00Z',
-          cover_image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800'
-        },
-        {
-          id: 3,
-          title: 'Building Better Reading Habits',
-          excerpt: 'Practical tips to make reading a daily habit.',
-          author_name: 'Emma Davis',
-          category: 'Reading Tips',
-          read_time: 6,
-          created_at: '2025-01-05T00:00:00Z',
-          cover_image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800'
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const scroll = (direction) => {
     if (carouselRef.current) {
