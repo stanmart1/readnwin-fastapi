@@ -83,6 +83,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const handleCreateUser = async () => {

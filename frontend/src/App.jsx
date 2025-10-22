@@ -25,6 +25,7 @@ import DashboardSettings from './pages/dashboard/Settings';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
+import Roles from './pages/admin/Roles';
 import AdminRoles from './pages/admin/Roles';
 import AdminAudit from './pages/admin/Audit';
 import AdminBooks from './pages/admin/Books';
@@ -73,7 +74,7 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/roles" element={<AdminRoles />} />
+        <Route path="/admin/roles" element={<Roles />} />
         <Route path="/admin/audit" element={<AdminAudit />} />
         <Route path="/admin/books" element={<AdminBooks />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
