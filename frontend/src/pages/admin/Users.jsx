@@ -54,6 +54,7 @@ const AdminUsers = () => {
     showPasswordModal,
     showAnalyticsModal,
     showAssignBooksModal,
+    showAssignRoleModal,
     selectedUser,
     selectedUserId,
     openCreateModal,
@@ -67,7 +68,9 @@ const AdminUsers = () => {
     openAnalyticsModal,
     closeAnalyticsModal,
     openAssignBooksModal,
-    closeAssignBooksModal
+    closeAssignBooksModal,
+    openAssignRoleModal,
+    closeAssignRoleModal
   } = useUserModals();
 
   const [newUser, setNewUser] = useState({

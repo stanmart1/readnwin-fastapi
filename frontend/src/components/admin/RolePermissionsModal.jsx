@@ -28,11 +28,13 @@ const RolePermissionsModal = ({ isOpen, onClose, role }) => {
   const fetchRolePermissions = async () => {
     try {
       const response = await api.get(`/rbac/roles/${role.id}/permissions`);
-      const perms = response.data || [];
+      const perms = Array.isArray(response.data) ? response.data : (response.data?.permissions || []);
       setRolePermissions(perms);
       setSelectedPermissions(perms.map(p => p.id));
     } catch (err) {
       console.error('Error fetching role permissions:', err);
+      setRolePermissions([]);
+      setSelectedPermissions([]);
     }
   };
 
