@@ -1,0 +1,197 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import api from '../lib/api';
+
+export default function BlogPost() {
+  const { slug } = useParams();
+  const [post, setPost] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPost();
+  }, [slug]);
+
+  const fetchPost = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/api/blog/posts/${slug}`);
+      setPost(response.data);
+      
+      // Fetch related posts
+      const related = await api.get('/api/blog/posts?limit=3');
+      setRelatedPosts(related.data?.filter(p => p.slug !== slug) || []);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const sharePost = (platform) => {
+    const url = window.location.href;
+    const text = post?.title;
+    
+    const urls = {
+      twitter: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
+    };
+    
+    window.open(urls[platform], '_blank', 'width=600,height=400');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Post not found</h2>
+          <Link to="/blog" className="text-blue-600 hover:text-purple-600">
+            Back to Blog
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      {/* Hero Image */}
+      <div className="relative h-96 bg-gradient-to-r from-blue-600 to-purple-600">
+        {post.cover_image && (
+          <img
+            src={post.cover_image}
+            alt={post.title}
+            className="w-full h-full object-cover opacity-50"
+          />
+        )}
+      </div>
+
+      {/* Article Content */}
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-2xl p-8 md:p-12"
+        >
+          {/* Meta Info */}
+          <div className="flex items-center text-sm text-gray-500 mb-6">
+            <i className="ri-calendar-line mr-2"></i>
+            <span>{formatDate(post.created_at)}</span>
+            <span className="mx-3">•</span>
+            <i className="ri-time-line mr-2"></i>
+            <span>{post.read_time || 5} min read</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            {post.title}
+          </h1>
+
+          {/* Author */}
+          <div className="flex items-center mb-8 pb-8 border-b">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {post.author_name?.[0] || 'A'}
+            </div>
+            <div className="ml-4">
+              <p className="font-semibold text-gray-900">{post.author_name || 'Anonymous'}</p>
+              <p className="text-sm text-gray-500">Author</p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="prose prose-lg max-w-none mb-8">
+            <p className="text-xl text-gray-600 mb-6">{post.excerpt}</p>
+            <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+              {post.content}
+            </div>
+          </div>
+
+          {/* Share Buttons */}
+          <div className="pt-8 border-t">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share this post</h3>
+            <div className="flex gap-4">
+              <button
+                onClick={() => sharePost('twitter')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500"
+              >
+                <i className="ri-twitter-fill"></i>
+                Twitter
+              </button>
+              <button
+                onClick={() => sharePost('facebook')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <i className="ri-facebook-fill"></i>
+                Facebook
+              </button>
+              <button
+                onClick={() => sharePost('linkedin')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+              >
+                <i className="ri-linkedin-fill"></i>
+                LinkedIn
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-16 mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">Related Posts</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedPosts.map((relatedPost) => (
+                <Link
+                  key={relatedPost.id}
+                  to={`/blog/${relatedPost.slug || relatedPost.id}`}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
+                >
+                  <img
+                    src={relatedPost.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                    alt={relatedPost.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{relatedPost.title}</h3>
+                    <p className="text-gray-600 text-sm line-clamp-2">{relatedPost.excerpt}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+
+      <Footer />
+    </div>
+  );
+}

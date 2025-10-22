@@ -172,7 +172,7 @@ export default function BlogSection() {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
