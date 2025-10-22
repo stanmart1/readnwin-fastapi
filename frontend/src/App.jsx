@@ -22,6 +22,14 @@ import DashboardActivity from './pages/dashboard/Activity';
 import DashboardOrders from './pages/dashboard/Orders';
 import DashboardSettings from './pages/dashboard/Settings';
 
+// Admin Pages
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminBooks from './pages/admin/Books';
+import AdminOrders from './pages/admin/Orders';
+import AdminAnalytics from './pages/admin/Analytics';
+import AdminSettings from './pages/admin/Settings';
+
 import './styles/index.css';
 
 function App() {
@@ -50,6 +58,14 @@ function App() {
         <Route path="/dashboard/activity" element={<DashboardActivity />} />
         <Route path="/dashboard/orders" element={<DashboardOrders />} />
         <Route path="/dashboard/settings" element={<DashboardSettings />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/books" element={<AdminBooks />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
         
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
