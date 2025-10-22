@@ -15,10 +15,21 @@ const AdminLayout = ({ children }) => {
   const menuItems = [
     { path: '/admin', icon: 'ri-dashboard-line', label: 'Overview' },
     { path: '/admin/users', icon: 'ri-user-line', label: 'Users' },
+    { path: '/admin/roles', icon: 'ri-shield-user-line', label: 'Roles' },
+    { path: '/admin/audit', icon: 'ri-file-list-line', label: 'Audit Log' },
     { path: '/admin/books', icon: 'ri-book-line', label: 'Books' },
+    { path: '/admin/reviews', icon: 'ri-star-line', label: 'Reviews' },
     { path: '/admin/orders', icon: 'ri-shopping-cart-line', label: 'Orders' },
-    { path: '/admin/analytics', icon: 'ri-line-chart-line', label: 'Analytics' },
-    { path: '/admin/settings', icon: 'ri-settings-3-line', label: 'Settings' },
+    { path: '/admin/shipping', icon: 'ri-truck-line', label: 'Shipping' },
+    { path: '/admin/reading', icon: 'ri-line-chart-line', label: 'Reading Analytics' },
+    { path: '/admin/reports', icon: 'ri-file-text-line', label: 'Reports' },
+    { path: '/admin/email-templates', icon: 'ri-mail-line', label: 'Email Templates' },
+    { path: '/admin/blog', icon: 'ri-file-text-line', label: 'Blog' },
+    { path: '/admin/works', icon: 'ri-image-line', label: 'Works' },
+    { path: '/admin/about', icon: 'ri-information-line', label: 'About' },
+    { path: '/admin/contact', icon: 'ri-customer-service-line', label: 'Contact' },
+    { path: '/admin/faq', icon: 'ri-question-line', label: 'FAQ' },
+    { path: '/admin/settings', icon: 'ri-settings-line', label: 'Settings' },
   ];
 
   const handleLogout = () => {

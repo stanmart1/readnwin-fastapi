@@ -25,9 +25,20 @@ import DashboardSettings from './pages/dashboard/Settings';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
+import AdminRoles from './pages/admin/Roles';
+import AdminAudit from './pages/admin/Audit';
 import AdminBooks from './pages/admin/Books';
+import AdminReviews from './pages/admin/Reviews';
 import AdminOrders from './pages/admin/Orders';
-import AdminAnalytics from './pages/admin/Analytics';
+import AdminShipping from './pages/admin/Shipping';
+import AdminReading from './pages/admin/Reading';
+import AdminReports from './pages/admin/Reports';
+import AdminEmailTemplates from './pages/admin/EmailTemplates';
+import AdminBlog from './pages/admin/Blog';
+import AdminWorks from './pages/admin/Works';
+import AdminAbout from './pages/admin/About';
+import AdminContact from './pages/admin/Contact';
+import AdminFAQ from './pages/admin/FAQ';
 import AdminSettings from './pages/admin/Settings';
 
 import './styles/index.css';
@@ -62,9 +73,20 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/roles" element={<AdminRoles />} />
+        <Route path="/admin/audit" element={<AdminAudit />} />
         <Route path="/admin/books" element={<AdminBooks />} />
+        <Route path="/admin/reviews" element={<AdminReviews />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
-        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/shipping" element={<AdminShipping />} />
+        <Route path="/admin/reading" element={<AdminReading />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+        <Route path="/admin/blog" element={<AdminBlog />} />
+        <Route path="/admin/works" element={<AdminWorks />} />
+        <Route path="/admin/about" element={<AdminAbout />} />
+        <Route path="/admin/contact" element={<AdminContact />} />
+        <Route path="/admin/faq" element={<AdminFAQ />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
         
         {/* 404 */}
