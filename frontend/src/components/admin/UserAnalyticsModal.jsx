@@ -109,15 +109,23 @@ const UserAnalyticsModal = ({ isOpen, onClose, userId }) => {
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Recent Books</h4>
               <div className="space-y-3">
-                {analytics.recentBooks?.map((book, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{book.title}</p>
-                      <p className="text-sm text-gray-500">{book.author}</p>
+                {analytics.recentBooks && analytics.recentBooks.length > 0 ? (
+                  analytics.recentBooks.map((book, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{book.title}</p>
+                        <p className="text-sm text-gray-500">{book.author}</p>
+                      </div>
+                      <span className="text-sm text-gray-600">{book.progress}%</span>
                     </div>
-                    <span className="text-sm text-gray-600">{book.progress}%</span>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <i className="ri-book-open-line text-6xl text-gray-300 mb-4"></i>
+                    <p className="text-gray-500 text-lg font-medium">No books yet</p>
+                    <p className="text-gray-400 text-sm mt-1">User hasn't started reading any books</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

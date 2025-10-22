@@ -7,7 +7,18 @@ from models.user import User
 from models.role import Role
 from typing import Optional
 
+from pydantic import BaseModel
+from typing import Optional
+
 router = APIRouter(prefix="/admin", tags=["admin", "users"])
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    username: Optional[str] = None
+    is_active: Optional[bool] = None
+    role_id: Optional[int] = None
 
 @router.get("/users")
 def get_all_users(
@@ -103,6 +114,66 @@ def update_user_status(
         db.rollback()
         print(f"Error updating user status: {e}")
         raise HTTPException(status_code=500, detail="Failed to update user status")
+
+@router.put("/users/{user_id}")
+def update_user(
+    user_id: int,
+    user_data: UserUpdate,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Update user details"""
+    check_admin_access(current_user)
+    
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update fields if provided
+        if user_data.first_name is not None:
+            user.first_name = user_data.first_name
+        if user_data.last_name is not None:
+            user.last_name = user_data.last_name
+        if user_data.email is not None:
+            # Check if email already exists
+            existing = db.query(User).filter(User.email == user_data.email, User.id != user_id).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Email already in use")
+            user.email = user_data.email
+        if user_data.username is not None:
+            # Check if username already exists
+            existing = db.query(User).filter(User.username == user_data.username, User.id != user_id).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Username already in use")
+            user.username = user_data.username
+        if user_data.is_active is not None:
+            user.is_active = user_data.is_active
+        if user_data.role_id is not None:
+            user.role_id = user_data.role_id
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "message": "User updated successfully",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "is_active": user.is_active,
+                "role_id": user.role_id
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update user")
 
 @router.delete("/users/{user_id}")
 def delete_user(

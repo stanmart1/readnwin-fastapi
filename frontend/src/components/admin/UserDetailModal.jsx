@@ -34,8 +34,8 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
           <div>
             <h4 className="text-xl font-bold text-gray-900">{user.first_name} {user.last_name}</h4>
             <p className="text-gray-600">@{user.username}</p>
-            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full text-white mt-2 ${getRoleColor(user.role)}`}>
-              {user.role || 'User'}
+            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full text-white mt-2 ${getRoleColor(user.role?.name)}`}>
+              {user.role?.display_name || 'No Role'}
             </span>
           </div>
         </div>

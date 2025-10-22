@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+// Updated: 1761141502
+import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import UserFilters from '../../components/admin/UserFilters';
 import UserTable from '../../components/admin/UserTable';
@@ -13,7 +14,6 @@ import { useUsers } from '../../hooks/useUsers';
 import { useUserFilters } from '../../hooks/useUserFilters';
 import { useUserSelection } from '../../hooks/useUserSelection';
 import { useUserModals } from '../../hooks/useUserModals';
-import { useState } from 'react';
 
 const AdminUsers = () => {
   const {
@@ -44,6 +44,7 @@ const AdminUsers = () => {
   const {
     showCreateModal,
     showViewModal,
+    showEditModal,
     showPasswordModal,
     showAnalyticsModal,
     showAssignBooksModal,
@@ -53,6 +54,8 @@ const AdminUsers = () => {
     closeCreateModal,
     openViewModal,
     closeViewModal,
+    openEditModal,
+    closeEditModal,
     openPasswordModal,
     closePasswordModal,
     openAnalyticsModal,
@@ -153,7 +156,7 @@ const AdminUsers = () => {
             onSelectAll={() => selectAll(users)}
             onSelectUser={toggleUser}
             onView={openViewModal}
-            onEdit={(user) => console.log('Edit', user)}
+            onEdit={openEditModal}
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteUser}
             onAnalytics={openAnalyticsModal}
@@ -169,7 +172,7 @@ const AdminUsers = () => {
               key={user.id}
               user={user}
               onView={openViewModal}
-              onEdit={(user) => console.log('Edit', user)}
+              onEdit={openEditModal}
               onAnalytics={openAnalyticsModal}
               onAssignBooks={openAssignBooksModal}
               onPasswordReset={openPasswordModal}

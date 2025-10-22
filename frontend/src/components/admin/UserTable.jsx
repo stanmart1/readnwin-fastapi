@@ -56,7 +56,7 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                       <p className="text-sm font-medium text-gray-900">
                         {user.first_name} {user.last_name}
                       </p>
-                      <p className="text-sm text-gray-500">@{user.username}</p>
+                      <p className="text-sm text-gray-500">{user.username}</p>
                     </div>
                   </div>
                 </td>

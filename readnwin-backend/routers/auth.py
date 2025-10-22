@@ -471,6 +471,10 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
         # Generate CSRF token
         csrf_token = SecurityService.generate_csrf_token()
 
+        # Update last_login timestamp
+        db.query(User).filter(User.id == user.id).update({"last_login": datetime.utcnow()})
+        db.commit()
+
         # Log successful login
         SecurityService.log_login_attempt(db, user_data.email, request, True)
         SecurityService.log_security_event(db, "login_success", request, user.id, 

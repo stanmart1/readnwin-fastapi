@@ -3,6 +3,7 @@ import { useState } from 'react';
 export const useUserModals = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [showAssignBooksModal, setShowAssignBooksModal] = useState(false);
@@ -18,6 +19,15 @@ export const useUserModals = () => {
   };
   const closeViewModal = () => {
     setShowViewModal(false);
+    setSelectedUser(null);
+  };
+
+  const openEditModal = (user) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+  const closeEditModal = () => {
+    setShowEditModal(false);
     setSelectedUser(null);
   };
 
@@ -51,6 +61,7 @@ export const useUserModals = () => {
   return {
     showCreateModal,
     showViewModal,
+    showEditModal,
     showPasswordModal,
     showAnalyticsModal,
     showAssignBooksModal,
@@ -60,6 +71,8 @@ export const useUserModals = () => {
     closeCreateModal,
     openViewModal,
     closeViewModal,
+    openEditModal,
+    closeEditModal,
     openPasswordModal,
     closePasswordModal,
     openAnalyticsModal,
