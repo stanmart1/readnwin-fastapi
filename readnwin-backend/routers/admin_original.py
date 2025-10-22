@@ -50,6 +50,204 @@ class NotificationResponse(BaseModel):
     priority: str
     user_email: Optional[str] = None
 
+@router.get("/stats/overview", response_model=StatsResponse)
+def get_overview_stats(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive admin dashboard statistics from database"""
+    check_admin_access(current_user)
+
+    try:
+        # Basic counts with error handling for each model
+        total_users = 0
+        total_books = 0
+        total_orders = 0
+        total_revenue = 0.0
+        completed_orders = 0
+
+        # Users count (this should work)
+        try:
+            total_users = db.query(User).count()
+            print(f"✅ Total users: {total_users}")
+        except Exception as e:
+            print(f"❌ Error counting users: {e}")
+            total_users = 0
+
+        # Books count (handle schema mismatch)
+        try:
+            total_books = db.query(Book).count()
+            print(f"✅ Total books: {total_books}")
+        except Exception as e:
+            print(f"❌ Error counting books (schema mismatch): {e}")
+            total_books = 0
+
+        # Orders count and revenue (handle schema mismatch)
+        try:
+            total_orders = db.query(Order).count()
+            print(f"✅ Total orders: {total_orders}")
+
+            # Calculate total revenue
+            total_revenue_result = db.query(func.coalesce(func.sum(Order.total_amount), 0)).scalar()
+            total_revenue = float(total_revenue_result) if total_revenue_result else 0.0
+            print(f"✅ Total revenue: {total_revenue}")
+
+            # Completed orders
+            completed_orders = db.query(Order).filter(Order.status == "completed").count()
+            print(f"✅ Completed orders: {completed_orders}")
+        except Exception as e:
+            print(f"❌ Error with orders (schema mismatch): {e}")
+            total_orders = 0
+            total_revenue = 0.0
+            completed_orders = 0
+
+        # Pending contacts (with error handling)
+        pending_contacts = 0
+        try:
+            pending_contacts = db.query(Contact).filter(Contact.is_resolved == False).count()
+            print(f"✅ Pending contacts: {pending_contacts}")
+        except Exception as e:
+            print(f"❌ Error counting contacts: {e}")
+            pending_contacts = 0
+
+        # Active users today (simplified calculation)
+        active_users_today = 0
+        today = datetime.utcnow().date()
+        try:
+            active_users_today = db.query(User).filter(
+                and_(
+                    User.last_login.isnot(None),
+                    func.date(User.last_login) == today
+                )
+            ).count()
+            print(f"✅ Active users today: {active_users_today}")
+        except Exception as e:
+            print(f"❌ Error counting active users: {e}")
+            active_users_today = 0
+
+        # New users this month
+        new_users_this_month = 0
+        try:
+            start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            new_users_this_month = db.query(User).filter(
+                User.created_at >= start_of_month
+            ).count()
+            print(f"✅ New users this month: {new_users_this_month}")
+        except Exception as e:
+            print(f"❌ Error counting new users: {e}")
+            new_users_this_month = 0
+
+        print(f"📊 Final stats: users={total_users}, books={total_books}, orders={total_orders}")
+
+        return StatsResponse(
+            total_users=total_users,
+            total_books=total_books,
+            total_orders=total_orders,
+            total_revenue=total_revenue,
+            pending_contacts=pending_contacts,
+            active_users_today=active_users_today,
+            completed_orders=completed_orders,
+            new_users_this_month=new_users_this_month
+        )
+
+    except Exception as e:
+        print(f"❌ Critical error fetching admin stats: {e}")
+        # Return stats with at least user count if possible
+        try:
+            fallback_users = db.query(User).count()
+            print(f"🔄 Fallback user count: {fallback_users}")
+            return StatsResponse(
+                total_users=fallback_users,
+                total_books=0,
+                total_orders=0,
+                total_revenue=0.0,
+                pending_contacts=0,
+                active_users_today=0,
+                completed_orders=0,
+                new_users_this_month=0
+            )
+        except:
+            print("❌ Complete fallback to zero stats")
+            return StatsResponse(
+                total_users=0,
+                total_books=0,
+                total_orders=0,
+                total_revenue=0.0,
+                pending_contacts=0,
+                active_users_today=0,
+                completed_orders=0,
+                new_users_this_month=0
+            )
+
+@router.get("/stats/reading-progress", response_model=ReadingProgressResponse)
+def get_reading_progress(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get reading progress statistics from database"""
+    check_admin_access(current_user)
+
+    # Total readers (users with at least one reading session)
+    total_readers = db.query(ReadingSession.user_id).distinct().count()
+
+    # Active readers (users with reading sessions in last 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    active_readers = db.query(ReadingSession.user_id).filter(
+        ReadingSession.created_at >= seven_days_ago
+    ).distinct().count()
+
+    # Books read today (completed reading sessions today)
+    today = datetime.utcnow().date()
+    books_read_today = db.query(UserLibrary).filter(
+        and_(
+            UserLibrary.status == "completed",
+            func.date(UserLibrary.updated_at) == today
+        )
+    ).count()
+
+    # Average reading time (in minutes)
+    avg_reading_time = db.query(func.avg(ReadingSession.duration)).scalar() or 0.0
+
+    # Total reading sessions
+    total_reading_sessions = db.query(ReadingSession).count()
+
+    # Books completed this month
+    start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    books_completed_this_month = db.query(UserLibrary).filter(
+        and_(
+            UserLibrary.status == "completed",
+            UserLibrary.updated_at >= start_of_month
+        )
+    ).count()
+
+    # Most popular book (book with most reading sessions)
+    most_popular_book_query = db.query(
+        Book.title,
+        func.count(ReadingSession.id).label('session_count')
+    ).join(
+        ReadingSession, Book.id == ReadingSession.book_id
+    ).group_by(
+        Book.id, Book.title
+    ).order_by(
+        desc('session_count')
+    ).first()
+
+    most_popular_book = most_popular_book_query.title if most_popular_book_query else None
+
+    # Total pages read
+    total_pages_read = db.query(func.coalesce(func.sum(ReadingSession.pages_read), 0)).scalar()
+
+    return ReadingProgressResponse(
+        total_readers=total_readers,
+        active_readers=active_readers,
+        books_read_today=books_read_today,
+        average_reading_time=float(avg_reading_time),
+        total_reading_sessions=total_reading_sessions,
+        books_completed_this_month=books_completed_this_month,
+        most_popular_book=most_popular_book,
+        total_pages_read=int(total_pages_read)
+    )
+
 @router.get("/notifications", response_model=List[NotificationResponse])
 def get_notifications(
     current_user: User = Depends(get_current_user_from_token),
@@ -793,6 +991,41 @@ def mark_notification_read(
 
     return {"message": "Notification marked as read"}
 
+@router.get("/users/stats")
+def get_user_stats(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get detailed user statistics"""
+    check_admin_access(current_user)
+
+    # User registration stats
+    total_users = db.query(User).count()
+    verified_users = db.query(User).filter(User.is_email_verified == True).count()
+    active_users = db.query(User).filter(User.is_active == True).count()
+
+    # Recent registrations (last 30 days)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    recent_registrations = db.query(User).filter(
+        User.created_at >= thirty_days_ago
+    ).count()
+
+    # Users by role
+    user_roles = db.query(
+        Role.name.label('role_name'),
+        func.count(User.id).label('count')
+    ).join(Role, User.role_id == Role.id).group_by(Role.name).all()
+
+    return {
+        "total_users": total_users,
+        "verified_users": verified_users,
+        "active_users": active_users,
+        "recent_registrations": recent_registrations,
+        "verification_rate": (verified_users / total_users * 100) if total_users > 0 else 0,
+        "user_roles": {role.role_name: role.count for role in user_roles}
+    }
+
+
 
 @router.get("/books/{book_id}")
 def get_admin_book(
@@ -1155,8 +1388,161 @@ def get_admin_roles(
         print(f"Error fetching roles: {e}")
         return []
 
+@router.get("/users")
+@router.get("/admin/users", dependencies=[Depends(get_current_user_from_token)])
+def get_admin_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    role_id: Optional[int] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get list of users for admin interface with pagination metadata"""
+    check_admin_access(current_user)
 
+    try:
+        print(f"🔄 Admin users query: skip={skip}, limit={limit}, search={search}, role_id={role_id}, is_active={is_active}")
 
+        query = db.query(User)
+        base_query = db.query(User)
+
+        # Apply filters to both queries
+        if search:
+            print(f"🔍 Applying search filter: {search}")
+            filter_condition = (
+                (User.email.contains(search)) |
+                (User.username.contains(search)) |
+                (User.first_name.contains(search)) |
+                (User.last_name.contains(search))
+            )
+            query = query.filter(filter_condition)
+            base_query = base_query.filter(filter_condition)
+
+        if role_id is not None:
+            print(f"🏷️ Applying role filter: {role_id}")
+            query = query.filter(User.role_id == role_id)
+            base_query = base_query.filter(User.role_id == role_id)
+
+        if is_active is not None:
+            print(f"✅ Applying active filter: {is_active}")
+            query = query.filter(User.is_active == is_active)
+            base_query = base_query.filter(User.is_active == is_active)
+
+        # Get total count before pagination
+        total_count = base_query.count()
+        print(f"📊 Total users matching filters: {total_count}")
+
+        # Get users with pagination
+        print("📊 Executing paginated query...")
+        users = query.offset(skip).limit(limit).all()
+        print(f"✅ Found {len(users)} users on current page")
+
+        # Format response
+        result = []
+        for user in users:
+            try:
+                # Get role information separately to avoid joinedload issues
+                role_info = None
+                if user.role_id:
+                    role = db.query(Role).filter(Role.id == user.role_id).first()
+                    if role:
+                        role_info = {
+                            "id": role.id,
+                            "name": role.name,
+                            "display_name": role.display_name
+                        }
+
+                user_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "is_active": user.is_active,
+                    "is_email_verified": user.is_email_verified,
+                    "created_at": user.created_at.isoformat() if user.created_at else None,
+                    "updated_at": user.created_at.isoformat() if user.created_at else None,  # Use created_at as fallback
+                    "last_login": user.last_login.isoformat() if user.last_login else None,
+                    "role": role_info
+                }
+                result.append(user_data)
+            except Exception as user_error:
+                print(f"❌ Error processing user {user.id}: {user_error}")
+                continue
+
+        # Return paginated response with metadata
+        response = {
+            "users": result,
+            "total": total_count,
+            "skip": skip,
+            "limit": limit,
+            "has_more": skip + limit < total_count
+        }
+
+        print(f"✅ Returning {len(result)} formatted users with total count: {total_count}")
+        return response
+
+    except Exception as e:
+        print(f"❌ Error fetching users: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to fetch users: {str(e)}")
+
+@router.put("/users/{user_id}/status")
+def update_admin_user_status(
+    user_id: int,
+    status_data: dict,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Update user status"""
+    check_admin_access(current_user)
+
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.is_active = status_data.get("is_active", user.is_active)
+        db.commit()
+
+        return {"message": f"User {'activated' if status_data.get('is_active') else 'deactivated'} successfully"}
+
+    except Exception as e:
+        print(f"Error updating user status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update user status")
+
+@router.delete("/users/{user_id}")
+def delete_admin_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Delete user"""
+    check_admin_access(current_user)
+
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Don't allow deleting the current user
+        if user.id == current_user.id:
+            raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+        # Store user info for audit log before deletion
+        deleted_user_info = {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role_id": user.role_id
+        }
+
+        # Delete the user
         db.delete(user)
         db.commit()
 
