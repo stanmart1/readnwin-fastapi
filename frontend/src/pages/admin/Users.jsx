@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import UserFilters from '../../components/admin/UserFilters';
 import UserTable from '../../components/admin/UserTable';
@@ -9,25 +9,58 @@ import PasswordResetModal from '../../components/admin/PasswordResetModal';
 import UserAnalyticsModal from '../../components/admin/UserAnalyticsModal';
 import AssignBooksModal from '../../components/admin/AssignBooksModal';
 import Pagination from '../../components/admin/Pagination';
+import { useUsers } from '../../hooks/useUsers';
+import { useUserFilters } from '../../hooks/useUserFilters';
+import { useUserSelection } from '../../hooks/useUserSelection';
+import { useUserModals } from '../../hooks/useUserModals';
+import { useState } from 'react';
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
-  const [showAssignBooksModal, setShowAssignBooksModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  
+  const {
+    users,
+    loading,
+    currentPage,
+    totalPages,
+    totalUsers,
+    fetchUsers,
+    createUser,
+    deleteUser,
+    updateUserStatus,
+    resetPassword,
+    assignBooks
+  } = useUsers();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterRole,
+    setFilterRole,
+    filterStatus,
+    setFilterStatus
+  } = useUserFilters((filters) => fetchUsers(1, filters));
+
+  const { selectedUsers, selectAll, toggleUser } = useUserSelection();
+
+  const {
+    showCreateModal,
+    showViewModal,
+    showPasswordModal,
+    showAnalyticsModal,
+    showAssignBooksModal,
+    selectedUser,
+    selectedUserId,
+    openCreateModal,
+    closeCreateModal,
+    openViewModal,
+    closeViewModal,
+    openPasswordModal,
+    closePasswordModal,
+    openAnalyticsModal,
+    closeAnalyticsModal,
+    openAssignBooksModal,
+    closeAssignBooksModal
+  } = useUserModals();
+
   const [newUser, setNewUser] = useState({
     email: '',
     username: '',
@@ -37,151 +70,51 @@ const AdminUsers = () => {
     role: 'user'
   });
 
-  const fetchUsers = async (page = 1) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10'
-      });
-
-      if (searchTerm) params.append('search', searchTerm);
-      if (filterStatus !== 'all') params.append('status', filterStatus);
-      if (filterRole !== 'all') params.append('role', filterRole);
-
-      const response = await fetch(`/api/admin/users?${params}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setUsers(data.users);
-        setTotalPages(data.pagination.pages);
-        setTotalUsers(data.pagination.total);
-        setCurrentPage(data.pagination.page);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchUsers(1);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, filterRole, filterStatus]);
-
   const handleCreateUser = async () => {
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setShowCreateModal(false);
-        setNewUser({ email: '', username: '', password: '', first_name: '', last_name: '', role: 'user' });
-        fetchUsers(currentPage);
-      }
-    } catch (error) {
-      console.error('Error creating user:', error);
+    const result = await createUser(newUser);
+    if (result.success) {
+      closeCreateModal();
+      setNewUser({ email: '', username: '', password: '', first_name: '', last_name: '', role: 'user' });
+      fetchUsers(currentPage, { searchTerm, filterRole, filterStatus });
     }
   };
 
   const handleDeleteUser = async (userId) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        fetchUsers(currentPage);
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
+    const result = await deleteUser(userId);
+    if (result.success) {
+      fetchUsers(currentPage, { searchTerm, filterRole, filterStatus });
     }
   };
 
   const handleStatusChange = async (userId, newStatus) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        fetchUsers(currentPage);
-      }
-    } catch (error) {
-      console.error('Error updating user status:', error);
+    const result = await updateUserStatus(userId, newStatus);
+    if (result.success) {
+      fetchUsers(currentPage, { searchTerm, filterRole, filterStatus });
     }
   };
 
   const handlePasswordReset = async (userId, newPassword) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/password`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: newPassword })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setShowPasswordModal(false);
-        alert('Password reset successfully');
-      }
-    } catch (error) {
-      console.error('Error resetting password:', error);
+    const result = await resetPassword(userId, newPassword);
+    if (result.success) {
+      closePasswordModal();
+      alert('Password reset successfully');
     }
   };
 
   const handleAssignBooks = async (userId, bookIds) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/assign-books`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book_ids: bookIds })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setShowAssignBooksModal(false);
-        alert('Books assigned successfully');
-      }
-    } catch (error) {
-      console.error('Error assigning books:', error);
+    const result = await assignBooks(userId, bookIds);
+    if (result.success) {
+      closeAssignBooksModal();
+      alert('Books assigned successfully');
     }
   };
 
-  const handleSelectAll = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map(u => u.id));
-    }
-  };
-
-  const handleSelectUser = (userId) => {
-    if (selectedUsers.includes(userId)) {
-      setSelectedUsers(selectedUsers.filter(id => id !== userId));
-    } else {
-      setSelectedUsers([...selectedUsers, userId]);
-    }
-  };
-
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -208,7 +141,7 @@ const AdminUsers = () => {
           setFilterRole={setFilterRole}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
-          onCreateUser={() => setShowCreateModal(true)}
+          onCreateUser={openCreateModal}
           selectedCount={selectedUsers.length}
         />
 
@@ -217,27 +150,15 @@ const AdminUsers = () => {
           <UserTable
             users={users}
             selectedUsers={selectedUsers}
-            onSelectAll={handleSelectAll}
-            onSelectUser={handleSelectUser}
-            onView={(user) => {
-              setSelectedUser(user);
-              setShowViewModal(true);
-            }}
+            onSelectAll={() => selectAll(users)}
+            onSelectUser={toggleUser}
+            onView={openViewModal}
             onEdit={(user) => console.log('Edit', user)}
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteUser}
-            onAnalytics={(userId) => {
-              setSelectedUserId(userId);
-              setShowAnalyticsModal(true);
-            }}
-            onAssignBooks={(user) => {
-              setSelectedUser(user);
-              setShowAssignBooksModal(true);
-            }}
-            onPasswordReset={(user) => {
-              setSelectedUser(user);
-              setShowPasswordModal(true);
-            }}
+            onAnalytics={openAnalyticsModal}
+            onAssignBooks={openAssignBooksModal}
+            onPasswordReset={openPasswordModal}
           />
         </div>
 
@@ -247,23 +168,11 @@ const AdminUsers = () => {
             <UserMobileCard
               key={user.id}
               user={user}
-              onView={(user) => {
-                setSelectedUser(user);
-                setShowViewModal(true);
-              }}
+              onView={openViewModal}
               onEdit={(user) => console.log('Edit', user)}
-              onAnalytics={(userId) => {
-                setSelectedUserId(userId);
-                setShowAnalyticsModal(true);
-              }}
-              onAssignBooks={(user) => {
-                setSelectedUser(user);
-                setShowAssignBooksModal(true);
-              }}
-              onPasswordReset={(user) => {
-                setSelectedUser(user);
-                setShowPasswordModal(true);
-              }}
+              onAnalytics={openAnalyticsModal}
+              onAssignBooks={openAssignBooksModal}
+              onPasswordReset={openPasswordModal}
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteUser}
             />
@@ -277,14 +186,14 @@ const AdminUsers = () => {
             totalPages={totalPages}
             totalItems={totalUsers}
             itemsPerPage={10}
-            onPageChange={fetchUsers}
+            onPageChange={(page) => fetchUsers(page, { searchTerm, filterRole, filterStatus })}
           />
         </div>
 
         {/* Modals */}
         <CreateUserModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={closeCreateModal}
           newUser={newUser}
           setNewUser={setNewUser}
           onSubmit={handleCreateUser}
@@ -292,26 +201,26 @@ const AdminUsers = () => {
 
         <UserDetailModal
           isOpen={showViewModal}
-          onClose={() => setShowViewModal(false)}
+          onClose={closeViewModal}
           user={selectedUser}
         />
 
         <PasswordResetModal
           isOpen={showPasswordModal}
-          onClose={() => setShowPasswordModal(false)}
+          onClose={closePasswordModal}
           user={selectedUser}
           onSubmit={handlePasswordReset}
         />
 
         <UserAnalyticsModal
           isOpen={showAnalyticsModal}
-          onClose={() => setShowAnalyticsModal(false)}
+          onClose={closeAnalyticsModal}
           userId={selectedUserId}
         />
 
         <AssignBooksModal
           isOpen={showAssignBooksModal}
-          onClose={() => setShowAssignBooksModal(false)}
+          onClose={closeAssignBooksModal}
           user={selectedUser}
           onSubmit={handleAssignBooks}
         />
