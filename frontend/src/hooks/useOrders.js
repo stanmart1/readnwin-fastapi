@@ -14,7 +14,7 @@ export const useOrders = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/orders');
+      const response = await api.get('/orders/user');
       setOrders(response.data.orders || []);
     } catch (err) {
       setError(err.message);

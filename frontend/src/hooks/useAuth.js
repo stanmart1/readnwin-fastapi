@@ -14,12 +14,12 @@ export const useAuth = () => {
       if (response.data.access_token) {
         localStorage.setItem('token', response.data.access_token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        return true;
+        return response.data;
       }
-      return false;
+      return null;
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
-      return false;
+      return null;
     } finally {
       setLoading(false);
     }

@@ -20,7 +20,6 @@ import DashboardLibrary from './pages/dashboard/Library';
 import DashboardAnalytics from './pages/dashboard/Analytics';
 import DashboardActivity from './pages/dashboard/Activity';
 import DashboardOrders from './pages/dashboard/Orders';
-import DashboardWishlist from './pages/dashboard/Wishlist';
 import DashboardSettings from './pages/dashboard/Settings';
 
 import './styles/index.css';
@@ -50,7 +49,6 @@ function App() {
         <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
         <Route path="/dashboard/activity" element={<DashboardActivity />} />
         <Route path="/dashboard/orders" element={<DashboardOrders />} />
-        <Route path="/dashboard/wishlist" element={<DashboardWishlist />} />
         <Route path="/dashboard/settings" element={<DashboardSettings />} />
         
         {/* 404 */}

@@ -11,7 +11,6 @@ export default function Overview() {
   const statsData = [
     { label: 'Books Read', value: stats?.books_read || 0, icon: 'ri-book-open-line', color: 'blue' },
     { label: 'Total Orders', value: stats?.total_orders || 0, icon: 'ri-shopping-bag-line', color: 'purple' },
-    { label: 'Wishlist', value: stats?.wishlist_count || 0, icon: 'ri-heart-line', color: 'pink' },
     { label: 'Reviews', value: stats?.reviews_count || 0, icon: 'ri-star-line', color: 'yellow' }
   ];
 
@@ -31,9 +30,9 @@ export default function Overview() {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {loading ? (
-            [...Array(4)].map((_, i) => <StatCardSkeleton key={i} />)
+            [...Array(3)].map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
             statsData.map((stat, index) => (
               <motion.div

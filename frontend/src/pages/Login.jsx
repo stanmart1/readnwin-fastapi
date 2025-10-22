@@ -12,9 +12,9 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
-      navigate('/');
+    const result = await login(email, password);
+    if (result) {
+      navigate(result.redirect_path || '/dashboard');
     }
   };
 

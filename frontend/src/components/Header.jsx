@@ -1,9 +1,19 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../hooks';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { isAuthenticated, getUser, logout } = useAuth();
+  const user = getUser();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <motion.header 
@@ -45,12 +55,56 @@ export default function Header() {
                 0
               </span>
             </Link>
-            <Link to="/login" className="hidden md:block px-6 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-medium">
-              Login
-            </Link>
-            <Link to="/register" className="hidden md:block px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium">
-              Sign Up
-            </Link>
+            
+            {isAuthenticated() ? (
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-all"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {user?.first_name?.[0] || 'U'}
+                  </div>
+                  <span className="hidden md:block font-medium text-gray-700">{user?.first_name}</span>
+                  <i className="ri-arrow-down-s-line text-gray-600"></i>
+                </button>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                    <div className="px-4 py-2 border-b">
+                      <p className="font-semibold text-gray-900">{user?.first_name} {user?.last_name}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
+                    <Link to="/dashboard" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                      <i className="ri-dashboard-line mr-2"></i>Dashboard
+                    </Link>
+                    <Link to="/dashboard/library" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                      <i className="ri-book-line mr-2"></i>My Library
+                    </Link>
+                    <Link to="/dashboard/orders" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                      <i className="ri-shopping-bag-line mr-2"></i>Orders
+                    </Link>
+                    <Link to="/dashboard/settings" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                      <i className="ri-settings-line mr-2"></i>Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      <i className="ri-logout-box-line mr-2"></i>Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="hidden md:block px-6 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-medium">
+                  Login
+                </Link>
+                <Link to="/signup" className="hidden md:block px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium">
+                  Sign Up
+                </Link>
+              </>
+            )}
             
             {/* Mobile menu button */}
             <button

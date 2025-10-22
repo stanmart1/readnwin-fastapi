@@ -18,11 +18,11 @@ export const useDashboard = () => {
       
       // Fetch dashboard stats
       const statsResponse = await api.get('/dashboard/stats');
-      setStats(statsResponse.data);
+      setStats(statsResponse.data.stats);
 
       // Fetch currently reading books
-      const readingResponse = await api.get('/dashboard/currently-reading');
-      setCurrentlyReading(readingResponse.data.books || []);
+      const readingResponse = await api.get('/dashboard/reading-progress');
+      setCurrentlyReading(readingResponse.data.reading_progress || []);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching dashboard:', err);

@@ -17,17 +17,16 @@ export const useAnalytics = (period = 'week') => {
       setLoading(true);
       setError(null);
       
-      // Fetch reading stats
-      const statsResponse = await api.get(`/analytics/stats?period=${period}`);
-      setStats(statsResponse.data);
-
-      // Fetch weekly reading data
-      const weeklyResponse = await api.get('/analytics/weekly');
-      setWeeklyData(weeklyResponse.data.data || []);
+      // Fetch analytics from dashboard
+      const analyticsResponse = await api.get('/dashboard/analytics');
+      const analyticsData = analyticsResponse.data.analytics;
+      
+      setStats(analyticsData.stats);
+      setWeeklyData(analyticsData.monthlyData || []);
 
       // Fetch reading goals
       const goalsResponse = await api.get('/reading-goals');
-      setGoals(goalsResponse.data.goals || []);
+      setGoals(goalsResponse.data || []);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching analytics:', err);
@@ -36,5 +35,15 @@ export const useAnalytics = (period = 'week') => {
     }
   };
 
-  return { stats, weeklyData, goals, loading, error, refetch: fetchAnalytics };
+  const createGoal = async (goalData) => {
+    try {
+      await api.post('/reading-goals/', goalData);
+      await fetchAnalytics();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.detail || 'Failed to create goal' };
+    }
+  };
+
+  return { stats, weeklyData, goals, loading, error, refetch: fetchAnalytics, createGoal };
 };
