@@ -209,7 +209,7 @@ if admin_redis:
 app.include_router(users.router, prefix="/users", tags=["users"])
 
 # User Features
-app.include_router(contact.router, prefix="/contact", tags=["contact"])
+app.include_router(contact.router, prefix="/api/contact", tags=["contact"])
 app.include_router(user_activation.router, tags=["user"])
 app.include_router(email.router, tags=["email"])
 
@@ -218,7 +218,7 @@ app.include_router(blog.router, prefix="/api/blog", tags=["blog"])
 app.include_router(about.router, prefix="/api/about", tags=["about"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
-app.include_router(faq.router, prefix="/faq", tags=["faq"])
+app.include_router(faq.router, prefix="/api/faq", tags=["faq"])
 
 # Testing (only for development)
 if app.debug:
