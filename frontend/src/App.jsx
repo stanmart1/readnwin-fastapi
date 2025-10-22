@@ -13,12 +13,21 @@ import ForgotPassword from './pages/ForgotPassword';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
+
+// Dashboard Pages
+import DashboardOverview from './pages/dashboard/Overview';
+import DashboardLibrary from './pages/dashboard/Library';
+import DashboardOrders from './pages/dashboard/Orders';
+import DashboardWishlist from './pages/dashboard/Wishlist';
+import DashboardSettings from './pages/dashboard/Settings';
+
 import './styles/index.css';
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetail />} />
@@ -32,6 +41,15 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        
+        {/* Dashboard Routes */}
+        <Route path="/dashboard" element={<DashboardOverview />} />
+        <Route path="/dashboard/library" element={<DashboardLibrary />} />
+        <Route path="/dashboard/orders" element={<DashboardOrders />} />
+        <Route path="/dashboard/wishlist" element={<DashboardWishlist />} />
+        <Route path="/dashboard/settings" element={<DashboardSettings />} />
+        
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
