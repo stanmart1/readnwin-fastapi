@@ -15,4 +15,8 @@ export { useDashboard } from './useDashboard';
 export { usePermissions } from './usePermissions';
 export { useRolePermissions } from './useRolePermissions';
 export { useAuditLogs } from './useAuditLogs';
+export { useBookManagement } from './useBookManagement';
+export { useCategories } from './useCategories';
+export { useAuthors } from './useAuthors';
+export { useUsers } from './useUsers';
 export { useSettings } from './useSettings';
