@@ -3,6 +3,7 @@ import HeroSection from '../components/HeroSection';
 import AboutSection from '../components/AboutSection';
 import FeaturedBooks from '../components/FeaturedBooks';
 import EReaderShowcase from '../components/EReaderShowcase';
+import WorksCarousel from '../components/WorksCarousel';
 import Footer from '../components/Footer';
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
       <AboutSection />
       <FeaturedBooks />
       <EReaderShowcase />
+      <WorksCarousel />
       <Footer />
     </div>
   );

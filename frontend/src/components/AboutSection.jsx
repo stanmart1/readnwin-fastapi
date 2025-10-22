@@ -1,21 +1,69 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 export default function AboutSection() {
-  const features = ['Unlimited Access', 'AI-Powered Recommendations', 'Global Community'];
-  
-  const values = [
-    {
-      icon: 'ri-book-open-line',
-      title: 'Accessibility',
-      description: 'Making reading accessible to everyone'
-    },
-    {
-      icon: 'ri-lightbulb-line',
-      title: 'Innovation',
-      description: 'Cutting-edge technology'
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAboutContent();
+  }, []);
+
+  const fetchAboutContent = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/about');
+      setContent(response.data);
+    } catch (error) {
+      console.error('Error fetching about content:', error);
+      // Use fallback content
+      setContent(null);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Fallback content
+  const defaultContent = {
+    hero: {
+      title: 'About ReadnWin',
+      subtitle: 'Empowering The Mind Through Reading'
+    },
+    mission: {
+      description: "Our mission is to make quality literature accessible to everyone, everywhere. We're building the world's most comprehensive digital reading platform, combining cutting-edge technology with timeless storytelling to create an experience that inspires, educates, and entertains.",
+      features: ['Unlimited Access', 'AI-Powered Recommendations', 'Global Community']
+    },
+    values: [
+      {
+        icon: 'ri-book-open-line',
+        title: 'Accessibility',
+        description: 'Making reading accessible to everyone'
+      },
+      {
+        icon: 'ri-lightbulb-line',
+        title: 'Innovation',
+        description: 'Cutting-edge technology'
+      }
+    ]
+  };
+
+  const aboutContent = content || defaultContent;
+  const features = aboutContent.mission?.features || defaultContent.mission.features;
+  const values = aboutContent.values || defaultContent.values;
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-white">
@@ -31,8 +79,8 @@ export default function AboutSection() {
           >
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"
-                alt="ReadnWin - Empowering minds through reading"
+                src={aboutContent.aboutSection?.image || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"}
+                alt={aboutContent.aboutSection?.imageAlt || "ReadnWin - Empowering minds through reading"}
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -52,21 +100,21 @@ export default function AboutSection() {
               </span>
             </div>
             
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              About ReadnWin
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+              {aboutContent.hero?.title || 'About ReadnWin'}
             </h2>
             
-            <p className="text-xl text-gray-600 mb-6">
-              Empowering The Mind Through Reading
+            <p className="text-lg md:text-xl text-gray-600 mb-6">
+              {aboutContent.hero?.subtitle || 'Empowering The Mind Through Reading'}
             </p>
             
-            <p className="text-lg text-gray-600 mb-8">
-              Our mission is to make quality literature accessible to everyone, everywhere. We're building the world's most comprehensive digital reading platform, combining cutting-edge technology with timeless storytelling to create an experience that inspires, educates, and entertains.
+            <p className="text-base md:text-lg text-gray-600 mb-8">
+              {aboutContent.mission?.description || defaultContent.mission.description}
             </p>
 
             {/* Key Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              {features.map((feature, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
+              {features.slice(0, 3).map((feature, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -93,7 +141,7 @@ export default function AboutSection() {
 
             {/* Values Preview */}
             <div className="grid grid-cols-2 gap-4 mb-8">
-              {values.map((value, index) => (
+              {values.slice(0, 2).map((value, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, scale: 0.9 }}

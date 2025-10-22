@@ -73,9 +73,9 @@ Our advanced e-reader technology bridges the gap between traditional book readin
           </p>
         </motion.div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Column - Benefits */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6 order-2 lg:order-1">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
@@ -105,26 +105,26 @@ Our advanced e-reader technology bridges the gap between traditional book readin
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="relative"
+            className="relative order-1 lg:order-2"
           >
-            <div className={`${currentTheme.bg} ${currentTheme.border} border-2 rounded-2xl shadow-2xl overflow-hidden max-w-md mx-auto transition-all duration-300`}>
+            <div className={`${currentTheme.bg} ${currentTheme.border} border-2 rounded-2xl shadow-2xl overflow-hidden w-full max-w-md mx-auto transition-all duration-300`}>
               {/* Reader Header */}
-              <div className={`${currentTheme.bg} ${currentTheme.border} border-b px-4 py-3 flex items-center justify-between`}>
-                <div className="flex items-center space-x-3">
-                  <i className="ri-book-line text-lg text-blue-600"></i>
-                  <span className={`font-medium ${currentTheme.text}`}>Sample Book</span>
+              <div className={`${currentTheme.bg} ${currentTheme.border} border-b px-3 md:px-4 py-2 md:py-3 flex items-center justify-between`}>
+                <div className="flex items-center space-x-2 md:space-x-3">
+                  <i className="ri-book-line text-base md:text-lg text-blue-600"></i>
+                  <span className={`font-medium text-sm md:text-base ${currentTheme.text}`}>Sample Book</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 md:space-x-2">
                   <button
                     onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-                    className={`p-1 rounded ${currentTheme.text} hover:bg-gray-100 transition-colors`}
+                    className={`p-1 rounded text-sm md:text-base ${currentTheme.text} hover:bg-gray-100 transition-colors`}
                   >
                     <i className="ri-subtract-line"></i>
                   </button>
-                  <span className={`text-sm ${currentTheme.text}`}>{fontSize}px</span>
+                  <span className={`text-xs md:text-sm ${currentTheme.text}`}>{fontSize}px</span>
                   <button
                     onClick={() => setFontSize(Math.min(24, fontSize + 2))}
-                    className={`p-1 rounded ${currentTheme.text} hover:bg-gray-100 transition-colors`}
+                    className={`p-1 rounded text-sm md:text-base ${currentTheme.text} hover:bg-gray-100 transition-colors`}
                   >
                     <i className="ri-add-line"></i>
                   </button>
@@ -132,7 +132,7 @@ Our advanced e-reader technology bridges the gap between traditional book readin
               </div>
 
               {/* Reader Content */}
-              <div className="p-6 h-[400px] overflow-y-auto">
+              <div className="p-4 md:p-6 h-[300px] md:h-[400px] overflow-y-auto">
                 <div 
                   className={`${currentTheme.text} leading-relaxed transition-all duration-300 select-text`}
                   style={{ fontSize: `${fontSize}px` }}
@@ -142,23 +142,23 @@ Our advanced e-reader technology bridges the gap between traditional book readin
               </div>
 
               {/* Reader Footer */}
-              <div className={`${currentTheme.bg} ${currentTheme.border} border-t px-4 py-3 flex items-center justify-between`}>
-                <div className="flex items-center space-x-4">
+              <div className={`${currentTheme.bg} ${currentTheme.border} border-t px-3 md:px-4 py-2 md:py-3 flex items-center justify-between`}>
+                <div className="flex items-center space-x-2 md:space-x-4">
                   <button
                     onClick={cycleTheme}
-                    className={`p-2 rounded-lg ${currentTheme.text} hover:bg-gray-100 transition-colors`}
+                    className={`p-1.5 md:p-2 rounded-lg text-sm md:text-base ${currentTheme.text} hover:bg-gray-100 transition-colors`}
                     title="Change theme"
                   >
                     <i className="ri-contrast-2-line"></i>
                   </button>
-                  <button className={`p-2 rounded-lg ${currentTheme.text} hover:bg-gray-100 transition-colors`} title="Bookmark">
+                  <button className={`p-1.5 md:p-2 rounded-lg text-sm md:text-base ${currentTheme.text} hover:bg-gray-100 transition-colors`} title="Bookmark">
                     <i className="ri-bookmark-line"></i>
                   </button>
-                  <button className={`p-2 rounded-lg ${currentTheme.text} hover:bg-gray-100 transition-colors`} title="Highlight">
+                  <button className={`p-1.5 md:p-2 rounded-lg text-sm md:text-base ${currentTheme.text} hover:bg-gray-100 transition-colors`} title="Highlight">
                     <i className="ri-edit-line"></i>
                   </button>
                 </div>
-                <div className={`text-sm ${currentTheme.text}`}>
+                <div className={`text-xs md:text-sm ${currentTheme.text}`}>
                   Page 1 of 156
                 </div>
               </div>
@@ -168,7 +168,7 @@ Our advanced e-reader technology bridges the gap between traditional book readin
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="absolute -bottom-4 -left-4 w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg"
+              className="hidden md:flex absolute -bottom-4 -left-4 w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full items-center justify-center shadow-lg"
             >
               <i className="ri-bookmark-line text-white text-lg"></i>
             </motion.div>
