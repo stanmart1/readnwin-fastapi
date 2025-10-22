@@ -15,7 +15,7 @@ export const useActivity = (limit = 20) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get(`/api/activity?limit=${limit}`);
+      const response = await api.get(`/dashboard/activity?limit=${limit}`);
       setActivities(response.data.activities || []);
       setHasMore(response.data.has_more || false);
     } catch (err) {
@@ -29,7 +29,7 @@ export const useActivity = (limit = 20) => {
   const loadMore = async () => {
     try {
       const offset = activities.length;
-      const response = await api.get(`/api/activity?limit=${limit}&offset=${offset}`);
+      const response = await api.get(`/dashboard/activity?limit=${limit}&offset=${offset}`);
       setActivities([...activities, ...(response.data.activities || [])]);
       setHasMore(response.data.has_more || false);
     } catch (err) {

@@ -18,15 +18,15 @@ export const useAnalytics = (period = 'week') => {
       setError(null);
       
       // Fetch reading stats
-      const statsResponse = await api.get(`/api/analytics/stats?period=${period}`);
+      const statsResponse = await api.get(`/analytics/stats?period=${period}`);
       setStats(statsResponse.data);
 
       // Fetch weekly reading data
-      const weeklyResponse = await api.get('/api/analytics/weekly');
+      const weeklyResponse = await api.get('/analytics/weekly');
       setWeeklyData(weeklyResponse.data.data || []);
 
       // Fetch reading goals
-      const goalsResponse = await api.get('/api/analytics/goals');
+      const goalsResponse = await api.get('/reading-goals');
       setGoals(goalsResponse.data.goals || []);
     } catch (err) {
       setError(err.message);
