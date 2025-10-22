@@ -118,7 +118,6 @@ const AdminLayout = ({ children }) => {
         initial={false}
         animate={{ marginLeft: collapsed ? 80 : 288 }}
         className="flex-1 lg:ml-72 transition-all duration-300"
-        style={{ paddingTop: '64px' }}
       >
         {/* Mobile Menu Button */}
         <div className="lg:hidden fixed top-20 left-4 z-20">
@@ -131,7 +130,7 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 mt-1">
           {children}
         </div>
       </motion.main>
