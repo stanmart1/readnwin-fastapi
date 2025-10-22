@@ -38,8 +38,8 @@ const AdminDashboard = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Page Title Card */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        {/* Page Title Card - Sticky */}
+        <div className="sticky top-0 z-10 bg-white rounded-lg shadow-md p-6">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-1">Manage your ReadnWin platform</p>
         </div>
