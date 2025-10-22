@@ -14,4 +14,5 @@ export { useActivity } from './useActivity';
 export { useDashboard } from './useDashboard';
 export { usePermissions } from './usePermissions';
 export { useRolePermissions } from './useRolePermissions';
+export { useAuditLogs } from './useAuditLogs';
 export { useSettings } from './useSettings';
