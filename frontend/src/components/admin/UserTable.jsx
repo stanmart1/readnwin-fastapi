@@ -62,15 +62,15 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                    {user.role || 'User'}
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role?.name)}`}>
+                    {user.role?.display_name || 'No Role'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {user.status || 'Active'}
+                    {user.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">
@@ -114,11 +114,11 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                       <i className="ri-lock-password-line"></i>
                     </button>
                     <button
-                      onClick={() => onStatusChange(user.id, user.status === 'active' ? 'suspended' : 'active')}
+                      onClick={() => onStatusChange(user.id, !user.is_active)}
                       className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-                      title={user.status === 'active' ? 'Suspend' : 'Activate'}
+                      title={user.is_active ? 'Deactivate' : 'Activate'}
                     >
-                      <i className={user.status === 'active' ? 'ri-pause-circle-line' : 'ri-play-circle-line'}></i>
+                      <i className={user.is_active ? 'ri-pause-circle-line' : 'ri-play-circle-line'}></i>
                     </button>
                     <button
                       onClick={() => onDelete(user.id)}

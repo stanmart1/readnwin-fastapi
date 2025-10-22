@@ -1,15 +1,10 @@
 const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onPasswordReset, onStatusChange, onDelete }) => {
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'suspended': return 'bg-red-500';
-      case 'pending': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
-    }
+  const getStatusColor = (isActive) => {
+    return isActive ? 'bg-green-500' : 'bg-red-500';
   };
 
-  const getRoleColor = (role) => {
-    switch (role) {
+  const getRoleColor = (roleName) => {
+    switch (roleName) {
       case 'admin': return 'bg-purple-500';
       case 'super_admin': return 'bg-red-500';
       case 'user': return 'bg-blue-500';
@@ -34,8 +29,8 @@ const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onPa
             <div className="text-sm text-gray-500 break-words">{user.email}</div>
           </div>
         </div>
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(user.status)}`}>
-          {user.status}
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(user.is_active)}`}>
+          {user.is_active ? 'Active' : 'Inactive'}
         </span>
       </div>
 
@@ -60,8 +55,8 @@ const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onPa
         <div className="text-sm">
           <span className="font-medium text-gray-700">Role:</span>
           <div className="mt-1 flex flex-wrap gap-1">
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full text-white ${getRoleColor(user.role)}`}>
-              {user.role || 'User'}
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full text-white ${getRoleColor(user.role?.name)}`}>
+              {user.role?.display_name || 'No Role'}
             </span>
           </div>
         </div>

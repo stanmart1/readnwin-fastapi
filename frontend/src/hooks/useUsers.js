@@ -15,7 +15,7 @@ export const useUsers = () => {
       setError(null);
 
       const params = {
-        page,
+        skip: (page - 1) * 10,
         limit: 10,
         ...(filters.searchTerm && { search: filters.searchTerm }),
         ...(filters.filterStatus && filters.filterStatus !== 'all' && { status: filters.filterStatus }),
@@ -23,13 +23,12 @@ export const useUsers = () => {
       };
 
       const response = await api.get('/admin/users', { params });
-      
-      if (response.data.success) {
-        setUsers(response.data.users);
-        setTotalPages(response.data.pagination.pages);
-        setTotalUsers(response.data.pagination.total);
-        setCurrentPage(response.data.pagination.page);
-      }
+      const data = response.data;
+
+      setUsers(data.users || []);
+      setTotalUsers(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / 10));
+      setCurrentPage(page);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching users:', err);
@@ -68,8 +67,8 @@ export const useUsers = () => {
     }
   };
 
-  const updateUserStatus = async (userId, status) => {
-    return updateUser(userId, { status });
+  const updateUserStatus = async (userId, isActive) => {
+    return updateUser(userId, { is_active: isActive });
   };
 
   const resetPassword = async (userId, newPassword) => {

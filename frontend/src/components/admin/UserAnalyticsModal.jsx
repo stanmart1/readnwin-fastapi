@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import api from '../../lib/api';
 
 const UserAnalyticsModal = ({ isOpen, onClose, userId }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -15,10 +16,9 @@ const UserAnalyticsModal = ({ isOpen, onClose, userId }) => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/users/${userId}/analytics`);
-      const data = await response.json();
-      if (data.success) {
-        setAnalytics(data.analytics);
+      const response = await api.get(`/admin/users/${userId}/analytics`);
+      if (response.data.success) {
+        setAnalytics(response.data.analytics);
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
