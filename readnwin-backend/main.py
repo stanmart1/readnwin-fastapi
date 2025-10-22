@@ -112,7 +112,7 @@ from routers import (
     faq, user, about, portfolio, reviews, rbac, users, dashboard, reading_goals,
     reading, reading_enhanced, admin_enhanced, admin_email,
     analytics, payment, shopping_enhanced, testing, ereader, ereader_enhanced, upload,
-    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard
+    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard, admin_library
 )
 
 # Import optional routers
@@ -185,6 +185,7 @@ app.include_router(admin_payment_proofs.router, prefix="/admin", tags=["admin"])
 app.include_router(admin_stats.router, tags=["admin"])
 app.include_router(admin_stats_fast.router, prefix="/admin/stats", tags=["admin"])
 app.include_router(admin_books.router, tags=["admin"])
+app.include_router(admin_library.router, tags=["admin"])
 app.include_router(admin_payment_settings.router, tags=["admin"])
 app.include_router(payment_settings.router, tags=["payment"])  # Public endpoints
 app.include_router(shipping.router, tags=["shipping"])

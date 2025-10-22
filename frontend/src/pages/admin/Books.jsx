@@ -9,6 +9,8 @@ import BookFilters from '../../components/admin/BookFilters';
 import BookTable from '../../components/admin/BookTable';
 import BookEditModal from '../../components/admin/BookEditModal';
 import BookAddModal from '../../components/admin/BookAddModal';
+import LibraryManagement from '../../components/admin/LibraryManagement';
+import CategoriesManagement from '../../components/admin/CategoriesManagement';
 
 const AdminBooks = () => {
   const [activeSection, setActiveSection] = useState('books');
@@ -351,17 +353,11 @@ const AdminBooks = () => {
               )}
 
               {activeSection === 'library' && (
-                <div className="text-center py-12">
-                  <i className="ri-book-shelf-line text-6xl text-gray-300 mb-4"></i>
-                  <p className="text-gray-500">Library management coming soon...</p>
-                </div>
+                <LibraryManagement />
               )}
 
               {activeSection === 'categories' && (
-                <div className="text-center py-12">
-                  <i className="ri-folder-line text-6xl text-gray-300 mb-4"></i>
-                  <p className="text-gray-500">Categories management coming soon...</p>
-                </div>
+                <CategoriesManagement />
               )}
 
               {activeSection === 'authors' && (
