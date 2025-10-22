@@ -5,3 +5,4 @@ export { useBlog } from './useBlog';
 export { useTestimonials } from './useTestimonials';
 export { useFAQ } from './useFAQ';
 export { useContact } from './useContact';
+export { useAuth } from './useAuth';
