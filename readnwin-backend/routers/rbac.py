@@ -64,9 +64,14 @@ def require_permission(permission_name: str):
             if not current_user or not current_user.role:
                 raise HTTPException(status_code=403, detail="Access denied")
 
-            # Check if user has the required permission
+            # Super admin and admin bypass permission checks
+            if current_user.role.name in ["admin", "super_admin"]:
+                return current_user
+
+            # Check if user has the required permission (already loaded via joinedload)
             user_permissions = [perm.permission.name for perm in current_user.role.permissions] if current_user.role.permissions else []
-            if permission_name not in user_permissions and "admin" not in user_permissions and current_user.role.name not in ["admin", "super_admin"]:
+            
+            if permission_name not in user_permissions:
                 raise HTTPException(status_code=403, detail="Access denied")
 
             return current_user
@@ -82,7 +87,13 @@ def require_permission(permission_name: str):
 @router.get("/roles", response_model=List[RoleResponse])
 def get_roles(user: User = Depends(require_permission("manage_roles")), db: Session = Depends(get_db)):
     try:
-        roles = db.query(Role).all()
+        from sqlalchemy.orm import joinedload
+        
+        # Eager load permissions to avoid N+1 queries
+        roles = db.query(Role).options(
+            joinedload(Role.permissions).joinedload(RolePermission.permission)
+        ).all()
+        
         result = []
         for role in roles:
             permissions = [
@@ -255,24 +266,40 @@ def delete_role(role_id: int, user: User = Depends(require_permission("manage_ro
 
 # Permission Management Endpoints
 @router.get("/permissions", response_model=List[PermissionResponse])
-def get_permissions(user: User = Depends(require_permission("manage_permissions")), db: Session = Depends(get_db)):
+@router.get("/permissions")
+def get_permissions(
+    skip: int = 0,
+    limit: int = 100,
+    user: User = Depends(require_permission("manage_permissions")), 
+    db: Session = Depends(get_db)
+):
     try:
-        permissions = db.query(Permission).all()
-        return [
-            PermissionResponse(
-                id=perm.id,
-                name=perm.name,
-                display_name=perm.display_name,
-                description=perm.description,
-                resource=perm.resource,
-                action=perm.action,
-                scope=perm.scope
-            )
-            for perm in permissions
-        ]
+        # Get total count
+        total = db.query(Permission).count()
+        
+        # Get paginated permissions
+        permissions = db.query(Permission).offset(skip).limit(limit).all()
+        
+        return {
+            "permissions": [
+                {
+                    "id": perm.id,
+                    "name": perm.name,
+                    "display_name": perm.display_name,
+                    "description": perm.description,
+                    "resource": perm.resource,
+                    "action": perm.action,
+                    "scope": perm.scope
+                }
+                for perm in permissions
+            ],
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
     except Exception as e:
         print(f"Get permissions error: {e}")
-        return []
+        return {"permissions": [], "total": 0, "skip": 0, "limit": limit}
 
 @router.post("/permissions", response_model=PermissionResponse)
 def create_permission(perm_data: CreatePermission, user: User = Depends(require_permission("manage_permissions")), db: Session = Depends(get_db)):

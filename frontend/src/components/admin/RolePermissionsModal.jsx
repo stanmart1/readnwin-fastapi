@@ -1,40 +1,31 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import api from '../../lib/api';
+import { useRolePermissions } from '../../hooks/useRolePermissions';
 
 const RolePermissionsModal = ({ isOpen, onClose, role }) => {
-  const [permissions, setPermissions] = useState([]);
-  const [rolePermissions, setRolePermissions] = useState([]);
+  const {
+    permissions,
+    rolePermissions,
+    loading,
+    fetchAllPermissions,
+    fetchRolePermissions,
+    updateRolePermissions
+  } = useRolePermissions();
+
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (role && isOpen) {
-      fetchPermissions();
-      fetchRolePermissions();
+      fetchAllPermissions();
+      loadRolePermissions();
     }
   }, [role, isOpen]);
 
-  const fetchPermissions = async () => {
-    try {
-      const response = await api.get('/rbac/permissions');
-      setPermissions(response.data || []);
-    } catch (err) {
-      console.error('Error fetching permissions:', err);
-    }
-  };
-
-  const fetchRolePermissions = async () => {
-    try {
-      const response = await api.get(`/rbac/roles/${role.id}/permissions`);
-      const perms = Array.isArray(response.data) ? response.data : (response.data?.permissions || []);
-      setRolePermissions(perms);
-      setSelectedPermissions(perms.map(p => p.id));
-    } catch (err) {
-      console.error('Error fetching role permissions:', err);
-      setRolePermissions([]);
-      setSelectedPermissions([]);
+  const loadRolePermissions = async () => {
+    const result = await fetchRolePermissions(role.id);
+    if (result.success) {
+      setSelectedPermissions(result.data.map(p => p.id));
     }
   };
 
@@ -47,30 +38,12 @@ const RolePermissionsModal = ({ isOpen, onClose, role }) => {
   };
 
   const handleSave = async () => {
-    setLoading(true);
-    try {
-      const currentIds = rolePermissions.map(p => p.id);
-      
-      // Remove permissions
-      for (const permId of currentIds) {
-        if (!selectedPermissions.includes(permId)) {
-          await api.delete(`/rbac/roles/${role.id}/permissions/${permId}`);
-        }
-      }
-
-      // Add permissions
-      for (const permId of selectedPermissions) {
-        if (!currentIds.includes(permId)) {
-          await api.post(`/rbac/roles/${role.id}/permissions`, { permission_id: permId });
-        }
-      }
-
-      await fetchRolePermissions();
+    const currentIds = rolePermissions.map(p => p.id);
+    const result = await updateRolePermissions(role.id, selectedPermissions, currentIds);
+    
+    if (result.success) {
+      await loadRolePermissions();
       setIsEditing(false);
-    } catch (err) {
-      console.error('Error updating permissions:', err);
-    } finally {
-      setLoading(false);
     }
   };
 

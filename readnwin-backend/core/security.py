@@ -83,8 +83,14 @@ async def get_current_user_from_token(
         if user_id is None or token_type != "access":
             raise HTTPException(status_code=401, detail="Invalid authentication token")
 
-        # Fast query without joins
-        user = db.query(User).filter(User.id == user_id).first()
+        # Optimized query with eager loading of role and permissions
+        from sqlalchemy.orm import joinedload
+        from models.role import Role, RolePermission, Permission
+        
+        user = db.query(User).options(
+            joinedload(User.role).joinedload(Role.permissions).joinedload(RolePermission.permission)
+        ).filter(User.id == user_id).first()
+        
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 

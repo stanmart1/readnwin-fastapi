@@ -13,4 +13,5 @@ export { useAnalytics } from './useAnalytics';
 export { useActivity } from './useActivity';
 export { useDashboard } from './useDashboard';
 export { usePermissions } from './usePermissions';
+export { useRolePermissions } from './useRolePermissions';
 export { useSettings } from './useSettings';
