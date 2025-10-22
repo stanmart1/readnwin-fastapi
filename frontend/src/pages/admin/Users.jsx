@@ -5,15 +5,18 @@ import UserFilters from '../../components/admin/UserFilters';
 import UserTable from '../../components/admin/UserTable';
 import UserMobileCard from '../../components/admin/UserMobileCard';
 import CreateUserModal from '../../components/admin/CreateUserModal';
+import EditUserModal from '../../components/admin/EditUserModal';
 import UserDetailModal from '../../components/admin/UserDetailModal';
 import PasswordResetModal from '../../components/admin/PasswordResetModal';
 import UserAnalyticsModal from '../../components/admin/UserAnalyticsModal';
 import AssignBooksModal from '../../components/admin/AssignBooksModal';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import Pagination from '../../components/admin/Pagination';
 import { useUsers } from '../../hooks/useUsers';
 import { useUserFilters } from '../../hooks/useUserFilters';
 import { useUserSelection } from '../../hooks/useUserSelection';
 import { useUserModals } from '../../hooks/useUserModals';
+import { useRoles } from '../../hooks/useRoles';
 
 const AdminUsers = () => {
   const {
@@ -40,6 +43,8 @@ const AdminUsers = () => {
   } = useUserFilters((filters) => fetchUsers(1, filters));
 
   const { selectedUsers, selectAll, toggleUser } = useUserSelection();
+
+  const { roles } = useRoles();
 
   const {
     showCreateModal,
@@ -73,6 +78,9 @@ const AdminUsers = () => {
     role: 'user'
   });
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -86,12 +94,27 @@ const AdminUsers = () => {
     }
   };
 
+  const handleEditUser = async (userId, userData) => {
+    const result = await updateUser(userId, userData);
+    if (result.success) {
+      closeEditModal();
+      fetchUsers(currentPage, { searchTerm, filterRole, filterStatus });
+    }
+    return result;
+  };
+
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    const result = await deleteUser(userId);
+    setUserToDelete(userId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    const result = await deleteUser(userToDelete);
     if (result.success) {
       fetchUsers(currentPage, { searchTerm, filterRole, filterStatus });
     }
+    setUserToDelete(null);
   };
 
   const handleStatusChange = async (userId, newStatus) => {
@@ -208,6 +231,14 @@ const AdminUsers = () => {
           user={selectedUser}
         />
 
+        <EditUserModal
+          isOpen={showEditModal}
+          onClose={closeEditModal}
+          user={selectedUser}
+          onSave={handleEditUser}
+          roles={roles}
+        />
+
         <PasswordResetModal
           isOpen={showPasswordModal}
           onClose={closePasswordModal}
@@ -226,6 +257,16 @@ const AdminUsers = () => {
           onClose={closeAssignBooksModal}
           user={selectedUser}
           onSubmit={handleAssignBooks}
+        />
+
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmDelete}
+          title="Delete User"
+          message="Are you sure you want to delete this user? This action cannot be undone."
+          confirmText="Delete"
+          type="danger"
         />
       </div>
     </AdminLayout>

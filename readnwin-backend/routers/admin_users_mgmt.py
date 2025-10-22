@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from core.database import get_db
-from core.security import get_current_user_from_token, check_admin_access
+from core.security import get_current_user_from_token, check_admin_access, verify_token
 from models.user import User
 from models.role import Role
 from typing import Optional
 
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter(prefix="/admin", tags=["admin", "users"])
 
@@ -19,6 +18,23 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     is_active: Optional[bool] = None
     role_id: Optional[int] = None
+
+def get_admin_without_active_check(authorization: str = Header(None), db: Session = Depends(get_db)):
+    """Get admin user without checking active status"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user = db.query(User).filter(User.id == payload.get("sub")).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    check_admin_access(user)
+    return user
 
 @router.get("/users")
 def get_all_users(
@@ -93,11 +109,10 @@ def get_all_users(
 def update_user_status(
     user_id: int,
     is_active: bool,
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_admin_without_active_check),
     db: Session = Depends(get_db)
 ):
     """Update user status"""
-    check_admin_access(current_user)
     
     try:
         user = db.query(User).filter(User.id == user_id).first()

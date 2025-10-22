@@ -77,7 +77,7 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     <button
                       onClick={() => onView(user)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
