@@ -12,6 +12,7 @@ class ResendEmailService:
         self.db = db
         # Load API key from database or environment
         self._load_api_key()
+        self._load_from_email()
     
     def _load_api_key(self):
         """Load Resend API key from database"""
@@ -32,11 +33,49 @@ class ResendEmailService:
         if env_key:
             resend.api_key = env_key
     
+    def _load_from_email(self):
+        """Load from email and name from database"""
+        try:
+            from sqlalchemy import text
+            result = self.db.execute(text(
+                "SELECT from_email, from_name FROM email_gateway_config WHERE provider = 'resend' AND is_active = true LIMIT 1"
+            )).fetchone()
+            if result:
+                self.from_email = result[0] or "noreply@readnwin.com"
+                self.from_name = result[1] or "ReadnWin"
+            else:
+                self.from_email = "noreply@readnwin.com"
+                self.from_name = "ReadnWin"
+        except Exception as e:
+            logger.warning(f"Could not load from email from database: {e}")
+            self.from_email = "noreply@readnwin.com"
+            self.from_name = "ReadnWin"
+    
+    def send_email(self, to: list, subject: str, html_content: str, from_email: str = None) -> Dict[str, Any]:
+        """Send a generic email"""
+        try:
+            if not from_email:
+                from_email = f"{self.from_name} <{self.from_email}>"
+            
+            params = {
+                "from": from_email,
+                "to": to,
+                "subject": subject,
+                "html": html_content
+            }
+            
+            email = resend.Emails.send(params)
+            logger.info(f"Email sent successfully to {to}")
+            return {"success": True, "email_id": email.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send email: {str(e)}")
+            return {"success": False, "error": str(e)}
+    
     def send_welcome_email(self, to_email: str, first_name: str = "Reader") -> Dict[str, Any]:
         """Send welcome email to new user"""
         try:
             params = {
-                "from": "ReadnWin <onboarding@resend.dev>",
+                "from": f"{self.from_name} <{self.from_email}>",
                 "to": [to_email],
                 "subject": "Welcome to ReadnWin!",
                 "html": f"""

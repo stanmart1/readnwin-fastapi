@@ -12,7 +12,13 @@ export const useSettingsManagement = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/admin/system-settings');
-      setSettings(response.data.settings || {});
+      // Extract values from the settings objects
+      const settingsData = response.data.settings || {};
+      const extractedSettings = {};
+      Object.keys(settingsData).forEach(key => {
+        extractedSettings[key] = settingsData[key].value;
+      });
+      setSettings(extractedSettings);
     } catch (err) {
       setError(err.message);
       console.error('Error loading settings:', err);
