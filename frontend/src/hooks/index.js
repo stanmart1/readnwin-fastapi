@@ -19,4 +19,5 @@ export { useBookManagement } from './useBookManagement';
 export { useCategories } from './useCategories';
 export { useAuthors } from './useAuthors';
 export { useUsers } from './useUsers';
+export { useReviews } from './useReviews';
 export { useSettings } from './useSettings';
