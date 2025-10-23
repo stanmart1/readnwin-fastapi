@@ -14,6 +14,7 @@ import { AdminRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Books from './pages/Books';
 import BookDetail from './pages/BookDetail';
+import Cart from './pages/Cart';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import FAQ from './pages/FAQ';
@@ -64,6 +65,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetail />} />
+        <Route path="/cart" element={<Cart />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/faq" element={<FAQ />} />

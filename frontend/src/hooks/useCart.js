@@ -1,0 +1,284 @@
+import { useState, useEffect, useCallback } from 'react';
+import api from '../lib/api';
+import { useAuth } from './useAuth';
+
+const GUEST_CART_KEY = 'readnwin_guest_cart';
+
+export const useCart = () => {
+  const { isAuthenticated, getUser } = useAuth();
+  const user = getUser();
+  
+  const [cartItems, setCartItems] = useState(() => {
+    // Initialize from localStorage for guest users
+    if (typeof window !== 'undefined' && !isAuthenticated) {
+      try {
+        const stored = localStorage.getItem(GUEST_CART_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        return [];
+      }
+    }
+    return [];
+  });
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [analytics, setAnalytics] = useState({
+    totalItems: 0,
+    totalValue: 0,
+    totalSavings: 0,
+    ebookCount: 0,
+    physicalCount: 0,
+    isEbookOnly: true,
+    isPhysicalOnly: false,
+    isMixedCart: false
+  });
+
+  // Save guest cart to localStorage
+  const saveGuestCart = useCallback((items) => {
+    try {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Error saving guest cart:', error);
+    }
+  }, []);
+
+  // Load authenticated user cart from API
+  const loadAuthenticatedCart = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await api.get('/cart');
+      setCartItems(response.data.items || []);
+    } catch (err) {
+      console.error('Error loading cart:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  // Transfer guest cart to authenticated user
+  const transferGuestCart = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const guestCart = localStorage.getItem(GUEST_CART_KEY);
+      if (!guestCart) return;
+      
+      const guestItems = JSON.parse(guestCart);
+      if (guestItems.length === 0) return;
+      
+      // Transfer each item to user cart
+      for (const item of guestItems) {
+        await api.post('/cart/add', {
+          book_id: item.book_id,
+          quantity: item.quantity
+        });
+      }
+      
+      // Clear guest cart
+      localStorage.removeItem(GUEST_CART_KEY);
+      
+      // Reload authenticated cart
+      await loadAuthenticatedCart();
+    } catch (err) {
+      console.error('Error transferring cart:', err);
+    }
+  }, [isAuthenticated, loadAuthenticatedCart]);
+
+  // Load cart on mount and when auth changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      transferGuestCart();
+    } else {
+      // Load from localStorage for guests
+      try {
+        const stored = localStorage.getItem(GUEST_CART_KEY);
+        if (stored) {
+          setCartItems(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.error('Error loading guest cart:', error);
+      }
+    }
+  }, [isAuthenticated, transferGuestCart]);
+
+  // Update analytics when cart changes
+  useEffect(() => {
+    const ebookCount = cartItems.filter(item => item.book?.format === 'ebook').length;
+    const physicalCount = cartItems.filter(item => item.book?.format === 'physical').length;
+    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalValue = cartItems.reduce((sum, item) => sum + (item.book?.price || 0) * item.quantity, 0);
+    const totalSavings = cartItems.reduce((sum, item) => {
+      const savings = (item.book?.original_price || 0) - (item.book?.price || 0);
+      return sum + (savings > 0 ? savings * item.quantity : 0);
+    }, 0);
+
+    setAnalytics({
+      totalItems,
+      totalValue,
+      totalSavings,
+      ebookCount,
+      physicalCount,
+      isEbookOnly: ebookCount > 0 && physicalCount === 0,
+      isPhysicalOnly: physicalCount > 0 && ebookCount === 0,
+      isMixedCart: ebookCount > 0 && physicalCount > 0
+    });
+  }, [cartItems]);
+
+  // Add to cart
+  const addToCart = useCallback(async (book, quantity = 1) => {
+    try {
+      setError(null);
+      
+      if (isAuthenticated) {
+        // Add to authenticated cart
+        await api.post('/cart/add', {
+          book_id: book.id,
+          quantity
+        });
+        await loadAuthenticatedCart();
+      } else {
+        // Add to guest cart
+        const existingIndex = cartItems.findIndex(item => item.book_id === book.id);
+        let newCart;
+        
+        if (existingIndex >= 0) {
+          newCart = [...cartItems];
+          newCart[existingIndex].quantity += quantity;
+        } else {
+          newCart = [...cartItems, {
+            id: Date.now(),
+            book_id: book.id,
+            book: book,
+            quantity,
+            created_at: new Date().toISOString()
+          }];
+        }
+        
+        setCartItems(newCart);
+        saveGuestCart(newCart);
+      }
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      setError(err.message);
+      throw err;
+    }
+  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+
+  // Update quantity
+  const updateQuantity = useCallback(async (bookId, quantity) => {
+    if (quantity < 1) return;
+    
+    try {
+      setError(null);
+      
+      if (isAuthenticated) {
+        await api.put('/cart/update', {
+          book_id: bookId,
+          quantity
+        });
+        await loadAuthenticatedCart();
+      } else {
+        const newCart = cartItems.map(item =>
+          item.book_id === bookId ? { ...item, quantity } : item
+        );
+        setCartItems(newCart);
+        saveGuestCart(newCart);
+      }
+    } catch (err) {
+      console.error('Error updating quantity:', err);
+      setError(err.message);
+      throw err;
+    }
+  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+
+  // Remove from cart
+  const removeFromCart = useCallback(async (bookId) => {
+    try {
+      setError(null);
+      
+      if (isAuthenticated) {
+        await api.delete(`/cart/remove/${bookId}`);
+        await loadAuthenticatedCart();
+      } else {
+        const newCart = cartItems.filter(item => item.book_id !== bookId);
+        setCartItems(newCart);
+        saveGuestCart(newCart);
+      }
+    } catch (err) {
+      console.error('Error removing from cart:', err);
+      setError(err.message);
+      throw err;
+    }
+  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+
+  // Clear cart
+  const clearCart = useCallback(async () => {
+    try {
+      setError(null);
+      
+      if (isAuthenticated) {
+        await api.delete('/cart/clear');
+        setCartItems([]);
+      } else {
+        setCartItems([]);
+        localStorage.removeItem(GUEST_CART_KEY);
+      }
+    } catch (err) {
+      console.error('Error clearing cart:', err);
+      setError(err.message);
+      throw err;
+    }
+  }, [isAuthenticated]);
+
+  // Helper functions
+  const getSubtotal = useCallback(() => {
+    return cartItems.reduce((sum, item) => sum + (item.book?.price || 0) * item.quantity, 0);
+  }, [cartItems]);
+
+  const getTotalSavings = useCallback(() => {
+    return cartItems.reduce((sum, item) => {
+      const savings = (item.book?.original_price || 0) - (item.book?.price || 0);
+      return sum + (savings > 0 ? savings * item.quantity : 0);
+    }, 0);
+  }, [cartItems]);
+
+  const getTotalItems = useCallback(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
+
+  const isEbookOnly = useCallback(() => {
+    return analytics.isEbookOnly;
+  }, [analytics]);
+
+  const isPhysicalOnly = useCallback(() => {
+    return analytics.isPhysicalOnly;
+  }, [analytics]);
+
+  const isMixedCart = useCallback(() => {
+    return analytics.isMixedCart;
+  }, [analytics]);
+
+  return {
+    cartItems,
+    isLoading,
+    error,
+    analytics,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    getSubtotal,
+    getTotalSavings,
+    getTotalItems,
+    isEbookOnly,
+    isPhysicalOnly,
+    isMixedCart,
+    refreshCart: loadAuthenticatedCart
+  };
+};

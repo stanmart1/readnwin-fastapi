@@ -74,22 +74,19 @@ export default function Header() {
                       <p className="font-semibold text-gray-900">{user?.first_name} {user?.last_name}</p>
                       <p className="text-sm text-gray-500">{user?.email}</p>
                     </div>
-                    <Link to="/dashboard" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                      <i className="ri-dashboard-line mr-2"></i>Dashboard
-                    </Link>
-                    {user?.role?.name === 'admin' && (
+                    {(user?.role?.name === 'admin' || user?.role?.name === 'super_admin' || user?.role === 'admin' || user?.role === 'super_admin') && (
                       <Link to="/admin" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-purple-600 hover:bg-purple-50">
                         <i className="ri-admin-line mr-2"></i>Admin Dashboard
                       </Link>
                     )}
+                    <Link to="/dashboard" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                      <i className="ri-dashboard-line mr-2"></i>Dashboard
+                    </Link>
                     <Link to="/dashboard/library" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                       <i className="ri-book-line mr-2"></i>My Library
                     </Link>
                     <Link to="/dashboard/orders" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                       <i className="ri-shopping-bag-line mr-2"></i>Orders
-                    </Link>
-                    <Link to="/dashboard/settings" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                      <i className="ri-settings-line mr-2"></i>Settings
                     </Link>
                     <button
                       onClick={handleLogout}
