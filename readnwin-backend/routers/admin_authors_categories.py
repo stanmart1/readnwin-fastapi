@@ -20,6 +20,8 @@ class AuthorCreate(BaseModel):
     email: Optional[str] = ""
     bio: Optional[str] = ""
     website: Optional[str] = ""
+    avatar_url: Optional[str] = ""
+    status: Optional[str] = "active"
     
     @validator('name')
     def validate_name(cls, v):
@@ -115,7 +117,9 @@ async def create_author_simple(
         author = Author(
             name=clean_name,
             email=author_data.email.strip() if author_data.email else None,
-            bio=author_data.bio.strip() if author_data.bio else None
+            bio=author_data.bio.strip() if author_data.bio else None,
+            avatar_url=author_data.avatar_url.strip() if author_data.avatar_url else None,
+            is_active=author_data.status == 'active' if author_data.status else True
         )
         db.add(author)
         db.commit()
@@ -158,15 +162,80 @@ def get_categories(
         print(f"Error in get_categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/authors-new")
+@router.get("/authors")
 def get_authors(
+    page: int = 1,
+    limit: int = 20,
+    search: Optional[str] = None,
+    status: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user_from_token)
 ):
-    """Get all authors"""
+    """Get all authors with pagination and filters"""
     check_admin_access(current_user)
     try:
-        authors = db.query(Author).all()
+        query = db.query(Author)
+        
+        # Apply filters
+        if search:
+            query = query.filter(
+                (Author.name.ilike(f"%{search}%")) | 
+                (Author.email.ilike(f"%{search}%"))
+            )
+        
+        if status:
+            is_active = status == 'active'
+            query = query.filter(Author.is_active == is_active)
+        
+        # Get total count
+        total = query.count()
+        
+        # Apply pagination
+        authors = query.offset((page - 1) * limit).limit(limit).all()
+        
+        # Get book counts
+        from models.book import Book
+        authors_data = []
+        for author in authors:
+            book_count = db.query(func.count(Book.id)).filter(Book.author_id == author.id).scalar() or 0
+            authors_data.append({
+                "id": author.id,
+                "name": author.name,
+                "email": author.email or "",
+                "bio": author.bio or "",
+                "avatar_url": author.avatar_url or "",
+                "website": author.website or "",
+                "is_active": author.is_active,
+                "books_count": book_count,
+                "total_sales": 0,
+                "revenue": 0,
+                "status": "active" if author.is_active else "inactive",
+                "created_at": author.created_at.isoformat() if author.created_at else None,
+                "updated_at": author.updated_at.isoformat() if author.updated_at else None
+            })
+        
+        return {
+            "authors": authors_data,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "pages": (total + limit - 1) // limit
+            }
+        }
+    except Exception as e:
+        print(f"Error in get_authors: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/authors-new")
+def get_authors_simple(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user_from_token)
+):
+    """Get all authors - simple list for dropdowns"""
+    check_admin_access(current_user)
+    try:
+        authors = db.query(Author).filter(Author.is_active == True).all()
         return [
             {
                 "id": author.id,
@@ -176,7 +245,7 @@ def get_authors(
                 "website": author.website,
                 "is_active": author.is_active,
                 "books_count": 0,
-                "status": "active",  # Added missing status field
+                "status": "active",
                 "created_at": author.created_at.isoformat() if author.created_at else None
             }
             for author in authors
@@ -204,6 +273,75 @@ def delete_category(
         db.delete(category)
         db.commit()
         return {"message": "Category deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/authors/{author_id}")
+async def update_author(
+    author_id: int,
+    author_data: AuthorCreate,
+    current_user = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Update author"""
+    check_admin_access(current_user)
+    try:
+        author = db.query(Author).filter(Author.id == author_id).first()
+        if not author:
+            raise HTTPException(status_code=404, detail="Author not found")
+        
+        # Check email uniqueness if changed
+        if author_data.email and author_data.email != author.email:
+            existing = db.query(Author).filter(
+                Author.email == author_data.email,
+                Author.id != author_id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Author with this email already exists")
+        
+        # Update fields
+        author.name = author_data.name
+        author.email = author_data.email if author_data.email else None
+        author.bio = author_data.bio if author_data.bio else None
+        author.website = author_data.website if author_data.website else None
+        author.avatar_url = author_data.avatar_url if author_data.avatar_url else None
+        author.is_active = author_data.status == 'active' if author_data.status else True
+        
+        db.commit()
+        db.refresh(author)
+        
+        return {"message": "Author updated successfully", "id": author.id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/authors/{author_id}")
+def delete_author_by_id(
+    author_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user_from_token)
+):
+    """Delete author by ID"""
+    check_admin_access(current_user)
+    try:
+        author = db.query(Author).filter(Author.id == author_id).first()
+        if not author:
+            raise HTTPException(status_code=404, detail="Author not found")
+        
+        # Check if author has books
+        from models.book import Book
+        book_count = db.query(func.count(Book.id)).filter(Book.author_id == author_id).scalar()
+        if book_count > 0:
+            raise HTTPException(status_code=400, detail=f"Cannot delete author with {book_count} books")
+        
+        db.delete(author)
+        db.commit()
+        return {"message": "Author deleted successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
