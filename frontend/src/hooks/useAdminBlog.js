@@ -25,9 +25,10 @@ export const useAdminBlog = () => {
       if (filters.category) params.append('category', filters.category);
       if (filters.search) params.append('search', filters.search);
 
-      const response = await api.get(`/admin/blog?${params}`);
-      setPosts(response.data.posts || []);
-      return { success: true, data: response.data.posts };
+      const response = await api.get(`/admin/blog/posts?${params}`);
+      const data = response.data;
+      setPosts(data.posts || []);
+      return { success: true, data: data.posts };
     } catch (err) {
       console.error('Error fetching posts:', err);
       setError(err.message);
@@ -40,8 +41,9 @@ export const useAdminBlog = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get('/admin/blog/categories');
-      setCategories(response.data.categories || []);
-      return { success: true, data: response.data.categories };
+      const data = response.data;
+      setCategories(data.categories || []);
+      return { success: true, data: data.categories };
     } catch (err) {
       console.error('Error fetching categories:', err);
       return { success: false, error: err.message };
@@ -51,7 +53,8 @@ export const useAdminBlog = () => {
   const fetchStats = async () => {
     try {
       const response = await api.get('/admin/blog/stats');
-      setStats(response.data.stats || {
+      const data = response.data;
+      setStats(data.stats || {
         total_posts: 0,
         published_posts: 0,
         draft_posts: 0,
@@ -60,7 +63,7 @@ export const useAdminBlog = () => {
         total_comments: 0,
         by_category: {}
       });
-      return { success: true, data: response.data.stats };
+      return { success: true, data: data.stats };
     } catch (err) {
       console.error('Error fetching stats:', err);
       return { success: false, error: err.message };
