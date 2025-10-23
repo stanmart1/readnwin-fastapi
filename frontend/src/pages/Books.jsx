@@ -3,12 +3,15 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BookCard from '../components/BookCard';
 import { useBooks } from '../hooks';
+import { useCartContext } from '../context/CartContext';
 
 export default function Books() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
+  const { refreshCart } = useCartContext();
 
   const params = {
     page,
@@ -72,30 +75,8 @@ export default function Books() {
                   key={book.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
                 >
-                  <div className="relative h-64">
-                    <img
-                      src={book.cover_image_url || book.cover_image || 'https://via.placeholder.com/300x400?text=No+Cover'}
-                      alt={book.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{book.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{book.author}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-blue-600">
-                        ${book.price}
-                      </span>
-                      <Link
-                        to={`/books/${book.id}`}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 text-sm"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
+                  <BookCard book={book} onCartUpdate={refreshCart} />
                 </motion.div>
               ))}
             </div>

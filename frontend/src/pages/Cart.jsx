@@ -260,7 +260,7 @@ export default function Cart() {
                           <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
                             <div className="flex-shrink-0">
                               <img
-                                src={item.book?.cover_image_url || '/placeholder-book.jpg'}
+                                src={item.book?.cover_image_url || item.book?.cover_image || '/placeholder-book.jpg'}
                                 alt={item.book?.title}
                                 className="w-16 h-20 sm:w-20 sm:h-28 rounded-lg object-cover shadow-md"
                                 onError={(e) => {

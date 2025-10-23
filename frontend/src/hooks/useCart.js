@@ -3,6 +3,7 @@ import api from '../lib/api';
 import { useAuth } from './useAuth';
 
 const GUEST_CART_KEY = 'readnwin_guest_cart';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const useCart = () => {
   const { isAuthenticated, getUser } = useAuth();
@@ -67,6 +68,7 @@ export const useCart = () => {
           price: item.book_price,
           original_price: item.book_original_price,
           cover_image: item.book_cover,
+          cover_image_url: item.book_cover ? `${API_BASE_URL}/${item.book_cover}` : null,
           format: item.book_format,
           category: item.book_category,
           stock_quantity: item.book_stock_quantity,
