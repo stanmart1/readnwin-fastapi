@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 import { useCart, useAuth } from '../hooks';
 import Header from '../components/Header';
 
 export default function Cart() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const hasLoaded = useRef(false);
   
   const {
     cartItems,
@@ -18,8 +20,16 @@ export default function Cart() {
     isMixedCart,
     getSubtotal,
     getTotalSavings,
-    getTotalItems
+    getTotalItems,
+    refreshCart
   } = useCart();
+
+  useEffect(() => {
+    if (isAuthenticated && !hasLoaded.current) {
+      hasLoaded.current = true;
+      refreshCart();
+    }
+  }, [isAuthenticated, refreshCart]);
 
   const handleUpdateQuantity = async (bookId, newQuantity) => {
     if (newQuantity < 1) return;

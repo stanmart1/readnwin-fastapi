@@ -47,12 +47,12 @@ export const useCart = () => {
 
   // Load authenticated user cart from API
   const loadAuthenticatedCart = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isLoading) return;
     
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get('/cart');
+      const response = await api.get('/cart/');
       const items = Array.isArray(response.data) ? response.data : (response.data.items || []);
       
       // Transform backend format to match expected format
@@ -81,7 +81,7 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   // Transfer guest cart to authenticated user
   const transferGuestCart = useCallback(async () => {
@@ -198,11 +198,15 @@ export const useCart = () => {
       setError(null);
       
       if (isAuthenticated) {
-        await api.put('/cart/update', {
-          book_id: bookId,
-          quantity
-        });
-        await loadAuthenticatedCart();
+        // Find the cart item id
+        const cartItem = cartItems.find(item => item.book_id === bookId);
+        if (cartItem) {
+          // Delete the old item
+          await api.delete(`/cart/${cartItem.id}`);
+          // Add with new quantity
+          await api.post('/cart/add', { book_id: bookId, quantity });
+          await loadAuthenticatedCart();
+        }
       } else {
         const newCart = cartItems.map(item =>
           item.book_id === bookId ? { ...item, quantity } : item
@@ -223,8 +227,11 @@ export const useCart = () => {
       setError(null);
       
       if (isAuthenticated) {
-        await api.delete(`/cart/remove/${bookId}`);
-        await loadAuthenticatedCart();
+        const cartItem = cartItems.find(item => item.book_id === bookId);
+        if (cartItem) {
+          await api.delete(`/cart/${cartItem.id}`);
+          await loadAuthenticatedCart();
+        }
       } else {
         const newCart = cartItems.filter(item => item.book_id !== bookId);
         setCartItems(newCart);
