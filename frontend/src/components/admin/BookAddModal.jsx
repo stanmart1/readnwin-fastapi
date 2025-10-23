@@ -353,7 +353,7 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                     }`}
                   >
                     <option value="">Select a category</option>
-                    {categories.map(category => (
+                    {categories.filter(cat => cat.status === 'active').map(category => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>

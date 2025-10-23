@@ -93,13 +93,10 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-CSRF-Token"],
 )
 
-# Serve uploaded files
-import os
-if os.path.exists("uploads"):
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-else:
-    os.makedirs("uploads", exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Serve uploaded files using storage module
+from core.storage import init_storage, UPLOAD_DIR
+init_storage()
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # Register exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)

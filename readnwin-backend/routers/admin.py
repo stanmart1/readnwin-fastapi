@@ -965,14 +965,16 @@ def get_admin_categories(
             Category.id,
             Category.name,
             Category.description,
+            Category.status,
             func.count(Book.id).label('book_count')
-        ).outerjoin(Book).group_by(Category.id, Category.name, Category.description).all()
+        ).outerjoin(Book).group_by(Category.id, Category.name, Category.description, Category.status).all()
 
         return [
             {
                 "id": cat.id,
                 "name": cat.name,
                 "description": cat.description,
+                "status": cat.status,
                 "book_count": cat.book_count
             }
             for cat in categories
@@ -984,8 +986,7 @@ def get_admin_categories(
 
 @router.post("/categories")
 def create_admin_category(
-    name: str,
-    description: Optional[str] = None,
+    category_data: dict,
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
@@ -993,12 +994,19 @@ def create_admin_category(
     check_admin_access(current_user)
 
     try:
+        name = category_data.get('name')
+        description = category_data.get('description')
+        status = category_data.get('status', 'active')
+        
+        if not name:
+            raise HTTPException(status_code=400, detail="Category name is required")
+        
         # Check if category already exists
         existing_category = db.query(Category).filter(Category.name == name).first()
         if existing_category:
             raise HTTPException(status_code=400, detail="Category with this name already exists")
 
-        new_category = Category(name=name, description=description)
+        new_category = Category(name=name, description=description, status=status)
         db.add(new_category)
         db.commit()
         db.refresh(new_category)
@@ -1008,7 +1016,8 @@ def create_admin_category(
             "category": {
                 "id": new_category.id,
                 "name": new_category.name,
-                "description": new_category.description
+                "description": new_category.description,
+                "status": new_category.status
             }
         }
 
@@ -1018,6 +1027,87 @@ def create_admin_category(
         db.rollback()
         print(f"Error creating category: {e}")
         raise HTTPException(status_code=500, detail="Failed to create category")
+
+@router.put("/categories/{category_id}")
+def update_admin_category(
+    category_id: int,
+    category_data: dict,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Update a category"""
+    check_admin_access(current_user)
+
+    try:
+        category = db.query(Category).filter(Category.id == category_id).first()
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        
+        name = category_data.get('name')
+        description = category_data.get('description')
+        status = category_data.get('status')
+        
+        if name:
+            # Check if name already exists for another category
+            existing = db.query(Category).filter(
+                Category.name == name,
+                Category.id != category_id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Category with this name already exists")
+            category.name = name
+        
+        if description is not None:
+            category.description = description
+        
+        if status is not None:
+            category.status = status
+        
+        db.commit()
+        db.refresh(category)
+
+        return {
+            "message": "Category updated successfully",
+            "category": {
+                "id": category.id,
+                "name": category.name,
+                "description": category.description,
+                "status": category.status
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating category: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update category")
+
+@router.delete("/categories/{category_id}")
+def delete_admin_category(
+    category_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Delete a category"""
+    check_admin_access(current_user)
+
+    try:
+        category = db.query(Category).filter(Category.id == category_id).first()
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        
+        db.delete(category)
+        db.commit()
+
+        return {"message": "Category deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting category: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete category")
 
 # Authors Management Endpoints
 @router.get("/authors")

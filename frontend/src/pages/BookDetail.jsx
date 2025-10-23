@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../lib/api';
+import { useCartContext } from '../context/CartContext';
 
 export default function BookDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { refreshCart } = useCartContext();
   const [book, setBook] = useState(null);
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     fetchBook();
@@ -19,17 +23,46 @@ export default function BookDetail() {
     try {
       setLoading(true);
       const response = await api.get(`/api/books/${id}`);
-      setBook(response.data);
+      const bookData = response.data.book || response.data;
+      setBook(bookData);
       
       // Fetch related books
-      if (response.data.category_id) {
-        const related = await api.get(`/api/books/?category_id=${response.data.category_id}&limit=4`);
+      if (bookData.category_id) {
+        const related = await api.get(`/api/books/?category_id=${bookData.category_id}&limit=4`);
         setRelatedBooks(related.data.books?.filter(b => b.id !== parseInt(id)) || []);
       }
     } catch (error) {
       console.error('Error fetching book:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    console.log('Add to cart clicked, book:', book);
+    if (!book || !book.id) {
+      alert('Book information not loaded');
+      return;
+    }
+    
+    try {
+      setAddingToCart(true);
+      console.log('Sending request to /cart/add with book_id:', book.id);
+      const response = await api.post('/cart/add', { book_id: book.id, quantity: 1 });
+      console.log('Cart response:', response.data);
+      await refreshCart();
+      alert(response.data.message || 'Book added to cart!');
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      console.error('Error response:', error.response);
+      if (error.response?.status === 401) {
+        alert('Please login to add items to cart');
+        navigate('/login');
+      } else {
+        alert(error.response?.data?.detail || 'Failed to add to cart');
+      }
+    } finally {
+      setAddingToCart(false);
     }
   };
 
@@ -74,7 +107,7 @@ export default function BookDetail() {
               animate={{ opacity: 1, x: 0 }}
             >
               <img
-                src={book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover'}
+                src={book.cover_image_url || book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover'}
                 alt={book.title}
                 className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
               />
@@ -86,17 +119,19 @@ export default function BookDetail() {
               animate={{ opacity: 1, x: 0 }}
             >
               <h1 className="text-4xl font-bold text-gray-900 mb-4">{book.title}</h1>
-              <p className="text-xl text-gray-600 mb-6">by {book.author}</p>
+              <p className="text-xl text-gray-600 mb-6">by {book.author_name || book.author || 'Unknown Author'}</p>
 
               {/* Rating */}
-              <div className="flex items-center mb-6">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <i key={i} className={`ri-star-${i < Math.floor(book.rating || 4) ? 'fill' : 'line'}`}></i>
-                  ))}
+              {book.rating && (
+                <div className="flex items-center mb-6">
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <i key={i} className={`ri-star-${i < Math.floor(book.rating) ? 'fill' : 'line'}`}></i>
+                    ))}
+                  </div>
+                  <span className="ml-2 text-gray-600">({book.rating.toFixed(1)})</span>
                 </div>
-                <span className="ml-2 text-gray-600">({book.rating || 4.0})</span>
-              </div>
+              )}
 
               {/* Price */}
               <div className="mb-6">
@@ -105,9 +140,22 @@ export default function BookDetail() {
 
               {/* Buttons */}
               <div className="flex gap-4 mb-8">
-                <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700">
-                  <i className="ri-shopping-cart-line mr-2"></i>
-                  Add to Cart
+                <button 
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {addingToCart ? (
+                    <>
+                      <i className="ri-loader-4-line mr-2 animate-spin"></i>
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-shopping-cart-line mr-2"></i>
+                      Add to Cart
+                    </>
+                  )}
                 </button>
                 <button className="flex-1 bg-white border-2 border-blue-600 text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-blue-50">
                   <i className="ri-book-open-line mr-2"></i>
@@ -160,7 +208,7 @@ export default function BookDetail() {
                     className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
                   >
                     <img
-                      src={relatedBook.cover_image || 'https://via.placeholder.com/300x400'}
+                      src={relatedBook.cover_image_url || relatedBook.cover_image || 'https://via.placeholder.com/300x400'}
                       alt={relatedBook.title}
                       className="w-full h-64 object-cover"
                     />

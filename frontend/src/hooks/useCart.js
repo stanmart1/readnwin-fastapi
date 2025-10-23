@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../lib/api';
 import { useAuth } from './useAuth';
 
@@ -7,6 +7,7 @@ const GUEST_CART_KEY = 'readnwin_guest_cart';
 export const useCart = () => {
   const { isAuthenticated, getUser } = useAuth();
   const user = getUser();
+  const hasLoadedCart = useRef(false);
   
   const [cartItems, setCartItems] = useState(() => {
     // Initialize from localStorage for guest users
@@ -52,7 +53,28 @@ export const useCart = () => {
       setIsLoading(true);
       setError(null);
       const response = await api.get('/cart');
-      setCartItems(response.data.items || []);
+      const items = Array.isArray(response.data) ? response.data : (response.data.items || []);
+      
+      // Transform backend format to match expected format
+      const transformedItems = items.map(item => ({
+        id: item.id,
+        book_id: item.book_id,
+        quantity: item.quantity,
+        book: {
+          id: item.book_id,
+          title: item.book_title,
+          author: item.book_author,
+          price: item.book_price,
+          original_price: item.book_original_price,
+          cover_image: item.book_cover,
+          format: item.book_format,
+          category: item.book_category,
+          stock_quantity: item.book_stock_quantity,
+          is_active: item.book_is_active
+        }
+      }));
+      
+      setCartItems(transformedItems);
     } catch (err) {
       console.error('Error loading cart:', err);
       setError(err.message);
@@ -92,10 +114,8 @@ export const useCart = () => {
 
   // Load cart on mount and when auth changes
   useEffect(() => {
-    if (isAuthenticated) {
-      transferGuestCart();
-    } else {
-      // Load from localStorage for guests
+    if (!isAuthenticated) {
+      hasLoadedCart.current = false;
       try {
         const stored = localStorage.getItem(GUEST_CART_KEY);
         if (stored) {
@@ -105,7 +125,7 @@ export const useCart = () => {
         console.error('Error loading guest cart:', error);
       }
     }
-  }, [isAuthenticated, transferGuestCart]);
+  }, [isAuthenticated]);
 
   // Update analytics when cart changes
   useEffect(() => {

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks';
+import { useCartContext } from '../context/CartContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { isAuthenticated, getUser, logout } = useAuth();
+  const { getTotalItems } = useCartContext();
   const user = getUser();
   const navigate = useNavigate();
 
@@ -51,9 +53,11 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <Link to="/cart" className="relative p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
               <i className="ri-shopping-cart-line text-2xl"></i>
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                0
-              </span>
+              {getTotalItems() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {getTotalItems()}
+                </span>
+              )}
             </Link>
             
             {isAuthenticated() ? (

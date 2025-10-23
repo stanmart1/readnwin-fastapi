@@ -10,7 +10,7 @@ const CategoriesManagement = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    is_active: true
+    status: 'active'
   });
   const [filters, setFilters] = useState({
     search: '',
@@ -58,7 +58,7 @@ const CategoriesManagement = () => {
     setFormData({
       name: category.name,
       description: category.description || '',
-      is_active: category.is_active !== false
+      status: category.status || 'active'
     });
     setShowModal(true);
   };
@@ -80,10 +80,11 @@ const CategoriesManagement = () => {
 
   const toggleStatus = async (categoryId, currentStatus) => {
     try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
       await api.put(`/admin/categories/${categoryId}`, { 
-        is_active: !currentStatus 
+        status: newStatus
       });
-      alert(`Category ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+      alert(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadCategories();
     } catch (error) {
       console.error('Status update error:', error);
@@ -95,7 +96,7 @@ const CategoriesManagement = () => {
     setFormData({
       name: '',
       description: '',
-      is_active: true
+      status: 'active'
     });
     setEditingCategory(null);
   };
@@ -111,8 +112,8 @@ const CategoriesManagement = () => {
       cat.description?.toLowerCase().includes(filters.search.toLowerCase());
     
     const matchesStatus = !filters.status || 
-      (filters.status === 'active' && cat.is_active) ||
-      (filters.status === 'inactive' && !cat.is_active);
+      (filters.status === 'active' && cat.status === 'active') ||
+      (filters.status === 'inactive' && cat.status === 'inactive');
     
     return matchesSearch && matchesStatus;
   });
@@ -198,15 +199,15 @@ const CategoriesManagement = () => {
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button
-                    onClick={() => toggleStatus(category.id, category.is_active)}
+                    onClick={() => toggleStatus(category.id, category.status)}
                     className={`p-1 rounded ${
-                      category.is_active 
+                      category.status === 'active'
                         ? 'text-green-600 hover:bg-green-50' 
                         : 'text-gray-400 hover:bg-gray-50'
                     }`}
-                    title={category.is_active ? 'Deactivate' : 'Activate'}
+                    title={category.status === 'active' ? 'Deactivate' : 'Activate'}
                   >
-                    <i className={`ri-${category.is_active ? 'eye' : 'eye-off'}-line`}></i>
+                    <i className={`ri-${category.status === 'active' ? 'eye' : 'eye-off'}-line`}></i>
                   </button>
                   <button
                     onClick={() => handleEdit(category)}
@@ -232,11 +233,11 @@ const CategoriesManagement = () => {
                     {category.book_count || 0} books
                   </span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    category.is_active 
+                    category.status === 'active' 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {category.is_active ? 'Active' : 'Inactive'}
+                    {category.status === 'active' ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 <span className="text-gray-500">
@@ -294,8 +295,8 @@ const CategoriesManagement = () => {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    checked={formData.status === 'active'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.checked ? 'active' : 'inactive' }))}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label className="ml-2 text-sm text-gray-700">Active</label>

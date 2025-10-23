@@ -9,6 +9,7 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(Text)
+    status = Column(String, default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     books = relationship("Book", back_populates="category")

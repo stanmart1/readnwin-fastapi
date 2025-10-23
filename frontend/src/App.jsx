@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { CartProvider } from './context/CartContext';
 
 { /* Scroll to top on route change*/}
 function ScrollToTop() {
@@ -59,8 +61,9 @@ import './styles/index.css';
 
 function App() {
   return (
-    <Router>
-      <Routes>
+    <CartProvider>
+      <Router>
+        <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/books" element={<Books />} />
@@ -108,6 +111,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
+    </CartProvider>
   );
 }
 

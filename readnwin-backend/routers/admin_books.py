@@ -219,10 +219,11 @@ async def create_book(
         weight_grams_int = int(weight_grams) if weight_grams else None
         low_stock_threshold_int = int(low_stock_threshold) if low_stock_threshold else 10
         
-        # Ensure upload directories exist
-        os.makedirs("uploads/covers", exist_ok=True)
-        os.makedirs("uploads/ebooks", exist_ok=True)
-        os.makedirs("uploads/samples", exist_ok=True)
+        # Import storage module
+        from core.storage import save_cover_image, save_book_file, save_sample_file, init_storage
+        
+        # Initialize storage directories
+        init_storage()
         
         # Secure file upload handling
         cover_image_path = None
@@ -230,53 +231,20 @@ async def create_book(
         sample_file_path = None
         
         if cover_image and cover_image.filename:
-            file_data = validate_file_security(cover_image, 'image')
-            # Use old format: hash + original filename
-            import hashlib
-            file_hash = hashlib.md5(file_data['content']).hexdigest()[:16]
-            file_ext = Path(cover_image.filename).suffix
-            secure_filename = f"{file_hash}_{cover_image.filename}"
-            cover_image_path = f"uploads/covers/{secure_filename}"
-            
-            # Ensure directory exists with proper permissions
-            os.makedirs(os.path.dirname(cover_image_path), mode=0o755, exist_ok=True)
-            
-            with open(cover_image_path, "wb") as buffer:
-                buffer.write(file_data['content'])
-            
-            logging.info(f"Cover image uploaded: {secure_filename}")
+            filename = await save_cover_image(cover_image)
+            cover_image_path = f"uploads/covers/{filename}"
+            logging.info(f"Cover image uploaded: {filename}")
         
         if ebook_file and ebook_file.filename:
-            file_data = validate_file_security(ebook_file, 'ebook')
-            # Use old format: hash + original filename
-            import hashlib
-            file_hash = hashlib.md5(file_data['content']).hexdigest()[:16]
-            file_ext = Path(ebook_file.filename).suffix
-            secure_filename = f"{file_hash}_{ebook_file.filename}"
-            ebook_file_path = f"uploads/ebooks/{secure_filename}"
-            
-            os.makedirs(os.path.dirname(ebook_file_path), mode=0o755, exist_ok=True)
-            
-            with open(ebook_file_path, "wb") as buffer:
-                buffer.write(file_data['content'])
-            
-            logging.info(f"Ebook file uploaded: {secure_filename}")
+            filename = await save_book_file(ebook_file)
+            ebook_file_path = f"uploads/books/{filename}"
+            logging.info(f"Ebook file uploaded: {filename}")
         
         if sample_file and sample_file.filename:
-            file_data = validate_file_security(sample_file, 'sample')
-            # Use old format: hash + original filename
-            import hashlib
-            file_hash = hashlib.md5(file_data['content']).hexdigest()[:16]
-            file_ext = Path(sample_file.filename).suffix
-            secure_filename = f"{file_hash}_{sample_file.filename}"
-            sample_file_path = f"uploads/samples/{secure_filename}"
-            
-            os.makedirs(os.path.dirname(sample_file_path), mode=0o755, exist_ok=True)
-            
-            with open(sample_file_path, "wb") as buffer:
-                buffer.write(file_data['content'])
-            
-            logging.info(f"Sample file uploaded: {secure_filename}")
+            filename = await save_sample_file(sample_file)
+            sample_file_path = f"uploads/samples/{filename}"
+            logging.info(f"Sample file uploaded: {filename}")
+        
         
         # Validate category exists
         category = db.query(Category).filter(Category.id == category_id_int).first()
