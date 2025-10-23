@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
 from models.contact import Contact
-from models.contact_settings import ContactMethod, ContactFAQ, OfficeInfo, ContactSubject
+from models.contact_settings import ContactMethod, OfficeInfo, ContactSubject
 from models.user import User
 from pydantic import BaseModel
 from typing import List, Dict, Any
@@ -60,76 +60,44 @@ def submit_contact(contact_data: ContactSubmission, db: Session = Depends(get_db
         return {"message": "Contact form submitted successfully"}
 
 @router.get("/info")
-def get_contact_info():
-    return {
-        "success": True,
-        "data": {
-            "contactMethods": [
-                {
-                    "title": "Email Support",
-                    "description": "Get help via email",
-                    "contact": "support@readnwin.com",
-                    "action": "mailto:support@readnwin.com",
-                    "icon": "ri-mail-line",
-                    "isActive": True
-                },
-                {
-                    "title": "Live Chat",
-                    "description": "Chat with our team",
-                    "contact": "Available 24/7",
-                    "action": "#",
-                    "icon": "ri-chat-3-line",
-                    "isActive": True
-                },
-                {
-                    "title": "Phone Support",
-                    "description": "Call us directly",
-                    "contact": "+1 (555) 123-4567",
-                    "action": "tel:+15551234567",
-                    "icon": "ri-phone-line",
-                    "isActive": True
-                },
-                {
-                    "title": "Help Center",
-                    "description": "Browse our guides",
-                    "contact": "Self-service help",
-                    "action": "/help",
-                    "icon": "ri-question-line",
-                    "isActive": True
-                }
-            ],
-            "faqs": [
-                {
-                    "question": "How do I create an account?",
-                    "answer": "Click the 'Sign Up' button and fill in your details. You'll receive a confirmation email to activate your account.",
-                    "isActive": True
-                },
-                {
-                    "question": "What payment methods do you accept?",
-                    "answer": "We accept all major credit cards, PayPal, and bank transfers through our secure payment partners.",
-                    "isActive": True
-                },
-                {
-                    "question": "How do I download my purchased books?",
-                    "answer": "After purchase, go to your library and click the download button next to each book.",
-                    "isActive": True
-                }
-            ],
-            "officeInfo": {
-                "address": "123 Book Street, Reading City, RC 12345",
-                "hours": "Monday - Friday: 9:00 AM - 6:00 PM",
-                "parking": "Free parking available in our building",
-                "isActive": True
-            },
-            "contactSubjects": [
-                {"name": "General Inquiry", "isActive": True},
-                {"name": "Technical Support", "isActive": True},
-                {"name": "Billing Question", "isActive": True},
-                {"name": "Book Request", "isActive": True},
-                {"name": "Partnership", "isActive": True}
-            ]
+def get_contact_info(db: Session = Depends(get_db)):
+    try:
+        contact_methods = db.query(ContactMethod).filter(ContactMethod.is_active == True).all()
+        office_info = db.query(OfficeInfo).filter(OfficeInfo.is_active == True).first()
+        subjects = db.query(ContactSubject).filter(ContactSubject.is_active == True).order_by(ContactSubject.order_index).all()
+        
+        return {
+            "success": True,
+            "data": {
+                "contactMethods": [
+                    {
+                        "icon": method.icon,
+                        "title": method.title,
+                        "description": method.description,
+                        "contact": method.contact,
+                        "action": method.action,
+                        "isActive": method.is_active
+                    }
+                    for method in contact_methods
+                ],
+                "officeInfo": {
+                    "address": office_info.address,
+                    "hours": office_info.hours,
+                    "parking": office_info.parking,
+                    "isActive": office_info.is_active
+                } if office_info else None,
+                "contactSubjects": [
+                    {
+                        "name": subject.name,
+                        "isActive": subject.is_active
+                    }
+                    for subject in subjects
+                ]
+            }
         }
-    }
+    except Exception as e:
+        print(f"Error fetching contact info: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch contact information")
 
 # Admin endpoints
 @router.get("/admin")
@@ -142,7 +110,6 @@ def get_admin_contact_data(
     
     try:
         contact_methods = db.query(ContactMethod).all()
-        faqs = db.query(ContactFAQ).order_by(ContactFAQ.order_index).all()
         office_info = db.query(OfficeInfo).first()
         subjects = db.query(ContactSubject).order_by(ContactSubject.order_index).all()
         
@@ -160,16 +127,6 @@ def get_admin_contact_data(
                         "isActive": method.is_active
                     }
                     for method in contact_methods
-                ],
-                "faqs": [
-                    {
-                        "id": str(faq.id),
-                        "question": faq.question,
-                        "answer": faq.answer,
-                        "isActive": faq.is_active,
-                        "order": faq.order_index
-                    }
-                    for faq in faqs
                 ],
                 "officeInfo": {
                     "address": office_info.address if office_info else "",
@@ -202,7 +159,6 @@ def save_admin_contact_data(
     check_admin_access(current_user)
     
     try:
-        # Sanitize all input data
         sanitized_data = sanitize_html_content(contact_data)
         
         # Update contact methods
@@ -225,17 +181,6 @@ def save_admin_contact_data(
                     is_active=method_data['isActive']
                 )
                 db.add(new_method)
-        
-        # Update FAQs
-        db.query(ContactFAQ).delete()
-        for faq_data in sanitized_data.get('faqs', []):
-            new_faq = ContactFAQ(
-                question=faq_data['question'],
-                answer=faq_data['answer'],
-                is_active=faq_data['isActive'],
-                order_index=faq_data['order']
-            )
-            db.add(new_faq)
         
         # Update office info
         office_data = sanitized_data.get('officeInfo', {})

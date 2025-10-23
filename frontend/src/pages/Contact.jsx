@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useContact } from '../hooks';
+import api from '../lib/api';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -11,8 +12,23 @@ export default function Contact() {
     subject: '',
     message: ''
   });
+  const [contactInfo, setContactInfo] = useState(null);
   
   const { sendMessage, loading, success, error } = useContact();
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const response = await api.get('/api/contact/info');
+        if (response.data.success) {
+          setContactInfo(response.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch contact info:', err);
+      }
+    };
+    fetchContactInfo();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -54,7 +70,7 @@ export default function Contact() {
       {/* Contact Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
             {/* Contact Form */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -166,41 +182,30 @@ export default function Contact() {
               </div>
 
               <div className="space-y-6">
-                <div className="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-md">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className="ri-mail-line text-2xl text-blue-600"></i>
+                {contactInfo?.contactMethods?.filter(m => m.isActive).map((method, idx) => (
+                  <div key={idx} className="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-md">
+                    <div className={`w-12 h-12 ${idx % 3 === 0 ? 'bg-blue-100' : idx % 3 === 1 ? 'bg-purple-100' : 'bg-indigo-100'} rounded-full flex items-center justify-center flex-shrink-0`}>
+                      <i className={`${method.icon} text-2xl ${idx % 3 === 0 ? 'text-blue-600' : idx % 3 === 1 ? 'text-purple-600' : 'text-indigo-600'}`}></i>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">{method.title}</h3>
+                      <p className="text-gray-600">{method.contact}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                    <p className="text-gray-600">support@readnwin.com</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-md">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className="ri-phone-line text-2xl text-purple-600"></i>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-md">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className="ri-map-pin-line text-2xl text-indigo-600"></i>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
-                    <p className="text-gray-600">
-                      123 Reading Street<br />
-                      Book City, BC 12345
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Social Links */}
+              {contactInfo?.officeInfo?.isActive && (
+                <div className="bg-white rounded-2xl p-8 shadow-md">
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Office Information</h3>
+                  <div className="space-y-3 text-gray-600">
+                    <p><strong>Address:</strong> {contactInfo.officeInfo.address}</p>
+                    <p><strong>Hours:</strong> {contactInfo.officeInfo.hours}</p>
+                    <p><strong>Parking:</strong> {contactInfo.officeInfo.parking}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
                 <h3 className="text-2xl font-bold mb-4">Follow Us</h3>
                 <p className="mb-6 text-blue-100">
