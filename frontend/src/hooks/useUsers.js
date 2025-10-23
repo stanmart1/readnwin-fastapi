@@ -10,7 +10,9 @@ export const useUsers = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/admin/users', { params });
+      const queryParams = new URLSearchParams(params).toString();
+      const url = queryParams ? `/admin/users?${queryParams}` : '/admin/users';
+      const response = await api.get(url);
       setUsers(response.data.users || response.data || []);
       return { success: true, data: response.data };
     } catch (err) {

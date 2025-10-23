@@ -18,9 +18,9 @@ export default function PaymentGatewayManagement() {
       enabled: true,
       testMode: false,
       apiKeys: {
-        clientId: '',
-        clientSecret: '',
-        encryptionKey: ''
+        publicKey: '',
+        secretKey: '',
+        hash: ''
       },
       supportedCurrencies: ['NGN', 'USD', 'EUR', 'GBP'],
       features: ['Mobile Money', 'Bank Transfers', 'Credit Cards', 'USSD', 'QR Payments'],
@@ -34,9 +34,9 @@ export default function PaymentGatewayManagement() {
       enabled: true,
       testMode: false,
       apiKeys: {
-        clientId: '',
-        clientSecret: '',
-        encryptionKey: ''
+        publicKey: '',
+        secretKey: '',
+        hash: ''
       },
       bankAccount: {
         bankName: 'Access Bank',
@@ -87,14 +87,14 @@ export default function PaymentGatewayManagement() {
   const validateApiKey = (value, type) => {
     if (!value) return `${type} is required`;
     switch (type) {
-      case 'clientId':
-        if (value.length < 10) return 'Client ID must be at least 10 characters';
+      case 'publicKey':
+        if (value.length < 10) return 'Public Key must be at least 10 characters';
         break;
-      case 'clientSecret':
-        if (value.length < 10) return 'Client Secret must be at least 10 characters';
+      case 'secretKey':
+        if (value.length < 10) return 'Secret Key must be at least 10 characters';
         break;
-      case 'encryptionKey':
-        if (value.length < 8) return 'Encryption Key must be at least 8 characters';
+      case 'hash':
+        if (value.length < 8) return 'Hash must be at least 8 characters';
         break;
     }
     return '';
@@ -103,12 +103,12 @@ export default function PaymentGatewayManagement() {
   const validateGateway = (gateway) => {
     const errors = {};
     if (gateway.id === 'flutterwave') {
-      const clientIdError = validateApiKey(gateway.apiKeys.clientId, 'clientId');
-      const clientSecretError = validateApiKey(gateway.apiKeys.clientSecret, 'clientSecret');
-      const encryptionKeyError = validateApiKey(gateway.apiKeys.encryptionKey, 'encryptionKey');
-      if (clientIdError) errors.clientId = clientIdError;
-      if (clientSecretError) errors.clientSecret = clientSecretError;
-      if (encryptionKeyError) errors.encryptionKey = encryptionKeyError;
+      const publicKeyError = validateApiKey(gateway.apiKeys.publicKey, 'publicKey');
+      const secretKeyError = validateApiKey(gateway.apiKeys.secretKey, 'secretKey');
+      const hashError = validateApiKey(gateway.apiKeys.hash, 'hash');
+      if (publicKeyError) errors.publicKey = publicKeyError;
+      if (secretKeyError) errors.secretKey = secretKeyError;
+      if (hashError) errors.hash = hashError;
     }
     if (gateway.id === 'bank_transfer' && gateway.bankAccount) {
       if (!gateway.bankAccount.bankName) errors.bankName = 'Bank name is required';
@@ -323,90 +323,90 @@ export default function PaymentGatewayManagement() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Client ID {gateway.testMode && '(Test)'} *
+                  Public Key {gateway.testMode && '(Test)'} *
                 </label>
                 <div className="relative">
                   <input
-                    type={showApiKeys[`${gateway.id}_clientId`] ? 'text' : 'password'}
-                    value={gateway.apiKeys.clientId}
-                    onChange={(e) => updateApiKey(gateway.id, 'clientId', e.target.value)}
+                    type={showApiKeys[`${gateway.id}_publicKey`] ? 'text' : 'password'}
+                    value={gateway.apiKeys.publicKey}
+                    onChange={(e) => updateApiKey(gateway.id, 'publicKey', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
-                      validationErrors[gateway.id]?.clientId ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                      validationErrors[gateway.id]?.publicKey ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Flutterwave Client ID"
+                    placeholder="Flutterwave Public Key (FLWPUBK-...)"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_clientId`]: !prev[`${gateway.id}_clientId`] }))}
+                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_publicKey`]: !prev[`${gateway.id}_publicKey`] }))}
                     className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
                   >
-                    <i className={showApiKeys[`${gateway.id}_clientId`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
+                    <i className={showApiKeys[`${gateway.id}_publicKey`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
                   </button>
                 </div>
-                {validationErrors[gateway.id]?.clientId && (
+                {validationErrors[gateway.id]?.publicKey && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <i className="ri-error-warning-line mr-1"></i>
-                    {validationErrors[gateway.id].clientId}
+                    {validationErrors[gateway.id].publicKey}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Client Secret {gateway.testMode && '(Test)'} *
+                  Secret Key {gateway.testMode && '(Test)'} *
                 </label>
                 <div className="relative">
                   <input
-                    type={showApiKeys[`${gateway.id}_clientSecret`] ? 'text' : 'password'}
-                    value={gateway.apiKeys.clientSecret}
-                    onChange={(e) => updateApiKey(gateway.id, 'clientSecret', e.target.value)}
+                    type={showApiKeys[`${gateway.id}_secretKey`] ? 'text' : 'password'}
+                    value={gateway.apiKeys.secretKey}
+                    onChange={(e) => updateApiKey(gateway.id, 'secretKey', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
-                      validationErrors[gateway.id]?.clientSecret ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                      validationErrors[gateway.id]?.secretKey ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Flutterwave Client Secret"
+                    placeholder="Flutterwave Secret Key (FLWSECK-...)"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_clientSecret`]: !prev[`${gateway.id}_clientSecret`] }))}
+                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_secretKey`]: !prev[`${gateway.id}_secretKey`] }))}
                     className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
                   >
-                    <i className={showApiKeys[`${gateway.id}_clientSecret`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
+                    <i className={showApiKeys[`${gateway.id}_secretKey`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
                   </button>
                 </div>
-                {validationErrors[gateway.id]?.clientSecret && (
+                {validationErrors[gateway.id]?.secretKey && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <i className="ri-error-warning-line mr-1"></i>
-                    {validationErrors[gateway.id].clientSecret}
+                    {validationErrors[gateway.id].secretKey}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Encryption Key {gateway.testMode && '(Test)'} *
+                  Hash {gateway.testMode && '(Test)'} *
                 </label>
                 <div className="relative">
                   <input
-                    type={showApiKeys[`${gateway.id}_encryptionKey`] ? 'text' : 'password'}
-                    value={gateway.apiKeys.encryptionKey}
-                    onChange={(e) => updateApiKey(gateway.id, 'encryptionKey', e.target.value)}
+                    type={showApiKeys[`${gateway.id}_hash`] ? 'text' : 'password'}
+                    value={gateway.apiKeys.hash}
+                    onChange={(e) => updateApiKey(gateway.id, 'hash', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
-                      validationErrors[gateway.id]?.encryptionKey ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                      validationErrors[gateway.id]?.hash ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Flutterwave Encryption Key"
+                    placeholder="Flutterwave Encryption Hash"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_encryptionKey`]: !prev[`${gateway.id}_encryptionKey`] }))}
+                    onClick={() => setShowApiKeys(prev => ({ ...prev, [`${gateway.id}_hash`]: !prev[`${gateway.id}_hash`] }))}
                     className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
                   >
-                    <i className={showApiKeys[`${gateway.id}_encryptionKey`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
+                    <i className={showApiKeys[`${gateway.id}_hash`] ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
                   </button>
                 </div>
-                {validationErrors[gateway.id]?.encryptionKey && (
+                {validationErrors[gateway.id]?.hash && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <i className="ri-error-warning-line mr-1"></i>
-                    {validationErrors[gateway.id].encryptionKey}
+                    {validationErrors[gateway.id].hash}
                   </p>
                 )}
               </div>
