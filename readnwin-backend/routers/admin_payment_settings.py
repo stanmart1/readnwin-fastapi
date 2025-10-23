@@ -34,7 +34,7 @@ class PaymentSettingsModel(BaseModel):
     taxRate: float
     shippingCost: float
     freeShippingThreshold: float
-    webhookUrl: str
+    webhookUrl: Optional[str] = ""
     testMode: bool
 
 class PaymentSettingsResponse(BaseModel):
@@ -92,7 +92,7 @@ def get_admin_payment_settings(
                 "taxRate": settings.tax_rate if settings else 7.5,
                 "shippingCost": settings.shipping_cost if settings else 500.0,
                 "freeShippingThreshold": settings.free_shipping_threshold if settings else 5000.0,
-                "webhookUrl": settings.webhook_url if settings else "",
+                "webhookUrl": settings.webhook_url if settings and settings.webhook_url else "",
                 "testMode": settings.test_mode if settings else False
             }
         }

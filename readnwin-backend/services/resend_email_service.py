@@ -6,13 +6,31 @@ from core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configure Resend API Key from environment
-resend.api_key = settings.resend_api_key
-
 class ResendEmailService:
     
     def __init__(self, db: Session):
         self.db = db
+        # Load API key from database or environment
+        self._load_api_key()
+    
+    def _load_api_key(self):
+        """Load Resend API key from database"""
+        try:
+            from sqlalchemy import text
+            result = self.db.execute(text(
+                "SELECT api_key FROM email_gateway_config WHERE provider = 'resend' AND is_active = true LIMIT 1"
+            )).fetchone()
+            if result and result[0]:
+                resend.api_key = result[0]
+                return
+        except Exception as e:
+            logger.warning(f"Could not load Resend API key from database: {e}")
+        
+        # Fallback to environment variable if exists
+        import os
+        env_key = os.getenv('RESEND_API_KEY', '')
+        if env_key:
+            resend.api_key = env_key
     
     def send_welcome_email(self, to_email: str, first_name: str = "Reader") -> Dict[str, Any]:
         """Send welcome email to new user"""
