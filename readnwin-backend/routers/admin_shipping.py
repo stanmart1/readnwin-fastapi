@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
 from models.user import User
-from models.shipping import ShippingMethod, ShippingZone
+from models.shipping import ShippingMethod, ShippingZone, ShippingMethodZone
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -258,3 +258,101 @@ def delete_shipping_zone(
         db.rollback()
         print(f"Error deleting shipping zone: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete shipping zone")
+
+# Method-Zone Associations
+class MethodZoneCreate(BaseModel):
+    shipping_method_id: int
+    shipping_zone_id: int
+    is_available: bool = True
+
+@router.get("/method-zones")
+def get_method_zones(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Get all method-zone associations"""
+    check_admin_access(current_user)
+    
+    try:
+        method_zones = db.query(ShippingMethodZone).all()
+        
+        result = []
+        for mz in method_zones:
+            method = db.query(ShippingMethod).filter(ShippingMethod.id == mz.shipping_method_id).first()
+            zone = db.query(ShippingZone).filter(ShippingZone.id == mz.shipping_zone_id).first()
+            
+            result.append({
+                "id": mz.id,
+                "shipping_method_id": mz.shipping_method_id,
+                "shipping_zone_id": mz.shipping_zone_id,
+                "is_available": mz.is_available,
+                "method_name": method.name if method else None,
+                "zone_name": zone.name if zone else None
+            })
+        
+        return {"methodZones": result}
+    except Exception as e:
+        print(f"Error fetching method zones: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch method zones")
+
+@router.post("/method-zones")
+def create_or_update_method_zone(
+    data: MethodZoneCreate,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Create or update a method-zone association"""
+    check_admin_access(current_user)
+    
+    try:
+        # Check if association already exists
+        existing = db.query(ShippingMethodZone).filter(
+            ShippingMethodZone.shipping_method_id == data.shipping_method_id,
+            ShippingMethodZone.shipping_zone_id == data.shipping_zone_id
+        ).first()
+        
+        if existing:
+            # Update existing
+            existing.is_available = data.is_available
+            db.commit()
+            db.refresh(existing)
+            return {"message": "Method-zone association updated", "id": existing.id}
+        else:
+            # Create new
+            method_zone = ShippingMethodZone(
+                shipping_method_id=data.shipping_method_id,
+                shipping_zone_id=data.shipping_zone_id,
+                is_available=data.is_available
+            )
+            db.add(method_zone)
+            db.commit()
+            db.refresh(method_zone)
+            return {"message": "Method-zone association created", "id": method_zone.id}
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating/updating method zone: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create/update method-zone association")
+
+@router.delete("/method-zones/{method_zone_id}")
+def delete_method_zone(
+    method_zone_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Delete a method-zone association"""
+    check_admin_access(current_user)
+    
+    try:
+        method_zone = db.query(ShippingMethodZone).filter(ShippingMethodZone.id == method_zone_id).first()
+        if not method_zone:
+            raise HTTPException(status_code=404, detail="Method-zone association not found")
+        
+        db.delete(method_zone)
+        db.commit()
+        return {"message": "Method-zone association deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting method zone: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete method-zone association")

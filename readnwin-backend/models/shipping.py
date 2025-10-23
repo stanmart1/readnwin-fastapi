@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, JSON
+from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from core.database import Base
@@ -28,5 +28,15 @@ class ShippingMethod(Base):
     estimated_days_max = Column(Integer, nullable=False, default=7)
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ShippingMethodZone(Base):
+    __tablename__ = "shipping_method_zones"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    shipping_method_id = Column(Integer, ForeignKey("shipping_methods.id"), nullable=False)
+    shipping_zone_id = Column(Integer, ForeignKey("shipping_zones.id"), nullable=False)
+    is_available = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
