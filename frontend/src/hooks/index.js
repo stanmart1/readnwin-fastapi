@@ -23,4 +23,5 @@ export { useReviews } from './useReviews';
 export { useAdminOrders } from './useAdminOrders';
 export { useShipping } from './useShipping';
 export { useReadingAnalytics } from './useReadingAnalytics';
+export { useReports } from './useReports';
 export { useSettings } from './useSettings';
