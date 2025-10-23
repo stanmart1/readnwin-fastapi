@@ -1,16 +1,395 @@
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+const defaultContent = {
+  hero: { title: 'About ReadnWin', subtitle: 'Revolutionizing reading through technology' },
+  mission: { title: 'Our Mission', description: 'Making reading accessible to everyone.', features: ['Unlimited Access', 'AI Recommendations', 'Global Community'] },
+  stats: [
+    { number: '50K+', label: 'Active Readers' },
+    { number: '100K+', label: 'Books' },
+    { number: '95%', label: 'Satisfaction' },
+    { number: '24/7', label: 'Support' }
+  ],
+  values: [
+    { icon: 'ri-book-open-line', title: 'Accessibility', description: 'Making reading accessible to everyone.' },
+    { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'Enhancing reading with technology.' },
+    { icon: 'ri-heart-line', title: 'Community', description: 'Building a global reader community.' },
+    { icon: 'ri-shield-check-line', title: 'Quality', description: 'Highest standards in content.' }
+  ],
+  cta: { title: 'Join the Reading Revolution', description: 'Start your journey with ReadnWin.', primaryButton: 'Get Started', secondaryButton: 'Learn More' }
+};
+
+const iconOptions = ['ri-book-line', 'ri-brain-line', 'ri-heart-line', 'ri-shield-check-line', 'ri-group-line', 'ri-star-line'];
 
 const AdminAbout = () => {
+  const [content, setContent] = useState(defaultContent);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
+  const [lastSaved, setLastSaved] = useState(null);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    loadContent();
+  }, []);
+
+  const loadContent = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/about/admin`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && Object.keys(response.data).length > 0) {
+        setContent({ ...defaultContent, ...response.data });
+      }
+    } catch (error) {
+      console.error('Error loading:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/api/about/admin`, content, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLastSaved(new Date());
+      setUnsavedChanges(false);
+      alert('Content saved successfully!');
+    } catch (error) {
+      console.error('Error saving:', error);
+      alert('Failed to save content');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateContent = useCallback((section, data) => {
+    setContent(prev => ({ ...prev, [section]: data }));
+    setUnsavedChanges(true);
+  }, []);
+
+  const sections = [
+    { id: 'hero', label: 'Hero', icon: 'ri-home-line' },
+    { id: 'mission', label: 'Mission', icon: 'ri-target-line' },
+    { id: 'stats', label: 'Statistics', icon: 'ri-bar-chart-line' },
+    { id: 'values', label: 'Values', icon: 'ri-heart-line' },
+    { id: 'cta', label: 'Call to Action', icon: 'ri-megaphone-line' }
+  ];
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="sticky top-0 z-10 bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold text-gray-900">About Management</h1>
-          <p className="text-gray-600 mt-1">Manage about page content</p>
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">About Page Management</h1>
+              <p className="text-gray-600 mt-1">Manage your About Us page content</p>
+              {lastSaved && <p className="text-sm text-green-600 mt-2">Last saved: {lastSaved.toLocaleTimeString()}</p>}
+              {unsavedChanges && <p className="text-sm text-amber-600 mt-1">Unsaved changes</p>}
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <i className="ri-information-line text-6xl text-gray-300 mb-4"></i>
-          <p className="text-gray-500 text-lg">About management coming soon...</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <h3 className="font-semibold mb-4">Sections</h3>
+              <nav className="space-y-1">
+                {sections.map(section => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${
+                      activeSection === section.id ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <i className={section.icon}></i>
+                    <span>{section.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  {/* Hero Section */}
+                  {activeSection === 'hero' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Hero Section</h2>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Title</label>
+                        <input
+                          type="text"
+                          value={content.hero?.title || ''}
+                          onChange={(e) => updateContent('hero', { ...content.hero, title: e.target.value })}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Subtitle</label>
+                        <textarea
+                          value={content.hero?.subtitle || ''}
+                          onChange={(e) => updateContent('hero', { ...content.hero, subtitle: e.target.value })}
+                          rows={3}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Mission Section */}
+                  {activeSection === 'mission' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Mission</h2>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Title</label>
+                        <input
+                          type="text"
+                          value={content.mission?.title || ''}
+                          onChange={(e) => updateContent('mission', { ...content.mission, title: e.target.value })}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Description</label>
+                        <textarea
+                          value={content.mission?.description || ''}
+                          onChange={(e) => updateContent('mission', { ...content.mission, description: e.target.value })}
+                          rows={6}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Features</label>
+                        {(content.mission?.features || []).map((feature, idx) => (
+                          <div key={idx} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={feature}
+                              onChange={(e) => {
+                                const newFeatures = [...content.mission.features];
+                                newFeatures[idx] = e.target.value;
+                                updateContent('mission', { ...content.mission, features: newFeatures });
+                              }}
+                              className="flex-1 px-3 py-2 border rounded-lg"
+                            />
+                            <button
+                              onClick={() => {
+                                const newFeatures = content.mission.features.filter((_, i) => i !== idx);
+                                updateContent('mission', { ...content.mission, features: newFeatures });
+                              }}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            >
+                              <i className="ri-delete-bin-line"></i>
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => updateContent('mission', { ...content.mission, features: [...content.mission.features, ''] })}
+                          className="w-full px-3 py-2 border-2 border-dashed rounded-lg text-gray-500"
+                        >
+                          Add Feature
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Stats Section */}
+                  {activeSection === 'stats' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Statistics</h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        {(content.stats || []).map((stat, idx) => (
+                          <div key={idx} className="border rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between">
+                              <h3 className="font-medium">Stat {idx + 1}</h3>
+                              <button
+                                onClick={() => updateContent('stats', content.stats.filter((_, i) => i !== idx))}
+                                className="text-red-600"
+                              >
+                                <i className="ri-delete-bin-line"></i>
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Number"
+                              value={stat.number}
+                              onChange={(e) => {
+                                const newStats = [...content.stats];
+                                newStats[idx] = { ...stat, number: e.target.value };
+                                updateContent('stats', newStats);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Label"
+                              value={stat.label}
+                              onChange={(e) => {
+                                const newStats = [...content.stats];
+                                newStats[idx] = { ...stat, label: e.target.value };
+                                updateContent('stats', newStats);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => updateContent('stats', [...content.stats, { number: '', label: '' }])}
+                          className="border-2 border-dashed rounded-lg p-8 text-gray-500"
+                        >
+                          Add Stat
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Values Section */}
+                  {activeSection === 'values' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Company Values</h2>
+                      <div className="grid grid-cols-2 gap-6">
+                        {(content.values || []).map((value, idx) => (
+                          <div key={idx} className="border rounded-lg p-4 space-y-4">
+                            <div className="flex justify-between">
+                              <h3 className="font-medium">Value {idx + 1}</h3>
+                              <button
+                                onClick={() => updateContent('values', content.values.filter((_, i) => i !== idx))}
+                                className="text-red-600"
+                              >
+                                <i className="ri-delete-bin-line"></i>
+                              </button>
+                            </div>
+                            <select
+                              value={value.icon}
+                              onChange={(e) => {
+                                const newValues = [...content.values];
+                                newValues[idx] = { ...value, icon: e.target.value };
+                                updateContent('values', newValues);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            >
+                              {iconOptions.map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="Title"
+                              value={value.title}
+                              onChange={(e) => {
+                                const newValues = [...content.values];
+                                newValues[idx] = { ...value, title: e.target.value };
+                                updateContent('values', newValues);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                            <textarea
+                              placeholder="Description"
+                              value={value.description}
+                              onChange={(e) => {
+                                const newValues = [...content.values];
+                                newValues[idx] = { ...value, description: e.target.value };
+                                updateContent('values', newValues);
+                              }}
+                              rows={4}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => updateContent('values', [...content.values, { icon: 'ri-star-line', title: '', description: '' }])}
+                          className="border-2 border-dashed rounded-lg p-8 text-gray-500"
+                        >
+                          Add Value
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* CTA Section */}
+                  {activeSection === 'cta' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Call to Action</h2>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Title</label>
+                        <input
+                          type="text"
+                          value={content.cta?.title || ''}
+                          onChange={(e) => updateContent('cta', { ...content.cta, title: e.target.value })}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Description</label>
+                        <textarea
+                          value={content.cta?.description || ''}
+                          onChange={(e) => updateContent('cta', { ...content.cta, description: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Primary Button</label>
+                          <input
+                            type="text"
+                            value={content.cta?.primaryButton || ''}
+                            onChange={(e) => updateContent('cta', { ...content.cta, primaryButton: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Secondary Button</label>
+                          <input
+                            type="text"
+                            value={content.cta?.secondaryButton || ''}
+                            onChange={(e) => updateContent('cta', { ...content.cta, secondaryButton: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
     </AdminLayout>
