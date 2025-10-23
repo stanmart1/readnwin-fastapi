@@ -1,4 +1,5 @@
 import AdminLayout from '../../components/AdminLayout';
+import EmailTemplateManagement from '../../components/admin/EmailTemplateManagement';
 
 const AdminEmailTemplates = () => {
   return (
@@ -6,12 +7,9 @@ const AdminEmailTemplates = () => {
       <div className="space-y-6">
         <div className="sticky top-0 z-10 bg-white rounded-lg shadow-md p-6">
           <h1 className="text-3xl font-bold text-gray-900">Email Templates</h1>
-          <p className="text-gray-600 mt-1">Manage email templates</p>
+          <p className="text-gray-600 mt-1">Manage email templates and notifications</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <i className="ri-mail-line text-6xl text-gray-300 mb-4"></i>
-          <p className="text-gray-500 text-lg">Email templates coming soon...</p>
-        </div>
+        <EmailTemplateManagement />
       </div>
     </AdminLayout>
   );

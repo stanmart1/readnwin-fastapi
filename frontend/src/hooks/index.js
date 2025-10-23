@@ -24,4 +24,5 @@ export { useAdminOrders } from './useAdminOrders';
 export { useShipping } from './useShipping';
 export { useReadingAnalytics } from './useReadingAnalytics';
 export { useReports } from './useReports';
+export { useEmailTemplates } from './useEmailTemplates';
 export { useSettings } from './useSettings';
