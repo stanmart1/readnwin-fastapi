@@ -112,17 +112,26 @@ async def upload_proof_of_payment(
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Upload proof of payment for bank transfer"""
+    """Upload proof of payment for bank transfer and create payment record"""
     try:
-        # Get payment record by order ID
+        # Get order
+        order = db.query(Order).filter(
+            Order.id == order_id,
+            Order.user_id == current_user.id
+        ).first()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Check if payment already exists
         payment = db.query(Payment).filter(
             Payment.order_id == order_id,
             Payment.user_id == current_user.id,
             Payment.payment_method == "bank_transfer"
         ).first()
         
-        if not payment:
-            raise HTTPException(status_code=404, detail="Bank transfer payment not found")
+        if payment:
+            raise HTTPException(status_code=400, detail="Payment proof already uploaded for this order")
         
         # Validate file type
         allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf']
@@ -134,14 +143,36 @@ async def upload_proof_of_payment(
         if len(content) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File too large. Maximum size: 5MB")
         
-        # Use storage manager to save file
-        from core.storage import save_file
-        file_url = save_file(content, file.filename, 'proofs')
+        # Save proof file
+        from core.storage import UPLOAD_DIR, generate_unique_filename, get_file_url
+        from pathlib import Path
         
-        # Update payment record with proof URL
-        payment.proof_of_payment_url = file_url
-        payment.status = PaymentStatus.AWAITING_APPROVAL
+        proofs_dir = UPLOAD_DIR / 'proofs'
+        proofs_dir.mkdir(parents=True, exist_ok=True)
         
+        filename = generate_unique_filename(file.filename)
+        file_path = proofs_dir / filename
+        
+        with file_path.open('wb') as f:
+            f.write(content)
+        
+        file_url = get_file_url(f'proofs/{filename}', 'image')
+        
+        # Create payment record NOW with proof
+        from models.payment import PaymentMethodType
+        payment = Payment(
+            amount=order.total_amount,
+            currency='NGN',
+            payment_method=PaymentMethodType.BANK_TRANSFER,
+            description=f'Bank transfer for order {order.order_number}',
+            order_id=order.id,
+            user_id=current_user.id,
+            transaction_reference=f'BT_{order.order_number}_{int(datetime.now().timestamp())}',
+            status=PaymentStatus.AWAITING_APPROVAL,
+            proof_of_payment_url=file_url
+        )
+        
+        db.add(payment)
         db.commit()
         db.refresh(payment)
         

@@ -195,9 +195,15 @@ async def create_order(
         
         elif payment_method == 'bank_transfer':
             try:
-                # Initialize bank transfer
-                bank_transfer_data = initialize_bank_transfer(order, db)
-                db.commit()  # Commit after successful payment initialization
+                # Get bank account details but DON'T create payment record yet
+                gateway = db.query(PaymentGateway).filter(PaymentGateway.id == "bank_transfer").first()
+                
+                if not gateway or not gateway.enabled:
+                    raise HTTPException(status_code=400, detail="Bank transfer payment not enabled")
+                
+                bank_account = gateway.bank_account or {}
+                
+                db.commit()  # Commit order only
                 return {
                     "success": True,
                     "paymentMethod": "bank_transfer",
@@ -206,8 +212,16 @@ async def create_order(
                         "order_number": order.order_number,
                         "total_amount": float(order.total_amount)
                     },
-                    "bankTransferDetails": bank_transfer_data['details'],
-                    "bankTransferId": bank_transfer_data['id']
+                    "bankTransferDetails": {
+                        "amount": float(order.total_amount),
+                        "bank_account": {
+                            "bank_name": bank_account.get('bank_name', 'Access Bank'),
+                            "account_number": bank_account.get('account_number', '0101234567'),
+                            "account_name": bank_account.get('account_name', 'Lagsale Online Resources'),
+                            "account_type": bank_account.get('account_type', 'Current')
+                        },
+                        "payment_instructions": bank_account.get('payment_instructions', 'Please include order number in payment reference')
+                    }
                 }
             except Exception as e:
                 db.rollback()
@@ -333,61 +347,3 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
         logger.error(f"Flutterwave initialization error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize Flutterwave payment: {str(e)}")
 
-def initialize_bank_transfer(order: Order, db: Session):
-    """Initialize bank transfer payment"""
-    try:
-        logger.info(f"Initializing bank transfer for order {order.order_number}")
-        
-        if not order.id:
-            raise HTTPException(status_code=400, detail="Order must be saved before creating payment")
-        
-        # Get bank transfer settings from database
-        gateway = db.query(PaymentGateway).filter(PaymentGateway.id == "bank_transfer").first()
-        
-        if not gateway or not gateway.enabled:
-            raise HTTPException(status_code=400, detail="Bank transfer payment not enabled")
-        
-        bank_account = gateway.bank_account or {}
-        
-        # Create payment record
-        tx_ref = f'BT_{order.order_number}_{int(datetime.now().timestamp())}'
-        payment = Payment(
-            amount=order.total_amount,
-            currency='NGN',
-            payment_method=PaymentMethodType.BANK_TRANSFER,
-            description=f'Bank transfer for order {order.order_number}',
-            order_id=order.id,
-            user_id=order.user_id,
-            transaction_reference=tx_ref,
-            status=PaymentStatus.AWAITING_APPROVAL
-        )
-        
-        db.add(payment)
-        db.flush()
-        db.refresh(payment)
-        logger.info(f"Payment record created with ID: {payment.id}")
-        
-        # Bank transfer details from database settings
-        bank_details = {
-            "amount": float(order.total_amount),
-            "reference": payment.transaction_reference,
-            "expires_at": (datetime.now() + timedelta(hours=24)).isoformat(),
-            "bank_account": {
-                "bank_name": bank_account.get('bank_name', 'Access Bank'),
-                "account_number": bank_account.get('account_number', '0101234567'),
-                "account_name": bank_account.get('account_name', 'Lagsale Online Resources'),
-                "account_type": bank_account.get('account_type', 'Current')
-            },
-            "instructions": f"Please use reference: {payment.transaction_reference} when making payment"
-        }
-        
-        return {
-            "id": payment.id,
-            "details": bank_details
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Bank transfer initialization error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to initialize bank transfer: {str(e)}")

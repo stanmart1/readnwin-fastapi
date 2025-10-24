@@ -28,7 +28,8 @@ export default function Checkout() {
         if (orderData.paymentMethod === 'flutterwave' && orderData.flutterwavePaymentUrl) {
           window.location.href = orderData.flutterwavePaymentUrl;
         } else if (orderData.paymentMethod === 'bank_transfer') {
-          navigate(`/order-confirmation/${orderId}?payment=bank_transfer`);
+          localStorage.setItem('bank_transfer_details', JSON.stringify(orderData));
+          navigate(`/bank-transfer/${orderId}`);
         } else {
           navigate(`/order-confirmation/${orderId}`);
         }
