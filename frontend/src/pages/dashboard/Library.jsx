@@ -147,10 +147,10 @@ export default function Library() {
                 className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2 w-full sm:w-72 md:w-80 flex-shrink-0"
               >
                 {/* Cover Image */}
-                <div className="aspect-[3/4] relative overflow-hidden">
+                <div className="aspect-[3/5] relative overflow-hidden">
                   <img
                     src={getImageUrl(book.cover_image || book.book?.cover_image)}
-                    alt={book.title || book.book?.title}
+                    alt={book.title || book.book?.title || 'Book cover'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -158,39 +158,43 @@ export default function Library() {
                   {/* Format Badge */}
                   <div className="absolute top-3 right-3">
                     <span className={`px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm shadow-lg ${
-                      (book.format || book.book?.format) === 'ebook' 
+                      book.format === 'ebook' 
                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
                         : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
                     }`}>
-                      {(book.format || book.book?.format) === 'ebook' ? 'Digital' : 'Physical'}
+                      {book.format === 'ebook' ? 'Digital' : 'Physical'}
                     </span>
                   </div>
 
                   {/* Progress Bar */}
-                  {book.progress > 0 && (book.format || book.book?.format) === 'ebook' && (
+                  {book.progress > 0 && book.format === 'ebook' && (
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
                       <div className="flex items-center space-x-2">
                         <div className="flex-1 bg-white/20 rounded-full h-1.5">
                           <div 
                             className="bg-white h-1.5 rounded-full transition-all duration-300"
-                            style={{ width: `${(book.progress || 0) * 100}%` }}
+                            style={{ width: `${book.progress * 100}%` }}
                           />
                         </div>
-                        <span className="text-white text-xs font-medium">{Math.round((book.progress || 0) * 100)}%</span>
+                        <span className="text-white text-xs font-medium">{Math.round(book.progress * 100)}%</span>
                       </div>
                     </div>
                   )}
                 </div>
                 
                 {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 group-hover:text-blue-700 transition-colors leading-tight">
-                    {book.book?.title}
+                <div className="p-3 flex flex-col">
+                  {/* Title - More Prominent */}
+                  <h3 className="font-bold text-gray-900 text-base mb-1.5 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
+                    {book.title || book.book?.title}
                   </h3>
-                  <p className="text-gray-600 text-xs mb-3 truncate">{book.book?.author_name || book.book?.author}</p>
+                  {/* Author */}
+                  <p className="text-gray-600 text-xs mb-3 line-clamp-1">
+                    <span className="font-semibold">Author:</span> {book.author || book.book?.author_name || book.book?.author}
+                  </p>
                   
                   {/* Reading Stats */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                     {(book.format || book.book?.format) === 'ebook' && (
                       <span>{Math.round((book.progress || 0) * 100)}%</span>
                     )}
