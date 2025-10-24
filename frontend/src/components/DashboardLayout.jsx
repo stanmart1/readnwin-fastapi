@@ -21,10 +21,11 @@ export default function DashboardLayout({ children }) {
       <Header />
 
       <div className="flex relative">
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - Floating */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all"
+          aria-label="Toggle menu"
         >
           <i className={`${sidebarOpen ? 'ri-close-line' : 'ri-menu-line'} text-2xl`}></i>
         </button>
@@ -33,14 +34,19 @@ export default function DashboardLayout({ children }) {
         {sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300"
           ></div>
         )}
 
         {/* Sidebar */}
         <aside className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static w-64 bg-white border-r min-h-screen transition-transform duration-300 z-40`}>
+        } lg:translate-x-0 fixed lg:static w-64 h-screen lg:h-auto bg-white border-r border-gray-200 transition-all duration-300 z-40 overflow-y-auto`}>
+          {/* Sidebar Header */}
+          <div className="lg:hidden p-4 border-b border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+          </div>
+          
           <nav className="p-4 space-y-2">
             {menuItems.map((item) => (
               <Link
@@ -61,7 +67,7 @@ export default function DashboardLayout({ children }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 lg:p-6 pt-6 lg:pt-6">
           {children}
         </main>
       </div>

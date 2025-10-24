@@ -123,28 +123,30 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your account settings and preferences</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your account settings and preferences</p>
         </div>
 
-        {/* Horizontal Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <i className={`${tab.icon} text-xl`}></i>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        {/* Tabs - Mobile Scrollable / Desktop Normal */}
+        <div className="mb-6">
+          <div className="flex gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <i className={`${tab.icon} text-lg sm:text-xl`}></i>
+                <span className="text-xs sm:text-base hidden xs:inline sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Success/Error Message */}
@@ -166,13 +168,13 @@ export default function Settings() {
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-md p-6"
+          className="bg-white rounded-lg sm:rounded-xl shadow-md p-4 sm:p-6"
         >
               {activeTab === 'profile' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
-                  <form onSubmit={handleProfileSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Profile Information</h2>
+                  <form onSubmit={handleProfileSubmit} className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-gray-700 font-semibold mb-2">
                           First Name
@@ -228,7 +230,7 @@ export default function Settings() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50"
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 text-sm sm:text-base"
                     >
                       {loading ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -238,8 +240,8 @@ export default function Settings() {
 
               {activeTab === 'security' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Security Settings</h2>
-                  <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Security Settings</h2>
+                  <form onSubmit={handlePasswordSubmit} className="space-y-4 sm:space-y-6">
                     <div>
                       <label className="block text-gray-700 font-semibold mb-2">
                         Current Password
@@ -311,7 +313,7 @@ export default function Settings() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50"
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 text-sm sm:text-base"
                     >
                       {loading ? 'Updating...' : 'Update Password'}
                     </button>
@@ -321,13 +323,13 @@ export default function Settings() {
 
               {activeTab === 'notifications' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Notification Preferences</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Notification Preferences</h2>
                   <form onSubmit={handleNotificationSubmit}>
-                    <div className="space-y-4 mb-6">
-                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                        <div>
-                          <p className="font-semibold text-gray-900">Email notifications</p>
-                          <p className="text-sm text-gray-600">Receive email updates about your orders</p>
+                    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 rounded-lg gap-3 sm:gap-0">
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm sm:text-base text-gray-900">Email notifications</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Receive email updates about your orders</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -388,7 +390,7 @@ export default function Settings() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50"
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 text-sm sm:text-base"
                     >
                       {loading ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -398,10 +400,10 @@ export default function Settings() {
 
               {activeTab === 'preferences' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Reading Preferences</h2>
-                  <div className="space-y-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Reading Preferences</h2>
+                  <div className="space-y-4 sm:space-y-6">
                     <div>
-                      <label className="block text-gray-700 font-semibold mb-2">
+                      <label className="block text-sm sm:text-base text-gray-700 font-semibold mb-2 sm:mb-3">
                         Preferred Genres
                       </label>
                       <div className="flex flex-wrap gap-2">
