@@ -40,6 +40,7 @@ class DashboardStats(BaseModel):
     books_unread: int
     recent_purchases: int
     unread_notifications: int
+    total_orders: int = 0
 
 class RecentActivity(BaseModel):
     reading_sessions: List[Dict[str, Any]]
@@ -154,6 +155,10 @@ async def get_dashboard_data(
         recent_purchases_count = db.query(func.count(Order.id)).filter(
             Order.user_id == current_user.id,
             Order.created_at >= thirty_days_ago
+        ).scalar() or 0
+        
+        total_orders_count = db.query(func.count(Order.id)).filter(
+            Order.user_id == current_user.id
         ).scalar() or 0
         
         unread_notifications = db.query(func.count(Notification.id)).filter(
@@ -337,7 +342,8 @@ async def get_dashboard_data(
                 books_reading=books_reading,
                 books_unread=books_unread,
                 recent_purchases=recent_purchases_count,
-                unread_notifications=unread_notifications
+                unread_notifications=unread_notifications,
+                total_orders=total_orders_count
             ),
             recent_activity=RecentActivity(
                 reading_sessions=recent_reading_sessions,
@@ -740,6 +746,10 @@ async def get_dashboard_stats(
             Order.created_at >= thirty_days_ago
         ).scalar() or 0
         
+        total_orders = db.query(func.count(Order.id)).filter(
+            Order.user_id == current_user.id
+        ).scalar() or 0
+        
         return {
             "stats": {
                 "booksRead": completed_books,
@@ -754,7 +764,8 @@ async def get_dashboard_stats(
                 "recentPurchases": recent_purchases,
                 "totalGoals": total_goals,
                 "completedGoals": completed_goals,
-                "avgGoalProgress": round((completed_goals / total_goals * 100) if total_goals > 0 else 0, 1)
+                "avgGoalProgress": round((completed_goals / total_goals * 100) if total_goals > 0 else 0, 1),
+                "total_orders": total_orders
             }
         }
         

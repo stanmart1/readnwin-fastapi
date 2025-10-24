@@ -354,6 +354,25 @@ def update_order_status(
     if notes:
         order.notes = notes
     order.updated_at = datetime.utcnow()
+    
+    # Add books to user library when order is confirmed
+    if new_status == "confirmed" and old_status != "confirmed" and order.user_id:
+        from models.user_library import UserLibrary
+        order_items = db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
+        for item in order_items:
+            # Check if book already in library
+            existing = db.query(UserLibrary).filter(
+                UserLibrary.user_id == order.user_id,
+                UserLibrary.book_id == item.book_id
+            ).first()
+            if not existing:
+                library_entry = UserLibrary(
+                    user_id=order.user_id,
+                    book_id=item.book_id,
+                    status="unread",
+                    progress=0
+                )
+                db.add(library_entry)
 
     # Create notification for status change if user exists and status changed
     if new_status != old_status and order.user_id:
