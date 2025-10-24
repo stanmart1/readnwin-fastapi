@@ -104,6 +104,7 @@ def get_user_orders(current_user: User = Depends(get_current_user_from_token), d
                     "id": item.id,
                     "book_title": item.book.title if item.book else "Unknown Book",
                     "book_format": getattr(item, 'book_format', 'ebook'),
+                    "book_cover": f"/{item.book.cover_image}" if item.book and item.book.cover_image and not item.book.cover_image.startswith('/') else item.book.cover_image if item.book else None,
                     "quantity": item.quantity,
                     "price": float(item.price)
                 }

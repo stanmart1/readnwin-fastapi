@@ -208,13 +208,7 @@ const OrdersManagement = () => {
   };
 
   const getCustomerName = (order) => {
-    if (order.customer_name) {
-      return order.customer_name;
-    }
-    if (order.guest_email) {
-      return `Guest (${order.guest_email})`;
-    }
-    return 'Unknown Customer';
+    return order.user_name || 'Unknown Customer';
   };
 
   const clearFilters = () => {

@@ -45,7 +45,7 @@ const OrderCard = ({
         </div>
         <div>
           <p className="text-gray-600">Items</p>
-          <p className="font-semibold text-gray-900">{order.item_count || 0}</p>
+          <p className="font-semibold text-gray-900">{order.total_items || 0}</p>
         </div>
         <div>
           <p className="text-gray-600">Date</p>

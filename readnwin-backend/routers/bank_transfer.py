@@ -156,7 +156,7 @@ async def upload_proof_of_payment(
         with file_path.open('wb') as f:
             f.write(content)
         
-        file_url = get_file_url(f'proofs/{filename}', 'image')
+        file_url = f'/uploads/proofs/{filename}'
         
         # Create payment record NOW with proof
         from models.payment import PaymentMethodType

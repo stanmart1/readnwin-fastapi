@@ -761,14 +761,14 @@ def get_order_details(
             {
                 "id": item.id,
                 "book": {
-                    "id": item.book.id,
-                    "title": item.book.title,
-                    "author": item.book.author,
-                    "cover_image": getattr(item.book, 'cover_image', None)
+                    "id": item.book.id if item.book else None,
+                    "title": item.book.title if item.book else item.book_title,
+                    "author": item.book.author if item.book else "Unknown",
+                    "cover_image": f"/{item.book.cover_image}" if item.book and item.book.cover_image and not item.book.cover_image.startswith('/') else item.book.cover_image if item.book else None
                 },
                 "quantity": item.quantity,
-                "unit_price": float(item.unit_price if hasattr(item, 'unit_price') else item.price),
-                "subtotal": float(item.subtotal if hasattr(item, 'subtotal') else item.quantity * item.price)
+                "unit_price": float(item.price),
+                "subtotal": float(item.quantity * item.price)
             }
             for item in order.items
         ]

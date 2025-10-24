@@ -2,24 +2,24 @@ import { useState, useEffect } from 'react';
 import api from '../../../lib/api';
 
 const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentStatusUpdate }) => {
-  const [orderItems, setOrderItems] = useState([]);
+  const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState(false);
 
   useEffect(() => {
     if (isOpen && order) {
-      fetchOrderItems();
+      fetchOrderDetails();
     }
   }, [isOpen, order]);
 
-  const fetchOrderItems = async () => {
+  const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/orders/${order.id}/items`);
-      setOrderItems(response.data || []);
+      const response = await api.get(`/admin/orders/${order.id}`);
+      setOrderData(response.data);
     } catch (error) {
-      console.error('Error fetching order items:', error);
+      console.error('Error fetching order details:', error);
     } finally {
       setLoading(false);
     }
@@ -82,19 +82,23 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
   };
 
   const getCustomerName = () => {
-    if (order.customer_name) return order.customer_name;
-    if (order.guest_email) return `Guest (${order.guest_email})`;
+    if (!orderData) return 'Unknown Customer';
+    if (orderData.user) {
+      return `${orderData.user.first_name || ''} ${orderData.user.last_name || ''}`.trim() || orderData.user.email;
+    }
+    if (orderData.guest_email) return `Guest (${orderData.guest_email})`;
     return 'Unknown Customer';
   };
 
   if (!isOpen || !order) return null;
+  const displayOrder = orderData || order;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Order #{order.order_number}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Order #{displayOrder.order_number}</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -110,11 +114,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Order Status</label>
               <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                  {order.status}
+                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(displayOrder.status)}`}>
+                  {displayOrder.status}
                 </span>
                 <select
-                  value={order.status}
+                  value={displayOrder.status}
                   onChange={(e) => handleOrderStatusUpdate(e.target.value)}
                   disabled={updatingStatus}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -133,11 +137,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
               <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                  {order.payment_status}
+                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getPaymentStatusColor(displayOrder.payment_status)}`}>
+                  {displayOrder.payment_status}
                 </span>
                 <select
-                  value={order.payment_status}
+                  value={displayOrder.payment_status}
                   onChange={(e) => handlePaymentStatusUpdate(e.target.value)}
                   disabled={updatingPaymentStatus}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -159,11 +163,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
             </h3>
             <div className="space-y-2">
               <p className="text-sm"><span className="font-medium">Name:</span> {getCustomerName()}</p>
-              {order.guest_email && (
-                <p className="text-sm"><span className="font-medium">Email:</span> {order.guest_email}</p>
+              {displayOrder.guest_email && (
+                <p className="text-sm"><span className="font-medium">Email:</span> {displayOrder.guest_email}</p>
               )}
-              {order.user_id && (
-                <p className="text-sm"><span className="font-medium">User ID:</span> {order.user_id}</p>
+              {displayOrder.user_id && (
+                <p className="text-sm"><span className="font-medium">User ID:</span> {displayOrder.user_id}</p>
               )}
             </div>
           </div>
@@ -179,22 +183,22 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-2 text-gray-600">Loading items...</p>
               </div>
-            ) : orderItems.length === 0 ? (
+            ) : !displayOrder.items || displayOrder.items.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No items found</p>
             ) : (
               <div className="space-y-3">
-                {orderItems.map((item) => (
+                {displayOrder.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.title}</h4>
-                      <p className="text-sm text-gray-600">{item.author_name}</p>
+                      <h4 className="font-medium text-gray-900">{item.book?.title}</h4>
+                      <p className="text-sm text-gray-600">{item.book?.author}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Format: {item.format} • Qty: {item.quantity}
+                        Qty: {item.quantity}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(item.total_price)}</p>
-                      <p className="text-sm text-gray-600">{formatCurrency(item.price)} each</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(item.subtotal)}</p>
+                      <p className="text-sm text-gray-600">{formatCurrency(item.unit_price)} each</p>
                     </div>
                   </div>
                 ))}
@@ -211,25 +215,29 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Subtotal:</span>
-                <span>{formatCurrency(order.subtotal)}</span>
+                <span>{formatCurrency(displayOrder.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Tax:</span>
-                <span>{formatCurrency(order.tax_amount)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Shipping:</span>
-                <span>{formatCurrency(order.shipping_amount)}</span>
-              </div>
-              {order.discount_amount > 0 && (
+              {displayOrder.tax_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Tax:</span>
+                  <span>{formatCurrency(displayOrder.tax_amount)}</span>
+                </div>
+              )}
+              {displayOrder.shipping_cost > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Shipping:</span>
+                  <span>{formatCurrency(displayOrder.shipping_cost)}</span>
+                </div>
+              )}
+              {displayOrder.discount_amount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount:</span>
-                  <span>-{formatCurrency(order.discount_amount)}</span>
+                  <span>-{formatCurrency(displayOrder.discount_amount)}</span>
                 </div>
               )}
               <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between font-semibold text-lg">
                 <span>Total:</span>
-                <span>{formatCurrency(order.total_amount)}</span>
+                <span>{formatCurrency(displayOrder.total_amount)}</span>
               </div>
             </div>
           </div>
@@ -241,41 +249,41 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
               Payment Information
             </h3>
             <div className="space-y-2">
-              {order.payment_method && (
-                <p className="text-sm"><span className="font-medium">Method:</span> {order.payment_method}</p>
+              {displayOrder.payment_method && (
+                <p className="text-sm"><span className="font-medium">Method:</span> {displayOrder.payment_method}</p>
               )}
-              {order.payment_transaction_id && (
-                <p className="text-sm"><span className="font-medium">Transaction ID:</span> {order.payment_transaction_id}</p>
+              {displayOrder.payment_transaction_id && (
+                <p className="text-sm"><span className="font-medium">Transaction ID:</span> {displayOrder.payment_transaction_id}</p>
               )}
-              <p className="text-sm"><span className="font-medium">Currency:</span> {order.currency || 'NGN'}</p>
+              <p className="text-sm"><span className="font-medium">Currency:</span> {displayOrder.currency || 'NGN'}</p>
             </div>
           </div>
 
           {/* Shipping Information */}
-          {(order.shipping_address || order.shipping_method || order.tracking_number) && (
+          {displayOrder.shipping_address && displayOrder.shipping_address.street && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                 <i className="ri-truck-line mr-2"></i>
                 Shipping Information
               </h3>
               <div className="space-y-2">
-                {order.shipping_method && (
-                  <p className="text-sm"><span className="font-medium">Method:</span> {order.shipping_method}</p>
+                {displayOrder.shipping_method && (
+                  <p className="text-sm"><span className="font-medium">Method:</span> {displayOrder.shipping_method}</p>
                 )}
-                {order.tracking_number && (
-                  <p className="text-sm"><span className="font-medium">Tracking:</span> {order.tracking_number}</p>
+                {displayOrder.tracking_number && (
+                  <p className="text-sm"><span className="font-medium">Tracking:</span> {displayOrder.tracking_number}</p>
                 )}
-                {order.estimated_delivery_date && (
-                  <p className="text-sm"><span className="font-medium">Est. Delivery:</span> {formatDate(order.estimated_delivery_date)}</p>
+                {displayOrder.estimated_delivery_date && (
+                  <p className="text-sm"><span className="font-medium">Est. Delivery:</span> {formatDate(displayOrder.estimated_delivery_date)}</p>
                 )}
-                {order.shipping_address && (
+                {displayOrder.shipping_address && (
                   <div className="mt-2">
                     <p className="text-sm font-medium">Shipping Address:</p>
                     <p className="text-sm text-gray-600">
-                      {order.shipping_address.name}<br />
-                      {order.shipping_address.street}<br />
-                      {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip}<br />
-                      {order.shipping_address.country}
+                      {displayOrder.shipping_address.name}<br />
+                      {displayOrder.shipping_address.street}<br />
+                      {displayOrder.shipping_address.city}, {displayOrder.shipping_address.state} {displayOrder.shipping_address.zip}<br />
+                      {displayOrder.shipping_address.country}
                     </p>
                   </div>
                 )}
@@ -284,13 +292,13 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
           )}
 
           {/* Order Notes */}
-          {order.notes && (
+          {displayOrder.notes && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                 <i className="ri-sticky-note-line mr-2"></i>
                 Notes
               </h3>
-              <p className="text-sm text-gray-700">{order.notes}</p>
+              <p className="text-sm text-gray-700">{displayOrder.notes}</p>
             </div>
           )}
 
@@ -301,8 +309,8 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
               Order Timeline
             </h3>
             <div className="space-y-2">
-              <p className="text-sm"><span className="font-medium">Created:</span> {formatDate(order.created_at)}</p>
-              <p className="text-sm"><span className="font-medium">Last Updated:</span> {formatDate(order.updated_at)}</p>
+              <p className="text-sm"><span className="font-medium">Created:</span> {formatDate(displayOrder.created_at)}</p>
+              <p className="text-sm"><span className="font-medium">Last Updated:</span> {formatDate(displayOrder.updated_at)}</p>
             </div>
           </div>
         </div>
