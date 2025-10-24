@@ -19,10 +19,10 @@ export default function Orders() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Order History</h1>
-          <p className="text-gray-600">View and manage your orders</p>
+      <div className="max-w-6xl mx-auto px-0 sm:px-0">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Order History</h1>
+          <p className="text-xs sm:text-base text-gray-600">View and manage your orders</p>
         </div>
 
         <div className="space-y-6">
@@ -35,59 +35,64 @@ export default function Orders() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl shadow-md overflow-hidden"
+                className="bg-white rounded-lg sm:rounded-xl shadow-md overflow-hidden"
               >
               {/* Order Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-                <div className="flex gap-8">
-                  <div>
-                    <p className="text-sm text-gray-600">Order Number</p>
-                    <p className="font-semibold text-gray-900">{order.order_number}</p>
+              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-b">
+                {/* Top row: Order Number and Status */}
+                <div className="flex justify-between items-start mb-3 sm:mb-0 sm:flex-row">
+                  <div className="flex-1">
+                    <p className="text-xs sm:text-sm text-gray-600">Order Number</p>
+                    <p className="font-semibold text-xs sm:text-base text-gray-900">{order.order_number}</p>
                   </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs sm:text-sm font-semibold ml-2 flex-shrink-0 ${getStatusColor(order.status)}`}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </span>
+                </div>
+                
+                {/* Bottom row: Date and Total (stacked on mobile) */}
+                <div className="grid grid-cols-2 gap-4 sm:gap-8">
                   <div>
-                    <p className="text-sm text-gray-600">Date</p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-xs sm:text-sm text-gray-600">Date</p>
+                    <p className="font-semibold text-xs sm:text-base text-gray-900">
                       {new Date(order.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
-                        month: 'long',
+                        month: 'short',
                         day: 'numeric'
                       })}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Total</p>
-                    <p className="font-semibold text-gray-900">₦{(order.total_amount || 0).toLocaleString()}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Total</p>
+                    <p className="font-semibold text-xs sm:text-base text-gray-900">₦{(order.total_amount || 0).toLocaleString()}</p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </span>
               </div>
 
               {/* Order Items */}
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Items ({order.items?.length || 0})</h3>
-                <div className="space-y-3">
+              <div className="p-4 sm:p-6">
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-3 sm:mb-4">Items ({order.items?.length || 0})</h3>
+                <div className="space-y-2 sm:space-y-3">
                   {order.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center">
-                      <div className="flex items-center gap-4">
+                    <div key={idx} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 p-2 sm:p-0">
+                      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                         {item.book_cover ? (
                           <img 
                             src={item.book_cover} 
                             alt={item.book_title}
-                            className="w-12 h-16 object-cover rounded"
+                            className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-12 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center text-white">
-                            <i className="ri-book-line text-2xl"></i>
+                          <div className="w-10 h-14 sm:w-12 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center text-white flex-shrink-0">
+                            <i className="ri-book-line text-lg sm:text-2xl"></i>
                           </div>
                         )}
-                        <div>
-                          <p className="font-medium text-gray-900">{item.book_title}</p>
-                          <p className="text-sm text-gray-600">Qty: {item.quantity} • {item.book_format}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-xs sm:text-base text-gray-900 line-clamp-2">{item.book_title}</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Qty: {item.quantity} • {item.book_format}</p>
                         </div>
                       </div>
-                      <p className="font-semibold text-gray-900">₦{(item.price || 0).toLocaleString()}</p>
+                      <p className="font-semibold text-xs sm:text-base text-gray-900 text-right">₦{(item.price || 0).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
