@@ -19,6 +19,7 @@ import BookDetail from './pages/BookDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import BankTransferProof from './pages/BankTransferProof';
+import OrderConfirmation from './pages/OrderConfirmation';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import FAQ from './pages/FAQ';
@@ -73,6 +74,7 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/bank-transfer/:orderId" element={<BankTransferProof />} />
+        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/faq" element={<FAQ />} />

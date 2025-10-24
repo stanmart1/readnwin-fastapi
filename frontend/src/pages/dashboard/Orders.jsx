@@ -39,13 +39,13 @@ export default function Orders() {
               <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                 <div className="flex gap-8">
                   <div>
-                    <p className="text-sm text-gray-600">Order ID</p>
-                    <p className="font-semibold text-gray-900">{order.id}</p>
+                    <p className="text-sm text-gray-600">Order Number</p>
+                    <p className="font-semibold text-gray-900">{order.order_number}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Date</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(order.date).toLocaleDateString('en-US', {
+                      {new Date(order.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -54,7 +54,7 @@ export default function Orders() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total</p>
-                    <p className="font-semibold text-gray-900">${order.total.toFixed(2)}</p>
+                    <p className="font-semibold text-gray-900">₦{(order.total_amount || 0).toLocaleString()}</p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
@@ -64,18 +64,22 @@ export default function Orders() {
 
               {/* Order Items */}
               <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Items ({order.items.length})</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">Items ({order.order_items?.length || 0})</h3>
                 <div className="space-y-3">
-                  {order.items.map((item, idx) => (
+                  {order.order_items?.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded"></div>
+                        <img 
+                          src={item.book?.cover_image_url || item.book?.cover_image || '/placeholder-book.jpg'} 
+                          alt={item.book_title}
+                          className="w-12 h-16 object-cover rounded"
+                        />
                         <div>
-                          <p className="font-medium text-gray-900">{item.title}</p>
-                          <p className="text-sm text-gray-600">Digital Book</p>
+                          <p className="font-medium text-gray-900">{item.book_title}</p>
+                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                         </div>
                       </div>
-                      <p className="font-semibold text-gray-900">${item.price.toFixed(2)}</p>
+                      <p className="font-semibold text-gray-900">₦{(item.price || 0).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
