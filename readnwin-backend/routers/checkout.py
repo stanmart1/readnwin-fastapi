@@ -184,6 +184,29 @@ async def create_order(
             # Initialize Flutterwave payment
             flutterwave_data = initialize_flutterwave_payment(order, checkout_data.formData.shipping, db)
             db.commit()  # Commit after successful payment initialization
+            
+            # Send order confirmation email
+            try:
+                from services.email_service import send_order_confirmation_email
+                order_items = [{
+                    "title": item.book.title,
+                    "price": float(item.book.price)
+                } for item in cart_items if item.book]
+                send_order_confirmation_email(
+                    to_email=current_user.email,
+                    order_data={
+                        "order_id": order.order_number,
+                        "order_number": order.order_number,
+                        "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "total_amount": float(order.total_amount),
+                        "items": order_items
+                    },
+                    first_name=current_user.first_name or current_user.username,
+                    db_session=db
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send order confirmation email: {e}")
+            
             return {
                 "success": True,
                 "paymentMethod": "flutterwave",
@@ -207,6 +230,29 @@ async def create_order(
                 bank_account = gateway.bank_account or {}
                 
                 db.commit()  # Commit order only
+                
+                # Send order confirmation email
+                try:
+                    from services.email_service import send_order_confirmation_email
+                    order_items = [{
+                        "title": item.book.title,
+                        "price": float(item.book.price)
+                    } for item in cart_items if item.book]
+                    send_order_confirmation_email(
+                        to_email=current_user.email,
+                        order_data={
+                            "order_id": order.order_number,
+                            "order_number": order.order_number,
+                            "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "total_amount": float(order.total_amount),
+                            "items": order_items
+                        },
+                        first_name=current_user.first_name or current_user.username,
+                        db_session=db
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send order confirmation email: {e}")
+                
                 return {
                     "success": True,
                     "paymentMethod": "bank_transfer",

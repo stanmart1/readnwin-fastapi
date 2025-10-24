@@ -480,6 +480,23 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
         SecurityService.log_security_event(db, "login_success", request, user.id, 
                                          {"role": role_name}, "low")
 
+        # Send login alert email
+        try:
+            from services.email_service import send_login_alert_email
+            send_login_alert_email(
+                to_email=user_data.email,
+                alert_data={
+                    "login_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
+                    "login_location": SecurityService.get_user_location(request),
+                    "device_info": request.headers.get("User-Agent", "Unknown"),
+                    "ip_address": client_ip
+                },
+                first_name=user.first_name or user.username,
+                db_session=db
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send login alert email: {e}")
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -759,6 +776,13 @@ def change_password(data: ChangePassword, current_user: User = Depends(get_curre
         db.commit()
 
         logger.info(f"✅ Password changed successfully for user: {current_user.email}")
+
+        # Send password changed confirmation email
+        try:
+            from services.email_service import send_password_reset_email
+            send_password_reset_email(current_user.email, current_user.first_name or current_user.username, db)
+        except Exception as e:
+            logger.warning(f"Failed to send password changed email: {e}")
 
         return {"message": "Password changed successfully"}
 

@@ -87,6 +87,26 @@ async def payment_callback(
                         db.commit()
                         logger.info(f"Payment completed successfully for order {order.order_number}")
                         
+                        # Send payment confirmation email
+                        try:
+                            from services.email_service import send_payment_confirmation_email
+                            from models.user import User
+                            user = db.query(User).filter(User.id == payment.user_id).first()
+                            if user:
+                                send_payment_confirmation_email(
+                                    to_email=user.email,
+                                    payment_data={
+                                        "transaction_id": payment.transaction_reference,
+                                        "amount": float(payment.amount),
+                                        "payment_method": payment.payment_method.value if hasattr(payment.payment_method, 'value') else str(payment.payment_method),
+                                        "payment_date": payment.created_at.strftime("%Y-%m-%d %H:%M") if payment.created_at else None
+                                    },
+                                    first_name=user.first_name or user.username,
+                                    db_session=db
+                                )
+                        except Exception as e:
+                            logger.warning(f"Failed to send payment confirmation email: {e}")
+                        
                         # Redirect to success page
                         from core.config import settings
                         return {
