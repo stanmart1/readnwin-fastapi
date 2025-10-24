@@ -12,6 +12,7 @@ export default function EpubReader({ bookId, onClose }) {
   const [showToc, setShowToc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [fontSize, setFontSize] = useState(100);
+  const [fontFamily, setFontFamily] = useState('Georgia');
   const [theme, setTheme] = useState('light');
   const [bookInfo, setBookInfo] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,20 +23,38 @@ export default function EpubReader({ bookId, onClose }) {
   const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
-      loadBook();
+      if (isMounted) {
+        loadBook();
+      }
     }, 100);
     
     return () => {
+      isMounted = false;
       clearTimeout(timer);
       if (bookRef.current) {
-        bookRef.current.destroy();
+        try {
+          bookRef.current.destroy();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+        bookRef.current = null;
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
     };
   }, [bookId]);
 
   const loadBook = async () => {
+    // Prevent multiple loads
+    if (bookRef.current) {
+      return;
+    }
+    
     try {
       setLoading(true);
       isInitialLoadRef.current = true; // Reset for new book load
@@ -136,29 +155,30 @@ export default function EpubReader({ bookId, onClose }) {
     }
   };
 
-  const applyTheme = (renditionInstance, themeName) => {
-    renditionInstance.themes.default({
-      body: {
-        'font-family': 'Georgia, serif !important',
-        'line-height': '1.6 !important',
-        'padding': '20px !important'
-      }
-    });
-
+  const applyTheme = (renditionInstance, themeName, font = fontFamily) => {
     const themes = {
       light: {
-        body: { background: '#ffffff !important', color: '#000000 !important' }
+        'background': '#ffffff',
+        'color': '#000000'
       },
       sepia: {
-        body: { background: '#f4ecd8 !important', color: '#5c4a2f !important' }
+        'background': '#f4ecd8',
+        'color': '#5c4a2f'
       },
       dark: {
-        body: { background: '#1a1a1a !important', color: '#e0e0e0 !important' }
+        'background': '#1a1a1a',
+        'color': '#e0e0e0'
       }
     };
 
-    renditionInstance.themes.register(themeName, themes[themeName]);
-    renditionInstance.themes.select(themeName);
+    const selectedTheme = themes[themeName];
+    
+    // Override body styles
+    renditionInstance.themes.override('color', selectedTheme.color, true);
+    renditionInstance.themes.override('background', selectedTheme.background, true);
+    renditionInstance.themes.override('font-family', `${font}, serif`, true);
+    renditionInstance.themes.override('line-height', '1.6', true);
+    renditionInstance.themes.override('padding', '20px', true);
   };
 
   const saveProgress = async (cfi, percentage, immediate = false) => {
@@ -225,7 +245,24 @@ export default function EpubReader({ bookId, onClose }) {
   const changeTheme = (newTheme) => {
     setTheme(newTheme);
     if (rendition) {
-      applyTheme(rendition, newTheme);
+      const currentCfi = rendition.currentLocation()?.start?.cfi;
+      applyTheme(rendition, newTheme, fontFamily);
+      // Refresh the current page to apply theme properly
+      if (currentCfi) {
+        rendition.display(currentCfi);
+      }
+    }
+  };
+
+  const changeFontFamily = (newFont) => {
+    setFontFamily(newFont);
+    if (rendition) {
+      const currentCfi = rendition.currentLocation()?.start?.cfi;
+      applyTheme(rendition, theme, newFont);
+      // Refresh the current page to apply font properly
+      if (currentCfi) {
+        rendition.display(currentCfi);
+      }
     }
   };
 
@@ -366,6 +403,27 @@ export default function EpubReader({ bookId, onClose }) {
               >
                 <i className="ri-add-line"></i>
               </button>
+            </div>
+          </div>
+
+          {/* Font Family */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Font Family</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Georgia', 'Arial', 'Times New Roman', 'Verdana'].map(font => (
+                <button
+                  key={font}
+                  onClick={() => changeFontFamily(font)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                    fontFamily === font
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  style={{ fontFamily: font }}
+                >
+                  {font}
+                </button>
+              ))}
             </div>
           </div>
 
