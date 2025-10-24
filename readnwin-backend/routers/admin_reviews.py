@@ -64,13 +64,17 @@ def get_reviews(
     check_admin_access(current_user)
     
     try:
-        query = db.query(Review)
+        from models.book import Book
+        
+        query = db.query(Review).join(User).join(Book)
         
         if status and status != 'all':
             if status == 'verified':
                 query = query.filter(Review.is_verified_purchase == True)
             elif status == 'unverified':
                 query = query.filter(Review.is_verified_purchase == False)
+            elif status == 'featured':
+                query = query.filter(Review.is_featured == True)
         
         if search:
             query = query.filter(Review.review_text.contains(search))
@@ -85,21 +89,21 @@ def get_reviews(
                     "id": review.id,
                     "book_id": review.book_id,
                     "user_id": review.user_id,
-                    "first_name": "User",
-                    "last_name": str(review.user_id),
-                    "user_email": f"user{review.user_id}@example.com",
+                    "first_name": review.user.first_name or "User",
+                    "last_name": review.user.last_name or "",
+                    "user_email": review.user.email,
                     "rating": review.rating,
                     "title": review.title or "",
                     "review_text": review.review_text or review.comment or "",
                     "is_verified_purchase": review.is_verified_purchase,
                     "is_helpful_count": review.is_helpful_count,
-                    "status": "approved",  # All reviews considered approved
-                    "is_featured": False,  # Not implemented in current model
+                    "status": "approved",
+                    "is_featured": review.is_featured,
                     "created_at": review.created_at.isoformat(),
-                    "updated_at": None,  # Not in current model
-                    "book_title": f"Book {review.book_id}",
-                    "book_cover": None,
-                    "book_author": "Author Name"
+                    "updated_at": None,
+                    "book_title": review.book.title,
+                    "book_cover": f"/{review.book.cover_image}" if review.book.cover_image else None,
+                    "book_author": review.book.author
                 }
                 for review in reviews
             ],
@@ -138,7 +142,7 @@ def update_review_feature(
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    """Update review featured status (placeholder - featured not implemented in current model)"""
+    """Update review featured status"""
     check_admin_access(current_user)
     
     try:
@@ -146,11 +150,14 @@ def update_review_feature(
         if not review:
             raise HTTPException(status_code=404, detail="Review not found")
         
-        # is_featured field doesn't exist in current model, so just return success
-        return {"message": "Review feature status update not implemented in current model"}
+        review.is_featured = request.isFeatured
+        db.commit()
+        
+        return {"message": "Review featured status updated successfully", "is_featured": request.isFeatured}
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         print(f"Error updating review feature: {e}")
         raise HTTPException(status_code=500, detail="Failed to update review feature status")
 

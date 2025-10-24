@@ -105,3 +105,21 @@ def get_admin_blog_categories(
     except Exception as e:
         print(f"Error fetching blog categories: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch blog categories")
+
+@router.delete("/{post_id}")
+def delete_blog_post(
+    post_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Delete a blog post"""
+    check_admin_access(current_user)
+    
+    post = db.query(BlogPost).filter(BlogPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    db.delete(post)
+    db.commit()
+    
+    return {"success": True, "message": "Blog post deleted successfully"}

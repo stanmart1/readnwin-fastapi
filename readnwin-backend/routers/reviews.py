@@ -63,7 +63,7 @@ def get_book_reviews(book_id: int, db: Session = Depends(get_db)):
 def get_featured_reviews(limit: int = 10, db: Session = Depends(get_db)):
     try:
         reviews = db.query(Review).join(User).join(Book).filter(
-            Review.rating >= 4
+            Review.is_featured == True
         ).order_by(Review.created_at.desc()).limit(limit).all()
         
         return [
@@ -78,7 +78,7 @@ def get_featured_reviews(limit: int = 10, db: Session = Depends(get_db)):
                 first_name=review.user.first_name or "Reader",
                 last_name=review.user.last_name or "",
                 book_title=review.book.title,
-                book_cover=review.book.cover_image,
+                book_cover=f"/{review.book.cover_image}" if review.book.cover_image else None,
                 book_author=review.book.author
             )
             for review in reviews

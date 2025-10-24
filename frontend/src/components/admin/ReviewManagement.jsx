@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useReviews } from '../../hooks/useReviews';
+import { API_BASE_URL } from '../../lib/api';
 
 const ReviewManagement = () => {
   const {
@@ -142,7 +143,7 @@ const ReviewManagement = () => {
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {review.book_cover && (
             <img
-              src={review.book_cover}
+              src={`${API_BASE_URL}${review.book_cover}`}
               alt={review.book_title}
               className="w-12 h-16 object-cover rounded flex-shrink-0"
             />
@@ -438,7 +439,7 @@ const ReviewManagement = () => {
               <div className="flex items-start gap-4">
                 {selectedReviewDetail.book_cover && (
                   <img
-                    src={selectedReviewDetail.book_cover}
+                    src={`${API_BASE_URL}${selectedReviewDetail.book_cover}`}
                     alt={selectedReviewDetail.book_title}
                     className="w-24 h-32 object-cover rounded"
                   />

@@ -12,8 +12,9 @@ class Review(Base):
     rating = Column(Integer, nullable=False)
     title = Column(String)
     review_text = Column(Text)
-    comment = Column(Text)  # Keep for backward compatibility
+    comment = Column(Text)
     is_verified_purchase = Column(Boolean, default=False)
+    is_featured = Column(Boolean, default=False)
     is_helpful_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
