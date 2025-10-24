@@ -16,6 +16,13 @@ export default function Library() {
     const readingBooks = books.filter(b => b.progress > 0 && b.progress < 100);
     const completedBooks = books.filter(b => b.progress >= 100);
     
+    // Debug logging
+    if (books.length > 0) {
+      console.log('Library books:', books);
+      console.log('First book cover_image:', books[0]?.book?.cover_image);
+      console.log('API_BASE_URL:', API_BASE_URL);
+    }
+    
     const filtered = (() => {
       switch (filter) {
         case 'reading':
@@ -149,8 +156,14 @@ export default function Library() {
                 {/* Cover Image */}
                 <div className="aspect-[3/4] relative overflow-hidden">
                   <img
-                    src={book.book?.cover_image_url || `${API_BASE_URL}${book.book?.cover_image}` || '/placeholder-book.png'}
-                    alt={book.book?.title}
+                    src={
+                      book.cover_image 
+                        ? `${API_BASE_URL}/${book.cover_image}` 
+                        : book.book?.cover_image 
+                        ? `${API_BASE_URL}/${book.book.cover_image}` 
+                        : '/placeholder-book.png'
+                    }
+                    alt={book.title || book.book?.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
