@@ -147,9 +147,8 @@ export default function EpubReader({ bookId, onClose }) {
 
   const saveProgress = async (cfi, percentage) => {
     try {
-      await api.post('/reading/progress', {
-        book_id: parseInt(bookId),
-        progress: percentage,
+      await api.post(`/ereader/${bookId}/progress`, {
+        progress: percentage * 100,
         last_read_location: cfi
       });
     } catch (err) {
