@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useOrders } from '../../hooks';
+import { getImageUrl } from '../../lib/fileService';
 import { OrderCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function Orders() {
@@ -76,17 +77,11 @@ export default function Orders() {
                   {order.items?.map((item, idx) => (
                     <div key={idx} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 p-2 sm:p-0">
                       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                        {item.book_cover ? (
-                          <img 
-                            src={item.book_cover} 
-                            alt={item.book_title}
-                            className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-14 sm:w-12 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center text-white flex-shrink-0">
-                            <i className="ri-book-line text-lg sm:text-2xl"></i>
-                          </div>
-                        )}
+                        <img 
+                          src={getImageUrl(item.book_cover || item.cover_image)}
+                          alt={item.book_title}
+                          className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded flex-shrink-0"
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-xs sm:text-base text-gray-900 line-clamp-2">{item.book_title}</p>
                           <p className="text-xs sm:text-sm text-gray-600">Qty: {item.quantity} • {item.book_format}</p>
@@ -176,13 +171,11 @@ export default function Orders() {
                   {selectedOrder.items?.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-4">
-                        {item.book_cover ? (
-                          <img src={item.book_cover} alt={item.book_title} className="w-12 h-16 object-cover rounded" />
-                        ) : (
-                          <div className="w-12 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center text-white">
-                            <i className="ri-book-line text-2xl"></i>
-                          </div>
-                        )}
+                        <img 
+                          src={getImageUrl(item.book_cover || item.cover_image)} 
+                          alt={item.book_title} 
+                          className="w-12 h-16 object-cover rounded" 
+                        />
                         <div>
                           <p className="font-medium text-gray-900">{item.book_title}</p>
                           <p className="text-sm text-gray-600">Qty: {item.quantity} • {item.book_format}</p>
