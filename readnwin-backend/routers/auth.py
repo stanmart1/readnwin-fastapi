@@ -480,22 +480,23 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
         SecurityService.log_security_event(db, "login_success", request, user.id, 
                                          {"role": role_name}, "low")
 
-        # Send login alert email
-        try:
-            from services.email_service import send_login_alert_email
-            send_login_alert_email(
-                to_email=user_data.email,
-                alert_data={
-                    "login_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
-                    "login_location": SecurityService.get_user_location(request),
-                    "device_info": request.headers.get("User-Agent", "Unknown"),
-                    "ip_address": client_ip
-                },
-                first_name=user.first_name or user.username,
-                db_session=db
-            )
-        except Exception as e:
-            logger.warning(f"Failed to send login alert email: {e}")
+        # Send login alert email only on suspicious activity (disabled by default)
+        # Uncomment to enable login alerts on every login
+        # try:
+        #     from services.email_service import send_login_alert_email
+        #     send_login_alert_email(
+        #         to_email=user_data.email,
+        #         alert_data={
+        #             "login_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
+        #             "login_location": "Unknown",  # Geolocation not available
+        #             "device_info": request.headers.get("User-Agent", "Unknown"),
+        #             "ip_address": client_ip
+        #         },
+        #         first_name=user.first_name or user.username,
+        #         db_session=db
+        #     )
+        # except Exception as e:
+        #     logger.warning(f"Failed to send login alert email: {e}")
 
         return {
             "access_token": access_token,

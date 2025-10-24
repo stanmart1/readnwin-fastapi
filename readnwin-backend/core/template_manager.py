@@ -3,7 +3,9 @@ Email Template Manager - Loads and renders email templates from the templates/em
 """
 import os
 from pathlib import Path
+from typing import Optional
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from sqlalchemy.orm import Session
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,8 +14,14 @@ logger = logging.getLogger(__name__)
 class TemplateManager:
     """Manages email template loading and rendering"""
     
-    def __init__(self):
-        """Initialize Jinja2 environment"""
+    def __init__(self, db_session: Optional[Session] = None):
+        """Initialize Jinja2 environment
+        
+        Args:
+            db_session: Optional database session for loading templates from DB
+        """
+        self.db_session = db_session
+        
         # Get the templates directory path
         backend_dir = Path(__file__).parent.parent
         templates_dir = backend_dir / "templates"
@@ -275,7 +283,7 @@ class TemplateManager:
         return self.render("emails/system_maintenance.html", context)
 
 
-def get_template_manager(db_session: Session = None) -> TemplateManager:
+def get_template_manager(db_session: Optional[Session] = None) -> TemplateManager:
     """Get template manager instance with optional database session
     
     Args:

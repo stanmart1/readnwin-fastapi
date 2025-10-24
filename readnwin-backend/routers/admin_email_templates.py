@@ -4,6 +4,7 @@ from sqlalchemy import func, and_, or_
 from typing import List, Optional
 from datetime import datetime
 import json
+import logging
 
 from core.database import get_db
 from models.email_templates import AdminEmailTemplate, AdminEmailFunction, AdminEmailFunctionAssignment, AdminEmailTemplateCategory
