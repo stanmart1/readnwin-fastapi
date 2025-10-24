@@ -104,24 +104,32 @@ export default function Analytics() {
           transition={{ delay: 0.5 }}
           className="bg-white rounded-xl shadow-md p-6 mb-8"
         >
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Weekly Reading Time</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Monthly Reading Time</h2>
           <div className="space-y-4">
-            {weeklyData.map((day, index) => (
+            {weeklyData.length > 0 ? weeklyData.map((day, index) => (
               <div key={day.day} className="flex items-center gap-4">
                 <span className="w-12 text-sm font-medium text-gray-600">{day.day}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(day.minutes / maxMinutes) * 100}%` }}
-                    transition={{ delay: 0.6 + index * 0.1, duration: 0.5 }}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 h-full rounded-full flex items-center justify-end pr-3"
-                  >
-                    <span className="text-white text-sm font-semibold">{day.minutes}m</span>
-                  </motion.div>
+                  {day.minutes > 0 ? (
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(day.minutes / maxMinutes) * 100}%` }}
+                      transition={{ delay: 0.6 + index * 0.1, duration: 0.5 }}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 h-full rounded-full flex items-center justify-end pr-3"
+                    >
+                      <span className="text-white text-sm font-semibold">{day.minutes}m</span>
+                    </motion.div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-gray-400 text-xs">No reading time</span>
+                    </div>
+                  )}
                 </div>
                 <span className="w-16 text-sm text-gray-600">{day.pages} pages</span>
               </div>
-            ))}
+            )) : (
+              <p className="text-center text-gray-500 py-8">No reading data available yet. Start reading to see your progress!</p>
+            )}
           </div>
         </motion.div>
 
@@ -144,8 +152,8 @@ export default function Analytics() {
           </div>
 
           <div className="space-y-6">
-            {goals.length > 0 ? goals.map((goal, index) => (
-              <div key={index}>
+            {goals.length > 0 ? goals.map((goal) => (
+              <div key={goal.id || goal.goal_id}>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium text-gray-900">{goal.title || goal.goal}</span>
                   <span className="text-sm text-gray-600">
