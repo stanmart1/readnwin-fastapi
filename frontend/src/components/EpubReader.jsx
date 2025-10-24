@@ -3,6 +3,8 @@ import ePub from 'epubjs';
 import api from '../lib/api';
 
 export default function EpubReader({ bookId, onClose }) {
+  console.log('EpubReader mounted with bookId:', bookId);
+  
   const [book, setBook] = useState(null);
   const [rendition, setRendition] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,10 +21,14 @@ export default function EpubReader({ bookId, onClose }) {
   const bookRef = useRef(null);
 
   useEffect(() => {
-    if (viewerRef.current) {
+    console.log('useEffect triggered, viewerRef.current:', viewerRef.current);
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
       loadBook();
-    }
+    }, 100);
+    
     return () => {
+      clearTimeout(timer);
       if (bookRef.current) {
         bookRef.current.destroy();
       }
@@ -72,10 +78,18 @@ export default function EpubReader({ bookId, onClose }) {
       setToc(navigation.toc);
       console.log('TOC loaded:', navigation.toc.length, 'chapters');
 
-      // Wait for viewer to be ready
-      if (!viewerRef.current) {
-        throw new Error('Viewer container not ready');
+      // Wait for viewer element to be available
+      let attempts = 0;
+      while (!viewerRef.current && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        attempts++;
       }
+
+      if (!viewerRef.current) {
+        throw new Error('Viewer container not available');
+      }
+
+      console.log('Viewer ready, creating rendition');
 
       // Create rendition
       const renditionInstance = epubBook.renderTo(viewerRef.current, {
