@@ -21,6 +21,8 @@ const BlogManagement = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ status: '', category: '', search: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -64,35 +66,50 @@ const BlogManagement = () => {
   };
 
   const handleCreatePost = async () => {
-    const result = await createPost(formData);
-    if (result.success) {
-      setShowCreateModal(false);
-      resetForm();
-      loadData();
-    } else {
-      setError(result.error || 'Failed to create post');
+    setIsSaving(true);
+    try {
+      const result = await createPost(formData);
+      if (result.success) {
+        setShowCreateModal(false);
+        resetForm();
+        loadData();
+      } else {
+        setError(result.error || 'Failed to create post');
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdatePost = async () => {
     if (!selectedPost?.id) return;
-    const result = await updatePost(selectedPost.id, formData);
-    if (result.success) {
-      setShowEditModal(false);
-      setSelectedPost(null);
-      loadData();
-    } else {
-      setError(result.error || 'Failed to update post');
+    setIsSaving(true);
+    try {
+      const result = await updatePost(selectedPost.id, formData);
+      if (result.success) {
+        setShowEditModal(false);
+        setSelectedPost(null);
+        loadData();
+      } else {
+        setError(result.error || 'Failed to update post');
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeletePost = async (id) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
-    const result = await deletePost(id);
-    if (result.success) {
-      loadData();
-    } else {
-      setError(result.error || 'Failed to delete post');
+    setIsDeleting(true);
+    try {
+      const result = await deletePost(id);
+      if (result.success) {
+        loadData();
+      } else {
+        setError(result.error || 'Failed to delete post');
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -366,10 +383,15 @@ const BlogManagement = () => {
                           </button>
                           <button
                             onClick={() => handleDeletePost(post.id)}
-                            className="text-red-600 hover:text-red-900 flex-shrink-0"
+                            disabled={isDeleting}
+                            className="text-red-600 hover:text-red-900 flex-shrink-0 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete"
                           >
-                            <i className="ri-delete-bin-line text-lg"></i>
+                            {isDeleting ? (
+                              <i className="ri-loader-4-line animate-spin text-lg"></i>
+                            ) : (
+                              <i className="ri-delete-bin-line text-lg"></i>
+                            )}
                           </button>
                         </div>
                       </td>
@@ -503,9 +525,11 @@ const BlogManagement = () => {
                     </button>
                     <button
                       onClick={showEditModal ? handleUpdatePost : handleCreatePost}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      disabled={isSaving}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs xs:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      {showEditModal ? 'Update' : 'Create'}
+                      {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
+                      {isSaving ? 'Saving...' : 'Save Template'}
                     </button>
                   </div>
                 </div>

@@ -25,6 +25,7 @@ const ReviewManagement = () => {
   const [modalAction, setModalAction] = useState('approve');
   const [showReviewDetail, setShowReviewDetail] = useState(false);
   const [selectedReviewDetail, setSelectedReviewDetail] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     loadReviews();
@@ -63,6 +64,7 @@ const ReviewManagement = () => {
   const confirmAction = async () => {
     if (!selectedReview) return;
 
+    setIsProcessing(true);
     try {
       let result;
       
@@ -92,6 +94,8 @@ const ReviewManagement = () => {
     } catch (error) {
       console.error('Error performing action:', error);
       alert('Failed to perform action');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -406,15 +410,18 @@ const ReviewManagement = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmAction}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Confirm
+                {isProcessing && <i className="ri-loader-4-line animate-spin"></i>}
+                {isProcessing ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>

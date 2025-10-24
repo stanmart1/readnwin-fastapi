@@ -16,6 +16,9 @@ const CategoriesManagement = () => {
     search: '',
     status: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -35,6 +38,7 @@ const CategoriesManagement = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       if (editingCategory) {
         await api.put(`/admin/categories/${editingCategory.id}`, formData);
@@ -50,6 +54,8 @@ const CategoriesManagement = () => {
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save category');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -68,6 +74,7 @@ const CategoriesManagement = () => {
       return;
     }
 
+    setIsDeleting(true);
     try {
       await api.delete(`/admin/categories/${categoryId}`);
       alert('Category deleted successfully!');
@@ -75,10 +82,13 @@ const CategoriesManagement = () => {
     } catch (error) {
       console.error('Delete error:', error);
       alert('Failed to delete category');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const toggleStatus = async (categoryId, currentStatus) => {
+    setIsTogglingStatus(true);
     try {
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
       await api.put(`/admin/categories/${categoryId}`, { 
@@ -89,6 +99,8 @@ const CategoriesManagement = () => {
     } catch (error) {
       console.error('Status update error:', error);
       alert('Failed to update category status');
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -200,14 +212,19 @@ const CategoriesManagement = () => {
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => toggleStatus(category.id, category.status)}
-                    className={`p-1 rounded ${
+                    disabled={isTogglingStatus}
+                    className={`p-1 rounded transition-opacity ${
                       category.status === 'active'
                         ? 'text-green-600 hover:bg-green-50' 
                         : 'text-gray-400 hover:bg-gray-50'
-                    }`}
+                    } ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title={category.status === 'active' ? 'Deactivate' : 'Activate'}
                   >
-                    <i className={`ri-${category.status === 'active' ? 'eye' : 'eye-off'}-line`}></i>
+                    {isTogglingStatus ? (
+                      <i className="ri-loader-4-line animate-spin"></i>
+                    ) : (
+                      <i className={`ri-${category.status === 'active' ? 'eye' : 'eye-off'}-line`}></i>
+                    )}
                   </button>
                   <button
                     onClick={() => handleEdit(category)}
@@ -218,10 +235,15 @@ const CategoriesManagement = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(category.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    disabled={isDeleting}
+                    className={`p-1 text-red-600 hover:bg-red-50 rounded transition-opacity ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title="Delete"
                   >
-                    <i className="ri-delete-bin-line"></i>
+                    {isDeleting ? (
+                      <i className="ri-loader-4-line animate-spin"></i>
+                    ) : (
+                      <i className="ri-delete-bin-line"></i>
+                    )}
                   </button>
                 </div>
               </div>
@@ -312,9 +334,11 @@ const CategoriesManagement = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {editingCategory ? 'Update' : 'Create'}
+                    {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
+                    {isSaving ? 'Saving...' : (editingCategory ? 'Update' : 'Create')}
                   </button>
                 </div>
               </form>

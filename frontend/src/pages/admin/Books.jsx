@@ -383,15 +383,17 @@ const AdminBooks = () => {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setModals(prev => ({ ...prev, deleteConfirm: false }))}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      disabled={loadingStates.delete}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={confirmDeleteBook}
                       disabled={loadingStates.delete}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
+                      {loadingStates.delete && <i className="ri-loader-4-line animate-spin"></i>}
                       {loadingStates.delete ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
@@ -481,9 +483,9 @@ const AdminBooks = () => {
                     </button>
                     <button
                       onClick={handleBatchUpdate}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                     >
-                      Update
+                      Update Books
                     </button>
                   </div>
                 </div>
@@ -657,7 +659,8 @@ const AdminBooks = () => {
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={() => setModals(prev => ({ ...prev, bookAssign: false }))}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      disabled={loadingStates.assign}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
@@ -693,8 +696,9 @@ const AdminBooks = () => {
                         }
                       }}
                       disabled={!selection.user || loadingStates.assign}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
+                      {loadingStates.assign && <i className="ri-loader-4-line animate-spin"></i>}
                       {loadingStates.assign ? 'Assigning...' : 'Assign'}
                     </button>
                   </div>

@@ -24,6 +24,8 @@ const EmailTemplateManagement = () => {
   const [showVariables, setShowVariables] = useState(false);
   const [showPreviewInModal, setShowPreviewInModal] = useState(false);
   const [filters, setFilters] = useState({ category: '', isActive: '', search: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -67,35 +69,50 @@ const EmailTemplateManagement = () => {
   };
 
   const handleCreateTemplate = async () => {
-    const result = await createTemplate(formData);
-    if (result.success) {
-      setShowCreateModal(false);
-      resetForm();
-      loadData();
-    } else {
-      setError(result.error || 'Failed to create template');
+    setIsSaving(true);
+    try {
+      const result = await createTemplate(formData);
+      if (result.success) {
+        setShowCreateModal(false);
+        resetForm();
+        loadData();
+      } else {
+        setError(result.error || 'Failed to create template');
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateTemplate = async () => {
     if (!selectedTemplate?.id) return;
-    const result = await updateTemplate(selectedTemplate.id, formData);
-    if (result.success) {
-      setShowEditModal(false);
-      setSelectedTemplate(null);
-      loadData();
-    } else {
-      setError(result.error || 'Failed to update template');
+    setIsSaving(true);
+    try {
+      const result = await updateTemplate(selectedTemplate.id, formData);
+      if (result.success) {
+        setShowEditModal(false);
+        setSelectedTemplate(null);
+        loadData();
+      } else {
+        setError(result.error || 'Failed to update template');
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteTemplate = async (templateId) => {
     if (!confirm('Are you sure you want to delete this template?')) return;
-    const result = await deleteTemplate(templateId);
-    if (result.success) {
-      loadData();
-    } else {
-      setError(result.error || 'Failed to delete template');
+    setIsDeleting(true);
+    try {
+      const result = await deleteTemplate(templateId);
+      if (result.success) {
+        loadData();
+      } else {
+        setError(result.error || 'Failed to delete template');
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -372,10 +389,15 @@ const EmailTemplateManagement = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteTemplate(template.id)}
-                            className="text-red-600 hover:text-red-900 flex-shrink-0 p-1"
+                            disabled={isDeleting}
+                            className="text-red-600 hover:text-red-900 flex-shrink-0 p-1 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete"
                           >
-                            <i className="ri-delete-bin-line text-lg"></i>
+                            {isDeleting ? (
+                              <i className="ri-loader-4-line animate-spin text-lg"></i>
+                            ) : (
+                              <i className="ri-delete-bin-line text-lg"></i>
+                            )}
                           </button>
                         </div>
                       </td>
@@ -608,9 +630,11 @@ const EmailTemplateManagement = () => {
                   </button>
                   <button
                     onClick={showEditModal ? handleUpdateTemplate : handleCreateTemplate}
-                    className="w-full xs:w-auto px-3 xs:px-4 py-2 xs:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs xs:text-sm font-medium"
+                    disabled={isSaving}
+                    className="w-full xs:w-auto px-3 xs:px-4 py-2 xs:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs xs:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Save Template
+                    {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
+                    {isSaving ? 'Saving...' : 'Save Template'}
                   </button>
                 </div>
               </div>

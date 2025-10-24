@@ -12,6 +12,8 @@ const WorksManagement = () => {
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -120,25 +122,35 @@ const WorksManagement = () => {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this work?')) return;
 
-    const result = await deleteWork(id);
-    if (result.success) {
-      fetchWorks();
-      alert('Work deleted successfully!');
-    } else {
-      setError(result.error || 'Failed to delete work');
+    setIsDeleting(true);
+    try {
+      const result = await deleteWork(id);
+      if (result.success) {
+        fetchWorks();
+        alert('Work deleted successfully!');
+      } else {
+        setError(result.error || 'Failed to delete work');
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const toggleActive = async (id, currentStatus) => {
-    const formDataToSend = new FormData();
-    formDataToSend.append('is_active', (!currentStatus).toString());
+    setIsTogglingStatus(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('is_active', (!currentStatus).toString());
 
-    const result = await updateWork(id, formDataToSend);
-    if (result.success) {
-      fetchWorks();
-      alert(`Work ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
-    } else {
-      setError(result.error || 'Failed to update status');
+      const result = await updateWork(id, formDataToSend);
+      if (result.success) {
+        fetchWorks();
+        alert(`Work ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+      } else {
+        setError(result.error || 'Failed to update status');
+      }
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -322,20 +334,30 @@ const WorksManagement = () => {
                   </button>
                   <button
                     onClick={() => toggleActive(work.id, work.is_active)}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    disabled={isTogglingStatus}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       work.is_active
                         ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
-                    <i className={`mr-1 ${work.is_active ? 'ri-eye-off-line' : 'ri-eye-line'}`}></i>
+                    {isTogglingStatus ? (
+                      <i className="ri-loader-4-line animate-spin mr-1"></i>
+                    ) : (
+                      <i className={`mr-1 ${work.is_active ? 'ri-eye-off-line' : 'ri-eye-line'}`}></i>
+                    )}
                     {work.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                   <button
                     onClick={() => handleDelete(work.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <i className="ri-delete-bin-line"></i>
+                    {isDeleting ? (
+                      <i className="ri-loader-4-line animate-spin"></i>
+                    ) : (
+                      <i className="ri-delete-bin-line"></i>
+                    )}
                   </button>
                 </div>
               </div>

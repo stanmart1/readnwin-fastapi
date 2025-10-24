@@ -19,6 +19,9 @@ const AuthorsManagement = () => {
     search: '',
     status: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   useEffect(() => {
     loadAuthors();
@@ -42,6 +45,7 @@ const AuthorsManagement = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       if (editingAuthor) {
         await api.put(`/admin/authors/${editingAuthor.id}`, formData);
@@ -57,6 +61,8 @@ const AuthorsManagement = () => {
     } catch (error) {
       console.error('Save error:', error);
       alert(error.response?.data?.error || 'Failed to save author');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -77,6 +83,7 @@ const AuthorsManagement = () => {
       return;
     }
 
+    setIsDeleting(true);
     try {
       await api.delete(`/admin/authors/${authorId}`);
       alert('Author deleted successfully!');
@@ -84,11 +91,14 @@ const AuthorsManagement = () => {
     } catch (error) {
       console.error('Delete error:', error);
       alert(error.response?.data?.error || 'Failed to delete author');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const toggleStatus = async (authorId, currentStatus) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    setIsTogglingStatus(true);
     
     try {
       await api.put(`/admin/authors/${authorId}`, { status: newStatus });
@@ -97,6 +107,8 @@ const AuthorsManagement = () => {
     } catch (error) {
       console.error('Status update error:', error);
       alert(error.response?.data?.error || 'Failed to update author status');
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -253,10 +265,15 @@ const AuthorsManagement = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleStatus(author.id, author.status)}
-                          className={`p-1 rounded ${author.status === 'active' ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'}`}
+                          disabled={isTogglingStatus}
+                          className={`p-1 rounded transition-opacity ${author.status === 'active' ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'} ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title={author.status === 'active' ? 'Deactivate' : 'Activate'}
                         >
-                          <i className={`ri-${author.status === 'active' ? 'pause' : 'play'}-line`}></i>
+                          {isTogglingStatus ? (
+                            <i className="ri-loader-4-line animate-spin"></i>
+                          ) : (
+                            <i className={`ri-${author.status === 'active' ? 'pause' : 'play'}-line`}></i>
+                          )}
                         </button>
                         <button
                           onClick={() => handleEdit(author)}
@@ -267,10 +284,15 @@ const AuthorsManagement = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(author.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          disabled={isDeleting}
+                          className={`p-1 text-red-600 hover:bg-red-50 rounded transition-opacity ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Delete"
                         >
-                          <i className="ri-delete-bin-line"></i>
+                          {isDeleting ? (
+                            <i className="ri-loader-4-line animate-spin"></i>
+                          ) : (
+                            <i className="ri-delete-bin-line"></i>
+                          )}
                         </button>
                       </div>
                     </td>
@@ -358,9 +380,11 @@ const AuthorsManagement = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {editingAuthor ? 'Update' : 'Create'} Author
+                    {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
+                    {isSaving ? 'Saving...' : (editingAuthor ? 'Update' : 'Create')} Author
                   </button>
                 </div>
               </form>
