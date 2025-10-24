@@ -96,6 +96,7 @@ async def get_user_library(
                     "cover_image": item.book.cover_image,
                     "status": item.status or "unread",
                     "progress": min(progress, 100.0),
+                    "last_read_location": item.last_read_location,
                     "last_read_at": last_read_at,
                     "purchase_date": item.created_at.isoformat() if item.created_at else None,
                     "format": getattr(item.book, 'format', 'ebook'),

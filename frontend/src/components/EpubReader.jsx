@@ -21,6 +21,7 @@ export default function EpubReader({ bookId, onClose }) {
   const viewerRef = useRef(null);
   const bookRef = useRef(null);
   const saveTimeoutRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     console.log('useEffect triggered, viewerRef.current:', viewerRef.current);
@@ -40,6 +41,7 @@ export default function EpubReader({ bookId, onClose }) {
   const loadBook = async () => {
     try {
       setLoading(true);
+      isInitialLoadRef.current = true; // Reset for new book load
       
       // Fetch book details from library
       const libraryResponse = await api.get('/user/library');
@@ -51,6 +53,8 @@ export default function EpubReader({ bookId, onClose }) {
         throw new Error('Book not found in your library');
       }
 
+      console.log('Library item:', libraryItem);
+      console.log('Saved location:', libraryItem.last_read_location);
       setBookInfo(libraryItem);
 
       // Fetch EPUB file as blob
@@ -101,6 +105,15 @@ export default function EpubReader({ bookId, onClose }) {
       const savedLocation = libraryItem.last_read_location;
       if (savedLocation) {
         await renditionInstance.display(savedLocation);
+        
+        // Calculate and save progress for the restored location
+        const currentLoc = epubBook.locations.locationFromCfi(savedLocation);
+        const totalLocs = epubBook.locations.total;
+        const progress = currentLoc / totalLocs;
+        console.log('Restored to:', currentLoc, '/', totalLocs, '=', (progress * 100).toFixed(2) + '%');
+        
+        // Save immediately to update backend (bypass throttle)
+        await saveProgress(savedLocation, progress, true);
       } else {
         await renditionInstance.display();
       }
@@ -114,6 +127,13 @@ export default function EpubReader({ bookId, onClose }) {
       renditionInstance.on('relocated', (location) => {
         console.log('Location changed:', location);
         setCurrentLocation(location.start.cfi);
+        
+        // Skip saving on initial load
+        if (isInitialLoadRef.current) {
+          console.log('Skipping initial load save');
+          isInitialLoadRef.current = false;
+          return;
+        }
         
         // Calculate progress using book locations
         const currentLocation = epubBook.locations.locationFromCfi(location.start.cfi);
@@ -159,7 +179,22 @@ export default function EpubReader({ bookId, onClose }) {
     renditionInstance.themes.select(themeName);
   };
 
-  const saveProgress = async (cfi, percentage) => {
+  const saveProgress = async (cfi, percentage, immediate = false) => {
+    // If immediate save (on load), don't throttle
+    if (immediate) {
+      try {
+        const progressPercent = (percentage || 0) * 100;
+        const response = await api.post(`/ereader/${bookId}/progress`, {
+          progress: progressPercent,
+          last_read_location: cfi
+        });
+        console.log('Progress saved:', progressPercent.toFixed(2) + '%', response.data);
+      } catch (err) {
+        console.error('Error saving progress:', err);
+      }
+      return;
+    }
+    
     // Throttle saves - only save every 3 seconds
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -171,11 +206,11 @@ export default function EpubReader({ bookId, onClose }) {
       try {
         setIsSaving(true);
         const progressPercent = (percentage || 0) * 100;
-        await api.post(`/ereader/${bookId}/progress`, {
+        const response = await api.post(`/ereader/${bookId}/progress`, {
           progress: progressPercent,
           last_read_location: cfi
         });
-        console.log('Progress saved:', progressPercent.toFixed(2) + '%');
+        console.log('Progress saved:', progressPercent.toFixed(2) + '%', response.data);
       } catch (err) {
         console.error('Error saving progress:', err);
       } finally {

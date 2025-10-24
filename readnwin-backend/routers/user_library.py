@@ -102,6 +102,10 @@ async def get_user_library(
             } if latest_session else None
         })
     
+    # Debug: print first item
+    if enhanced_items:
+        print(f"First library item last_read_location: {enhanced_items[0].get('last_read_location')}")
+    
     return {"libraryItems": enhanced_items}
 
 @router.post("/library/add-ebooks-from-order/{order_id}")
