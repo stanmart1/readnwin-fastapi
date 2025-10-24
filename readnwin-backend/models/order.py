@@ -9,6 +9,9 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     order_number = Column(String, unique=True, index=True)
+    subtotal = Column(Numeric(10, 2), default=0)
+    tax_amount = Column(Numeric(10, 2), default=0)
+    shipping_cost = Column(Numeric(10, 2), default=0)
     total_amount = Column(Numeric(10, 2), nullable=False)
     status = Column(String, default="pending")
     shipping_address = Column(JSON)  # Store as JSON for structured data

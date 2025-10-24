@@ -747,9 +747,9 @@ def get_order_details(
         "payment_status": "pending",  # Default status since field doesn't exist
         "payment_method": order.payment_method,
         "total_amount": float(order.total_amount),
-        "subtotal": float(getattr(order, 'subtotal', order.total_amount)),
-        "shipping_cost": float(getattr(order, 'shipping_cost', 0)),
-        "tax_amount": float(getattr(order, 'tax_amount', 0)),
+        "subtotal": float(order.subtotal or order.total_amount),
+        "shipping_cost": float(order.shipping_cost or 0),
+        "tax_amount": float(order.tax_amount or 0),
         "shipping_address": order.shipping_address,
         "billing_address": order.billing_address,
         "shipping_method": getattr(order, 'shipping_method', None),

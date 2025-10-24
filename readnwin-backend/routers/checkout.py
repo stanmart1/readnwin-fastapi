@@ -135,6 +135,9 @@ async def create_order(
         order = Order(
             user_id=current_user.id,
             order_number=order_number,
+            subtotal=total_amount,
+            tax_amount=vat_amount,
+            shipping_cost=shipping_cost,
             total_amount=final_total,
             status='pending',
             payment_method=checkout_data.formData.payment.method,

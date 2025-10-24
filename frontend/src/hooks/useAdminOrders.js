@@ -29,7 +29,7 @@ export const useAdminOrders = () => {
 
   const updateOrderStatus = async (orderId, status, notes) => {
     try {
-      await api.patch(`/admin/orders/${orderId}/status`, { status, notes });
+      await api.put(`/admin/orders/${orderId}/status`, { status, notes });
       return { success: true };
     } catch (err) {
       console.error('Error updating order status:', err);
@@ -40,7 +40,7 @@ export const useAdminOrders = () => {
   const updatePaymentStatus = async (orderId, paymentStatus, notes) => {
     try {
       await api.patch(`/admin/orders/${orderId}/payment-status`, { 
-        payment_status: paymentStatus, 
+        status: paymentStatus, 
         notes 
       });
       return { success: true };
