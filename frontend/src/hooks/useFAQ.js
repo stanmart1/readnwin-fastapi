@@ -15,10 +15,16 @@ export const useFAQ = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/api/faq');
-      setFaqs(response.data || []);
+      
+      if (response.data?.success && response.data?.data?.faqs) {
+        setFaqs(response.data.data.faqs);
+      } else {
+        setFaqs([]);
+      }
     } catch (err) {
       setError(err.message);
       console.error('Error fetching FAQs:', err);
+      setFaqs([]);
     } finally {
       setLoading(false);
     }

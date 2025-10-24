@@ -136,15 +136,15 @@ export default function BookDetail() {
 
               {/* Price */}
               <div className="mb-6">
-                <span className="text-4xl font-bold text-blue-600">${book.price}</span>
+                <span className="text-4xl font-bold text-blue-600">₦{book.price?.toLocaleString() || '0'}</span>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-4 mb-8">
+              <div className="mb-8">
                 <button 
                   onClick={handleAddToCart}
                   disabled={addingToCart}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addingToCart ? (
                     <>
@@ -157,10 +157,6 @@ export default function BookDetail() {
                       Add to Cart
                     </>
                   )}
-                </button>
-                <button className="flex-1 bg-white border-2 border-blue-600 text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-blue-50">
-                  <i className="ri-book-open-line mr-2"></i>
-                  Preview
                 </button>
               </div>
 
@@ -216,7 +212,7 @@ export default function BookDetail() {
                     <div className="p-4">
                       <h3 className="font-bold text-lg mb-2 line-clamp-2">{relatedBook.title}</h3>
                       <p className="text-gray-600 text-sm mb-2">{relatedBook.author}</p>
-                      <span className="text-xl font-bold text-blue-600">${relatedBook.price}</span>
+                      <span className="text-xl font-bold text-blue-600">₦{relatedBook.price?.toLocaleString() || '0'}</span>
                     </div>
                   </Link>
                 ))}

@@ -3,9 +3,12 @@ import { motion } from 'framer-motion';
 import { getImageUrl } from '../lib/fileService';
 import { Link } from 'react-router-dom';
 import { useBooks } from '../hooks';
+import { useCartContext } from '../context/CartContext';
 
 export default function FeaturedBooks() {
   const [selectedCategory, setSelectedCategory] = useState('featured');
+  const [addedToCart, setAddedToCart] = useState(new Set());
+  const { addToCart } = useCartContext();
   
   const params = { 
     page: 1, 
@@ -17,6 +20,27 @@ export default function FeaturedBooks() {
   };
   
   const { books, loading } = useBooks(params);
+
+  const handleAddToCart = (book, e) => {
+    e.preventDefault();
+    addToCart({
+      id: book.id,
+      title: book.title,
+      author: book.author_name,
+      price: book.price,
+      cover_image: book.cover_image_url || book.cover_image,
+      quantity: 1
+    });
+    
+    setAddedToCart(prev => new Set(prev).add(book.id));
+    setTimeout(() => {
+      setAddedToCart(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(book.id);
+        return newSet;
+      });
+    }, 2000);
+  };
 
   const categories = [
     { id: 'featured', name: 'Featured Books', icon: 'ri-star-line' },
@@ -116,8 +140,25 @@ export default function FeaturedBooks() {
                       >
                         View Details
                       </Link>
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">
-                        <i className="ri-shopping-cart-line"></i>
+                      <button 
+                        onClick={(e) => handleAddToCart(book, e)}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all text-white ${
+                          addedToCart.has(book.id)
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                      >
+                        {addedToCart.has(book.id) ? (
+                          <>
+                            <i className="ri-check-line"></i>
+                            <span className="hidden sm:inline ml-1">Added</span>
+                          </>
+                        ) : (
+                          <>
+                            <i className="ri-shopping-cart-line"></i>
+                            <span className="hidden sm:inline ml-1">Add</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -167,11 +208,11 @@ export default function FeaturedBooks() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-blue-600 font-bold text-xl">
-                        ${book.price?.toFixed(2) || '9.99'}
+                        ₦{(book.price || 9.99).toLocaleString('en-NG')}
                       </span>
                       {book.original_price && book.original_price > book.price && (
                         <span className="text-gray-400 text-sm line-through ml-2">
-                          ${book.original_price.toFixed(2)}
+                          ₦{book.original_price.toLocaleString('en-NG')}
                         </span>
                       )}
                     </div>

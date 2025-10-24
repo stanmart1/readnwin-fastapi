@@ -128,9 +128,9 @@ export default function BookCard({ book, onCartUpdate }) {
           <div className="mt-auto">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-blue-600">${book.price}</span>
+                <span className="text-2xl font-bold text-blue-600">₦{(book.price || 0).toLocaleString()}</span>
                 {displayOriginalPrice && displayOriginalPrice > book.price && (
-                  <span className="text-sm text-gray-500 line-through">${displayOriginalPrice}</span>
+                  <span className="text-sm text-gray-500 line-through">₦{displayOriginalPrice.toLocaleString()}</span>
                 )}
               </div>
             </div>
