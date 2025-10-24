@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, desc, text
 from datetime import datetime, timedelta
 from core.database import get_db
+from core.storage import storage
 from core.security import get_current_user_from_token, check_admin_access
 from models.user import User
 from models.book import Book, Category
@@ -768,6 +769,7 @@ def get_order_details(
         "status": order.status,
         "payment_status": order.payments[0].status if order.payments else "pending",
         "payment_method": order.payment_method,
+        "payment_proof_url": storage.get_url(order.payments[0].proof_of_payment_url) if order.payments and order.payments[0].proof_of_payment_url else None,
         "total_amount": float(order.total_amount),
         "subtotal": float(order.subtotal or order.total_amount),
         "shipping_cost": float(order.shipping_cost or 0),

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../lib/fileService';
 import { Link } from 'react-router-dom';
 import { useBooks } from '../hooks';
 
@@ -24,8 +25,7 @@ export default function FeaturedBooks() {
   ];
 
   const getBookImage = (book) => {
-    if (book.cover_image_url) return book.cover_image_url;
-    return `https://picsum.photos/seed/${book.id}/400/600`;
+    return getImageUrl(book.cover_image_url || book.cover_image, `https://picsum.photos/seed/${book.id}/400/600`);
   };
 
   return (

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func, desc, and_, case
 from core.database import get_db
+from core.storage import storage
 from core.security import get_current_user_from_token
 from models.user import User
 from models.user_library import UserLibrary
@@ -316,7 +317,7 @@ async def get_dashboard_data(
                     "id": book.id,
                     "title": book.title,
                     "author": book.author,
-                    "cover_image": book.cover_image,
+                    "cover_image": storage.get_url(book.cover_image) if book.cover_image else None,
                     "price": float(book.price),
                     "reason": f"Based on your interest in {book.category.name if book.category else 'this genre'}"
                 })
@@ -930,7 +931,7 @@ async def get_dashboard_library(
                 "book_id": item.book_id,
                 "title": item.book.title if item.book else "Unknown",
                 "author": item.book.author if item.book else "Unknown",
-                "cover_image": item.book.cover_image if item.book else None,
+                "cover_image": storage.get_url(item.book.cover_image) if item.book and item.book.cover_image else None,
                 "status": item.status,
                 "progress": item.progress or 0,
                 "added_at": item.added_at.isoformat() if item.added_at else None,
@@ -962,7 +963,7 @@ async def get_reading_progress(
                 "book_id": item.book_id,
                 "title": item.book.title if item.book else "Unknown",
                 "author": item.book.author if item.book else "Unknown",
-                "cover_image": item.book.cover_image if item.book else None,
+                "cover_image": storage.get_url(item.book.cover_image) if item.book and item.book.cover_image else None,
                 "progress": item.progress or 0,
                 "last_read_at": item.last_read_at.isoformat() if item.last_read_at else None
             })

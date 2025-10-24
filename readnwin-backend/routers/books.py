@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from core.storage import storage
 from core.database import get_db
 from core.security import get_current_user_from_token
 from models.book import Book, Category
@@ -98,7 +99,7 @@ def get_books(
                 "price": float(book.price) if book.price else 0.0,
                 "original_price": float(book.original_price) if book.original_price else None,
                 "cover_image": book.cover_image or "",
-                "cover_image_url": f"http://localhost:8000/{book.cover_image}" if book.cover_image and book.cover_image.strip() else None,
+                "cover_image_url": storage.get_url(book.cover_image) if book.cover_image and book.cover_image.strip() else None,
                 "category_id": book.category_id or 0,
                 "category_name": category_name,
                 "isbn": book.isbn or "",
@@ -154,7 +155,7 @@ def get_book(book_id: int, db: Session = Depends(get_db)):
             "author_name": author_name,
             "description": book.description,
             "price": float(book.price) if book.price else 0.0,
-            "cover_image_url": f"http://localhost:8000/{book.cover_image}" if book.cover_image and book.cover_image.strip() else None,
+            "cover_image_url": storage.get_url(book.cover_image) if book.cover_image and book.cover_image.strip() else None,
             "category_id": book.category_id,
             "category_name": book.category.name if book.category else None,
             "isbn": book.isbn,

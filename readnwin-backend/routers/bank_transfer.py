@@ -143,22 +143,14 @@ async def upload_proof_of_payment(
         if len(content) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File too large. Maximum size: 5MB")
         
-        # Save proof file
-        from core.storage import UPLOAD_DIR, generate_unique_filename, get_file_url
-        from pathlib import Path
+        # Reset file pointer for storage manager
+        await file.seek(0)
         
-        proofs_dir = UPLOAD_DIR / 'proofs'
-        proofs_dir.mkdir(parents=True, exist_ok=True)
+        # Save proof file using StorageManager
+        from core.storage import storage
+        file_path = await storage.save_image(file, subfolder='proofs')
         
-        filename = generate_unique_filename(file.filename)
-        file_path = proofs_dir / filename
-        
-        with file_path.open('wb') as f:
-            f.write(content)
-        
-        file_url = f'/uploads/proofs/{filename}'
-        
-        # Create payment record NOW with proof
+        # Create payment record NOW with proof (store raw path, not URL)
         from models.payment import PaymentMethodType
         payment = Payment(
             amount=order.total_amount,
@@ -169,7 +161,7 @@ async def upload_proof_of_payment(
             user_id=current_user.id,
             transaction_reference=f'BT_{order.order_number}_{int(datetime.now().timestamp())}',
             status=PaymentStatus.AWAITING_APPROVAL,
-            proof_of_payment_url=file_url
+            proof_of_payment_url=file_path
         )
         
         db.add(payment)

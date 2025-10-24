@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
+from core.storage import storage
 from core.database import get_db
 from core.security import get_current_user_from_token
 from models.user_library import UserLibrary
@@ -70,7 +71,8 @@ async def get_user_library(
                 "title": item.book.title,
                 "author_name": author_name,
                 "author": author_name,
-                "cover_image": f"/{item.book.cover_image}" if item.book.cover_image and not item.book.cover_image.startswith('/') else item.book.cover_image,
+                "cover_image": storage.get_url(item.book.cover_image) if item.book.cover_image else None,
+                "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image else None,
                 "price": float(item.book.price) if item.book.price else 0,
                 "format": item.format if hasattr(item, 'format') and item.format else ("ebook" if (item.book.format or "ebook") == "ebook" else (item.book.format or "ebook")),
                 "pages": total_pages,

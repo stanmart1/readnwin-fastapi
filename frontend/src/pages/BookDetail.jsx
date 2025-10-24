@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../lib/fileService';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../lib/api';
@@ -107,7 +108,7 @@ export default function BookDetail() {
               animate={{ opacity: 1, x: 0 }}
             >
               <img
-                src={book.cover_image_url || book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover'}
+                src={getImageUrl(book.cover_image_url || book.cover_image, 'https://via.placeholder.com/400x600?text=No+Cover')}
                 alt={book.title}
                 className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
               />
@@ -208,7 +209,7 @@ export default function BookDetail() {
                     className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
                   >
                     <img
-                      src={relatedBook.cover_image_url || relatedBook.cover_image || 'https://via.placeholder.com/300x400'}
+                      src={getImageUrl(relatedBook.cover_image_url || relatedBook.cover_image, 'https://via.placeholder.com/300x400')}
                       alt={relatedBook.title}
                       className="w-full h-64 object-cover"
                     />

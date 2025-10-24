@@ -1,3 +1,5 @@
+import { getImageUrl } from '../../lib/fileService';
+
 const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) => {
   const handleSelectAll = (checked) => {
     if (checked) {
@@ -32,7 +34,7 @@ const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) =>
                 />
                 <div className="w-12 h-16 bg-gray-100 rounded overflow-hidden relative flex-shrink-0">
                   <img
-                    src={book.cover_image_url || '/placeholder-book.jpg'}
+                    src={getImageUrl(book.cover_image_url || book.cover_image)}
                     alt={book.title}
                     className="w-full h-full object-cover"
                   />
@@ -193,7 +195,7 @@ const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) =>
                     <div className="flex items-center">
                       <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden relative flex-shrink-0">
                         <img
-                          src={book.cover_image_url || '/placeholder-book.jpg'}
+                          src={getImageUrl(book.cover_image_url || book.cover_image)}
                           alt={book.title}
                           className="w-full h-full object-cover"
                         />

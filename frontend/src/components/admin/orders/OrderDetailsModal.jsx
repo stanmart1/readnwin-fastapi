@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../../../lib/api';
+import { getImageUrl } from '../../../lib/fileService';
 
 const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentStatusUpdate }) => {
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState(false);
+  const [showProofModal, setShowProofModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && order) {
@@ -258,6 +260,19 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
                 <p className="text-sm"><span className="font-medium">Transaction ID:</span> {displayOrder.payment_transaction_id}</p>
               )}
               <p className="text-sm"><span className="font-medium">Currency:</span> {displayOrder.currency || 'NGN'}</p>
+              
+              {/* Proof of Payment for Bank Transfer */}
+              {displayOrder.payment_method === 'bank_transfer' && displayOrder.payment_proof_url && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowProofModal(true)}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <i className="ri-image-line mr-2"></i>
+                    View Payment Proof
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -326,6 +341,30 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
           </button>
         </div>
       </div>
+
+      {/* Proof of Payment Modal */}
+      {showProofModal && displayOrder.payment_proof_url && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Payment Proof</h3>
+              <button
+                onClick={() => setShowProofModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <i className="ri-close-line text-2xl"></i>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <img
+                src={getImageUrl(displayOrder.payment_proof_url)}
+                alt="Payment Proof"
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

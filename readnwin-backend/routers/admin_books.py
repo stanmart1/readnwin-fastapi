@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from core.validation import (
     BookValidationSchema, validate_file_security, sanitize_search_query,
     validate_pagination, validate_sort_params, BulkOperationSchema,
@@ -220,10 +221,7 @@ async def create_book(
         low_stock_threshold_int = int(low_stock_threshold) if low_stock_threshold else 10
         
         # Import storage module
-        from core.storage import save_cover_image, save_book_file, save_sample_file, init_storage
-        
-        # Initialize storage directories
-        init_storage()
+        from core.storage import storage
         
         # Secure file upload handling
         cover_image_path = None
@@ -231,19 +229,16 @@ async def create_book(
         sample_file_path = None
         
         if cover_image and cover_image.filename:
-            filename = await save_cover_image(cover_image)
-            cover_image_path = f"uploads/covers/{filename}"
-            logging.info(f"Cover image uploaded: {filename}")
+            cover_image_path = await storage.save_cover(cover_image)
+            logging.info(f"Cover image uploaded: {cover_image_path}")
         
         if ebook_file and ebook_file.filename:
-            filename = await save_book_file(ebook_file)
-            ebook_file_path = f"uploads/books/{filename}"
-            logging.info(f"Ebook file uploaded: {filename}")
+            ebook_file_path = await storage.save_book(ebook_file)
+            logging.info(f"Ebook file uploaded: {ebook_file_path}")
         
         if sample_file and sample_file.filename:
-            filename = await save_sample_file(sample_file)
-            sample_file_path = f"uploads/samples/{filename}"
-            logging.info(f"Sample file uploaded: {filename}")
+            sample_file_path = await storage.save_sample(sample_file)
+            logging.info(f"Sample file uploaded: {sample_file_path}")
         
         
         # Validate category exists
@@ -419,7 +414,7 @@ async def get_books(
             "stock_quantity": book.stock_quantity or 0,
             "is_featured": book.is_featured or False,
             "is_active": book.is_active if hasattr(book, 'is_active') else True,
-            "cover_image_url": f"http://localhost:8000/{book.cover_image}" if book.cover_image and book.cover_image.strip() else None,
+            "cover_image_url": storage.get_url(book.cover_image) if book.cover_image and book.cover_image.strip() else None,
             "format": book.format or "ebook",
             "created_at": book.created_at.isoformat() if book.created_at else "",
             "description": book.description or "",
@@ -488,23 +483,13 @@ async def update_book(
             book.is_featured = is_featured.lower() == "true"
         
         # Handle file updates
+        from core.storage import storage
+        
         if cover_image and cover_image.filename:
-            content = await cover_image.read()
-            file_hash = hashlib.md5(content).hexdigest()[:16]
-            filename = f"{file_hash}_{cover_image.filename}"
-            cover_image_path = f"uploads/covers/{filename}"
-            with open(cover_image_path, "wb") as buffer:
-                buffer.write(content)
-            book.cover_image = cover_image_path
+            book.cover_image = await storage.save_cover(cover_image)
         
         if ebook_file and ebook_file.filename:
-            content = await ebook_file.read()
-            file_hash = hashlib.md5(content).hexdigest()[:16]
-            filename = f"{file_hash}_{ebook_file.filename}"
-            ebook_file_path = f"uploads/ebooks/{filename}"
-            with open(ebook_file_path, "wb") as buffer:
-                buffer.write(content)
-            book.file_path = ebook_file_path
+            book.file_path = await storage.save_book(ebook_file)
         
         db.commit()
         db.refresh(book)
@@ -780,7 +765,7 @@ async def get_book(
         "stock_quantity": book.stock_quantity,
         "is_featured": book.is_featured,
         "is_active": book.is_active if hasattr(book, 'is_active') else True,
-        "cover_image_url": f"http://localhost:8000/{book.cover_image}" if book.cover_image else None,
+        "cover_image_url": storage.get_url(book.cover_image) if book.cover_image else None,
         "format": book.format,
         "description": book.description,
         "isbn": book.isbn,

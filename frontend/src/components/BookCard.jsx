@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
+import { getImageUrl } from '../lib/fileService';
 import api from '../lib/api';
 
 export default function BookCard({ book, onCartUpdate }) {
@@ -10,7 +11,7 @@ export default function BookCard({ book, onCartUpdate }) {
   const navigate = useNavigate();
 
   const displayAuthor = book.author_name || book.author || '';
-  const displayCover = book.cover_image_url || book.cover_image;
+  const displayCover = getImageUrl(book.cover_image_url || book.cover_image);
   const displayOriginalPrice = book.original_price || book.originalPrice;
   const displayRating = book.rating || 0;
   const displayReviewCount = book.review_count || 0;
