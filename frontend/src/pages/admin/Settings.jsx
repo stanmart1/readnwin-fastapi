@@ -47,32 +47,32 @@ export default function SystemSettings() {
   }
 
   const renderGeneralSettings = () => (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Site Name</label>
         <input
           type="text"
           value={settings.siteName || ''}
           onChange={(e) => handleSettingChange('siteName', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Site Description</label>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Site Description</label>
         <textarea
           value={settings.siteDescription || ''}
           onChange={(e) => handleSettingChange('siteDescription', e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-2 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Maintenance Mode</label>
-            <p className="text-sm text-gray-500">Temporarily disable site for maintenance</p>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">Maintenance Mode</label>
+            <p className="text-xs text-gray-500">Temporarily disable site for maintenance</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -85,10 +85,10 @@ export default function SystemSettings() {
           </label>
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">User Registration</label>
-            <p className="text-sm text-gray-500">Allow new users to register</p>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">User Registration</label>
+            <p className="text-xs text-gray-500">Allow new users to register</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -101,10 +101,10 @@ export default function SystemSettings() {
           </label>
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Email Notifications</label>
-            <p className="text-sm text-gray-500">Send email notifications to users</p>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">Email Notifications</label>
+            <p className="text-xs text-gray-500">Send email notifications to users</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -117,10 +117,10 @@ export default function SystemSettings() {
           </label>
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Double Opt-In Registration</label>
-            <p className="text-sm text-gray-500">Require email verification for new user registrations</p>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">Double Opt-In Registration</label>
+            <p className="text-xs text-gray-500">Require email verification for new user registrations</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -133,10 +133,10 @@ export default function SystemSettings() {
           </label>
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Review Moderation</label>
-            <p className="text-sm text-gray-500">Moderate reviews before publishing</p>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">Review Moderation</label>
+            <p className="text-xs text-gray-500">Moderate reviews before publishing</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -252,45 +252,49 @@ export default function SystemSettings() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
+        className="space-y-4 sm:space-y-6"
       >
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">System Settings</h2>
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">System Settings</h2>
           
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <i className={tab.icon}></i>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          {/* Tabs - scrollable on mobile */}
+          <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 mb-4 sm:mb-6">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md font-medium text-xs sm:text-sm whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <i className={`${tab.icon} text-sm sm:text-base`}></i>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
           </div>
           
-          <div className="max-w-2xl">
+          <div>
             {activeTab === 'general' && renderGeneralSettings()}
             {activeTab === 'security' && renderSecuritySettings()}
             {activeTab === 'payment' && renderPaymentSettings()}
             {activeTab === 'email' && <EmailGatewayManagement />}
           </div>
           
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex space-x-4">
+          <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-2 sm:space-x-4">
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
               >
                 {saving ? 'Saving...' : 'Save Settings'}
               </button>
-              <button className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base">
                 Cancel
               </button>
             </div>

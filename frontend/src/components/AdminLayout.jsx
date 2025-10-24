@@ -41,6 +41,17 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header />
+      
+      {/* Mobile Menu Button below Header */}
+      <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+        >
+          <i className={`ri-${mobileOpen ? 'close' : 'menu'}-line text-xl`}></i>
+          <span className="text-sm font-medium">Menu</span>
+        </button>
+      </div>
 
       {/* Mobile Overlay */}
       <AnimatePresence>
@@ -62,7 +73,7 @@ const AdminLayout = ({ children }) => {
         className={`fixed left-0 bg-white shadow-lg z-50 transform transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 overflow-y-auto overflow-x-hidden border-r border-gray-200`}
-        style={{ top: '4rem', height: 'calc(100vh - 4rem)' }}
+        style={{ top: 0, height: '100vh' }}
       >
         {/* User Profile Section */}
         <div className="p-4 border-b border-gray-200">
@@ -82,7 +93,7 @@ const AdminLayout = ({ children }) => {
             </div>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              className="hidden lg:block p-1 text-gray-400 hover:text-gray-600 transition-colors"
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <i className={`ri-arrow-left-s-line text-lg transition-transform ${collapsed ? 'rotate-180' : ''}`}></i>
@@ -128,23 +139,20 @@ const AdminLayout = ({ children }) => {
       <motion.main
         initial={false}
         animate={{ marginLeft: collapsed ? 80 : 288 }}
-        className="flex-1 lg:ml-72 ml-0 transition-all duration-300"
+        className="flex-1 transition-all duration-300 hidden lg:block lg:ml-0"
       >
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden fixed bottom-6 right-6 z-20">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl"
-          >
-            <i className="ri-menu-line text-2xl"></i>
-          </button>
-        </div>
-
         {/* Content */}
         <div className="p-4 sm:p-6 mt-1">
           {children}
         </div>
       </motion.main>
+
+      {/* Mobile Main Content */}
+      <div className="lg:hidden">
+        <div className="p-4 sm:p-6 mt-1">
+          {children}
+        </div>
+      </div>
     </div>
   );
 };
