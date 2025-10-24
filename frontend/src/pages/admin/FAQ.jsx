@@ -135,34 +135,35 @@ export default function FAQManagementPage() {
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+          <div className="mb-4 sm:mb-8">
+            <div className="flex flex-col gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">FAQ Management</h1>
-                <p className="mt-2 text-gray-600">Manage frequently asked questions and categories</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">FAQ Management</h1>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-base text-gray-600">Manage frequently asked questions and categories</p>
               </div>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button
                   onClick={refetch}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto"
                 >
                   <i className="ri-refresh-line mr-2"></i>
-                  Refresh
+                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="sm:hidden">Refresh</span>
                 </button>
                 <button
                   onClick={() => setShowCategoryForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                  className="inline-flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                 >
                   <i className="ri-folder-add-line mr-2"></i>
-                  Add Category
+                  <span>Add Category</span>
                 </button>
                 <button
                   onClick={() => setShowFAQForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 >
                   <i className="ri-add-line mr-2"></i>
-                  Add FAQ
+                  <span>Add FAQ</span>
                 </button>
               </div>
             </div>
@@ -170,27 +171,27 @@ export default function FAQManagementPage() {
 
           <FAQStats stats={stats} />
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search FAQs</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Search FAQs</label>
                 <div className="relative">
                   <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                   <input
                     type="text"
-                    placeholder="Search questions or answers..."
+                    placeholder="Search questions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="pl-10 w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Category</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Filter by Category</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -199,33 +200,33 @@ export default function FAQManagementPage() {
                 </select>
               </div>
               <div className="flex items-end">
-                <div className="text-sm text-gray-600">
-                  Showing {filteredFAQs.length} of {faqs.length} FAQs
+                <div className="text-xs sm:text-sm text-gray-600">
+                  Showing {filteredFAQs.length} of {faqs.length}
                 </div>
               </div>
             </div>
           </div>
 
           {selectedFAQs.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-blue-800">{selectedFAQs.length} FAQ(s) selected</div>
-                <div className="flex space-x-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-xs sm:text-sm text-blue-800">{selectedFAQs.length} FAQ(s) selected</div>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                   <button
                     onClick={() => handleBulkToggleStatus(true)}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
+                    className="inline-flex items-center justify-center px-3 py-1 border border-transparent text-xs sm:text-sm font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 w-full sm:w-auto"
                   >
                     Activate
                   </button>
                   <button
                     onClick={() => handleBulkToggleStatus(false)}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                    className="inline-flex items-center justify-center px-3 py-1 border border-transparent text-xs sm:text-sm font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200 w-full sm:w-auto"
                   >
                     Deactivate
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded text-red-700 bg-red-100 hover:bg-red-200"
+                    className="inline-flex items-center justify-center px-3 py-1 border border-transparent text-xs sm:text-sm font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 w-full sm:w-auto"
                   >
                     Delete
                   </button>

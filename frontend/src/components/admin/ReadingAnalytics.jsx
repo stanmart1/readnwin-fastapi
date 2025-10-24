@@ -81,19 +81,19 @@ const ReadingAnalytics = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-4 sm:mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Reading Analytics</h2>
-            <p className="text-gray-600">Comprehensive insights into user reading patterns and engagement</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Reading Analytics</h2>
+            <p className="text-xs sm:text-base text-gray-600 mt-1">Comprehensive insights into user reading patterns and engagement</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
             >
               <option value="week">Last Week</option>
               <option value="month">Last Month</option>
@@ -102,95 +102,95 @@ const ReadingAnalytics = () => {
             </select>
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm font-medium whitespace-nowrap w-full sm:w-auto"
             >
               <i className="ri-refresh-line"></i>
-              Refresh
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm">Total Active Readers</p>
-                <p className="text-3xl font-bold">{safeData.totalUsers.toLocaleString()}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-blue-100 text-xs sm:text-sm">Total Active Readers</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{safeData.totalUsers.toLocaleString()}</p>
               </div>
-              <i className="ri-user-line text-4xl opacity-50"></i>
+              <i className="ri-user-line text-2xl sm:text-3xl md:text-4xl opacity-50 flex-shrink-0"></i>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm">Books Read</p>
-                <p className="text-3xl font-bold">{safeData.totalBooksRead.toLocaleString()}</p>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-green-100 text-xs sm:text-sm">Books Read</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{safeData.totalBooksRead.toLocaleString()}</p>
               </div>
-              <i className="ri-book-line text-4xl opacity-50"></i>
+              <i className="ri-book-line text-2xl sm:text-3xl md:text-4xl opacity-50 flex-shrink-0"></i>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm">Avg Reading Time</p>
-                <p className="text-3xl font-bold">{safeData.averageReadingTime}h/day</p>
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-purple-100 text-xs sm:text-sm">Avg Reading Time</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{safeData.averageReadingTime}h/day</p>
               </div>
-              <i className="ri-time-line text-4xl opacity-50"></i>
+              <i className="ri-time-line text-2xl sm:text-3xl md:text-4xl opacity-50 flex-shrink-0"></i>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm">Avg Reading Speed</p>
-                <p className="text-3xl font-bold">{safeData.averageReadingSpeed} pgs/day</p>
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-orange-100 text-xs sm:text-sm">Avg Reading Speed</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{safeData.averageReadingSpeed} pgs/day</p>
               </div>
-              <i className="ri-speed-line text-4xl opacity-50"></i>
+              <i className="ri-speed-line text-2xl sm:text-3xl md:text-4xl opacity-50 flex-shrink-0"></i>
             </div>
           </div>
         </div>
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Monthly Reading Activity */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Reading Activity</h3>
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Monthly Reading Activity</h3>
           {safeData.monthlyReadingData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={safeData.monthlyReadingData}>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={safeData.monthlyReadingData} margin={{ left: -20, right: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar dataKey="activeReaders" fill="#3B82F6" name="Active Readers" />
                 <Bar dataKey="booksCompleted" fill="#10B981" name="Books Completed" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-48 sm:h-64 flex items-center justify-center text-gray-500">
               No data available
             </div>
           )}
         </div>
 
         {/* Genre Distribution */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Reading by Genre</h3>
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Reading by Genre</h3>
           {safeData.genreDistribution.length > 0 ? (
-            <div className="flex items-center space-x-6">
-              <div className="w-40 h-40">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={safeData.genreDistribution}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
+                      innerRadius={30}
+                      outerRadius={60}
                       paddingAngle={2}
                       dataKey="value"
                     >
@@ -202,23 +202,23 @@ const ReadingAnalytics = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-2 w-full">
                 {safeData.genreDistribution.map((genre, index) => (
                   <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: genre.color }}
                       ></div>
-                      <span className="text-sm text-gray-700">{genre.name}</span>
+                      <span className="text-xs sm:text-sm text-gray-700 truncate">{genre.name}</span>
                     </div>
-                    <span className="text-sm text-gray-600">{genre.value}%</span>
+                    <span className="text-xs sm:text-sm text-gray-600 flex-shrink-0 ml-2">{genre.value}%</span>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-48 sm:h-64 flex items-center justify-center text-gray-500">
               No data available
             </div>
           )}

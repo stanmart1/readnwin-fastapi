@@ -306,20 +306,20 @@ const EmailTemplateManagement = () => {
 
         {/* Templates Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Template
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Category
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
                     Status
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -328,24 +328,25 @@ const EmailTemplateManagement = () => {
                 {templates.length > 0 ? (
                   templates.map((template) => (
                     <tr key={template.id} className="hover:bg-gray-50">
-                      <td className="px-4 lg:px-6 py-4">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{template.name}</div>
-                          <div className="text-sm text-gray-500">{template.slug}</div>
-                          <div className="text-xs text-gray-400 mt-1">{template.subject}</div>
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{template.name}</div>
+                          <div className="text-xs text-gray-500 truncate hidden sm:block">{template.slug}</div>
+                          <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block">{template.subject}</div>
                         </div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <span
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
                           style={{ backgroundColor: `${getCategoryColor(template.category)}20`, color: getCategoryColor(template.category) }}
                         >
                           <i className={`${getCategoryIcon(template.category)} mr-1`}></i>
-                          {template.category}
+                          <span className="hidden sm:inline">{template.category}</span>
+                          <span className="sm:hidden">{template.category.substring(0, 3)}</span>
                         </span>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
                           template.is_active
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
@@ -353,25 +354,25 @@ const EmailTemplateManagement = () => {
                           {template.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <div className="flex items-center gap-2">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <button
                             onClick={() => handlePreviewTemplate(template)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 flex-shrink-0 p-1"
                             title="Preview"
                           >
                             <i className="ri-eye-line text-lg"></i>
                           </button>
                           <button
                             onClick={() => handleEditTemplate(template)}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-green-600 hover:text-green-900 flex-shrink-0 p-1"
                             title="Edit"
                           >
                             <i className="ri-edit-line text-lg"></i>
                           </button>
                           <button
                             onClick={() => handleDeleteTemplate(template.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 flex-shrink-0 p-1"
                             title="Delete"
                           >
                             <i className="ri-delete-bin-line text-lg"></i>
@@ -382,10 +383,10 @@ const EmailTemplateManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center">
-                      <i className="ri-mail-line text-6xl text-gray-300 mb-4"></i>
-                      <h3 className="text-lg font-medium text-gray-900">No templates found</h3>
-                      <p className="text-gray-500 mt-1">Create your first email template</p>
+                    <td colSpan={4} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
+                      <i className="ri-mail-line text-4xl sm:text-6xl text-gray-300 mb-3 sm:mb-4"></i>
+                      <h3 className="text-sm sm:text-lg font-medium text-gray-900">No templates found</h3>
+                      <p className="text-xs sm:text-base text-gray-500 mt-1">Create your first email template</p>
                     </td>
                   </tr>
                 )}

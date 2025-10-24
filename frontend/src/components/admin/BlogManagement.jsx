@@ -300,23 +300,23 @@ const BlogManagement = () => {
 
         {/* Posts Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Post
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Category
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Status
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
                     Stats
                   </th>
-                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -325,48 +325,48 @@ const BlogManagement = () => {
                 {posts.length > 0 ? (
                   posts.map((post) => (
                     <tr key={post.id} className="hover:bg-gray-50">
-                      <td className="px-4 lg:px-6 py-4">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">{post.title}</div>
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{post.title}</div>
                             {post.featured && (
-                              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded">
+                              <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded flex-shrink-0">
                                 Featured
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-500">{post.slug}</div>
-                          <div className="text-xs text-gray-400 mt-1">{post.excerpt}</div>
+                          <div className="text-xs text-gray-500 truncate hidden sm:block">{post.slug}</div>
+                          <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block">{post.excerpt}</div>
                         </div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
                           {post.category}
                         </span>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(post.status)}`}>
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(post.status)} whitespace-nowrap`}>
                           {post.status}
                         </span>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <div className="text-xs text-gray-600">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                        <div className="text-xs text-gray-600 whitespace-nowrap">
                           <div>{post.views_count || 0} views</div>
                           <div>{post.likes_count || 0} likes</div>
                         </div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditPost(post)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 flex-shrink-0"
                             title="Edit"
                           >
                             <i className="ri-edit-line text-lg"></i>
                           </button>
                           <button
                             onClick={() => handleDeletePost(post.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 flex-shrink-0"
                             title="Delete"
                           >
                             <i className="ri-delete-bin-line text-lg"></i>
@@ -377,10 +377,10 @@ const BlogManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
-                      <i className="ri-article-line text-6xl text-gray-300 mb-4"></i>
-                      <h3 className="text-lg font-medium text-gray-900">No posts found</h3>
-                      <p className="text-gray-500 mt-1">Create your first blog post</p>
+                    <td colSpan={5} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
+                      <i className="ri-article-line text-4xl sm:text-6xl text-gray-300 mb-3 sm:mb-4"></i>
+                      <h3 className="text-sm sm:text-lg font-medium text-gray-900">No posts found</h3>
+                      <p className="text-xs sm:text-base text-gray-500 mt-1">Create your first blog post</p>
                     </td>
                   </tr>
                 )}
