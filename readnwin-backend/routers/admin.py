@@ -117,7 +117,8 @@ def get_all_orders(
     """Get all orders with comprehensive filtering and search"""
     check_admin_access(current_user)
 
-    query = db.query(Order).options(joinedload(Order.user), joinedload(Order.items))
+    from models.payment import Payment
+    query = db.query(Order).options(joinedload(Order.user), joinedload(Order.items), joinedload(Order.payments))
     base_query = db.query(Order)
 
     # Apply filters
@@ -191,7 +192,7 @@ def get_all_orders(
             "status": order.status,
             "total_items": total_items,
             "payment_method": order.payment_method,
-            "payment_status": "pending",  # Default status since field doesn't exist
+            "payment_status": order.payments[0].status if order.payments else "pending",
             "tracking_number": order.tracking_number,
             "created_at": order.created_at.isoformat(),
             "updated_at": order.updated_at.isoformat() if order.updated_at else order.created_at.isoformat(),
@@ -715,9 +716,11 @@ def get_order_details(
     """Get detailed order information"""
     check_admin_access(current_user)
 
+    from models.payment import Payment
     order = db.query(Order).options(
         joinedload(Order.user),
-        joinedload(Order.items).joinedload(OrderItem.book)
+        joinedload(Order.items).joinedload(OrderItem.book),
+        joinedload(Order.payments)
     ).filter(Order.id == order_id).first()
 
     if not order:
@@ -744,7 +747,7 @@ def get_order_details(
         "id": order.id,
         "user": user_info,
         "status": order.status,
-        "payment_status": "pending",  # Default status since field doesn't exist
+        "payment_status": order.payments[0].status if order.payments else "pending",
         "payment_method": order.payment_method,
         "total_amount": float(order.total_amount),
         "subtotal": float(order.subtotal or order.total_amount),
