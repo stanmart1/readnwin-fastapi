@@ -41,17 +41,21 @@ export default function Cart() {
   };
 
   const handleCheckout = () => {
+    console.log('Checkout clicked', { cartItems: cartItems.length, isAuthenticated: isAuthenticated() });
+    
     if (cartItems.length === 0) {
       alert('Your cart is empty. Please add items before proceeding to checkout.');
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated()) {
+      console.log('Not authenticated, redirecting to login');
       localStorage.setItem('redirectAfterLogin', '/checkout');
       navigate('/login?redirect=/checkout');
       return;
     }
 
+    console.log('Navigating to checkout');
     navigate('/checkout');
   };
 
@@ -168,7 +172,7 @@ export default function Cart() {
         </motion.div>
 
         {/* Guest User Login/Signup Prompt */}
-        {!isAuthenticated && cartItems.length > 0 && (
+        {!isAuthenticated() && cartItems.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -398,7 +402,7 @@ export default function Cart() {
                     <p className="text-xs text-gray-500 mt-1">
                       {isEbookOnly() 
                         ? 'Digital delivery - no shipping fees' 
-                        : isAuthenticated 
+                        : isAuthenticated() 
                           ? 'Shipping fees added at checkout based on location'
                           : 'Sign in to calculate shipping and final total'
                       }
@@ -406,7 +410,7 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {isAuthenticated ? (
+                {isAuthenticated() ? (
                   <button
                     onClick={handleCheckout}
                     disabled={cartItems.length === 0}
