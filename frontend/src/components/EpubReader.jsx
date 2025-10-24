@@ -78,17 +78,6 @@ export default function EpubReader({ bookId, onClose }) {
       setToc(navigation.toc);
       console.log('TOC loaded:', navigation.toc.length, 'chapters');
 
-      // Wait for viewer element to be available
-      let attempts = 0;
-      while (!viewerRef.current && attempts < 50) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-        attempts++;
-      }
-
-      if (!viewerRef.current) {
-        throw new Error('Viewer container not available');
-      }
-
       console.log('Viewer ready, creating rendition');
 
       // Create rendition
@@ -198,39 +187,34 @@ export default function EpubReader({ bookId, onClose }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading book...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-8 max-w-md mx-4">
-          <div className="text-center">
-            <i className="ri-error-warning-line text-5xl text-red-500 mb-4"></i>
-            <h3 className="text-xl font-bold mb-2">Error Loading Book</h3>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Back to Library
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
+      {loading && (
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-white text-lg">Loading book...</p>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md mx-4">
+            <div className="text-center">
+              <i className="ri-error-warning-line text-5xl text-red-500 mb-4"></i>
+              <h3 className="text-xl font-bold mb-2">Error Loading Book</h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Back to Library
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center space-x-4">
