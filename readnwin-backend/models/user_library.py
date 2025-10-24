@@ -9,6 +9,7 @@ class UserLibrary(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     book_id = Column(Integer, ForeignKey("books.id"))
+    format = Column(String, default="ebook")  # ebook, physical, hybrid
     status = Column(String, default="unread")  # unread, reading, completed
     progress = Column(Float, default=0.0)
     last_read_at = Column(DateTime(timezone=True), nullable=True)

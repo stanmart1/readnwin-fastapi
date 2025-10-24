@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional
+from pydantic import BaseModel
 from core.database import get_db
 from routers.rbac import require_permission
 from models.user_library import UserLibrary
@@ -8,6 +9,57 @@ from models.user import User
 from models.book import Book
 
 router = APIRouter(prefix="/admin", tags=["admin-library"])
+
+class AssignBookRequest(BaseModel):
+    user_id: int
+    book_id: int
+    format: str
+
+@router.post("/user-library")
+async def assign_book_to_user(
+    request: AssignBookRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_permission("manage_library"))
+):
+    """Assign a book to a user's library"""
+    
+    # Check if user exists
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if book exists
+    book = db.query(Book).filter(Book.id == request.book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    # Check if already assigned
+    existing = db.query(UserLibrary).filter(
+        UserLibrary.user_id == request.user_id,
+        UserLibrary.book_id == request.book_id,
+        UserLibrary.format == request.format
+    ).first()
+    
+    if existing:
+        return {"success": True, "message": "Book already in user's library", "assignment_id": existing.id}
+    
+    # Create new assignment
+    assignment = UserLibrary(
+        user_id=request.user_id,
+        book_id=request.book_id,
+        format=request.format,
+        progress=0
+    )
+    
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+    
+    return {
+        "success": True,
+        "message": "Book assigned successfully",
+        "assignment_id": assignment.id
+    }
 
 @router.get("/library-assignments")
 async def get_library_assignments(

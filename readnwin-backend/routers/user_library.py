@@ -70,9 +70,10 @@ async def get_user_library(
                 "title": item.book.title,
                 "author_name": author_name,
                 "author": author_name,  # Provide both for compatibility
-                "cover_image_url": item.book.cover_image,
+                "cover_image_url": f"/{item.book.cover_image}" if item.book.cover_image else None,
+                "cover_image": f"/{item.book.cover_image}" if item.book.cover_image else None,
                 "price": float(item.book.price) if item.book.price else 0,
-                "format": "epub" if (item.book.format or "ebook") == "ebook" else (item.book.format or "epub"),
+                "format": item.format if hasattr(item, 'format') and item.format else ("epub" if (item.book.format or "ebook") == "ebook" else (item.book.format or "epub")),
                 "pages": total_pages,
                 "ebook_file_url": item.book.file_path,
                 "description": item.book.description,

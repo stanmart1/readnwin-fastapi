@@ -39,6 +39,7 @@ import DashboardAnalytics from './pages/dashboard/Analytics';
 import DashboardActivity from './pages/dashboard/Activity';
 import DashboardOrders from './pages/dashboard/Orders';
 import DashboardSettings from './pages/dashboard/Settings';
+import Reading from './pages/Reading';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -93,6 +94,7 @@ function App() {
         <Route path="/dashboard/activity" element={<DashboardActivity />} />
         <Route path="/dashboard/orders" element={<DashboardOrders />} />
         <Route path="/dashboard/settings" element={<DashboardSettings />} />
+        <Route path="/reading/:bookId" element={<Reading />} />
         
         {/* Admin Routes - Protected */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
