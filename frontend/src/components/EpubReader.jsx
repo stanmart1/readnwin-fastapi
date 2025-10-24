@@ -74,6 +74,10 @@ export default function EpubReader({ bookId, onClose }) {
       // Load the book
       await epubBook.ready;
       console.log('EPUB ready');
+      
+      // Generate locations for progress tracking
+      await epubBook.locations.generate(1024);
+      console.log('Locations generated:', epubBook.locations.total);
 
       // Get table of contents
       const navigation = await epubBook.loaded.navigation;
@@ -108,8 +112,16 @@ export default function EpubReader({ bookId, onClose }) {
 
       // Track location changes
       renditionInstance.on('relocated', (location) => {
+        console.log('Location changed:', location);
         setCurrentLocation(location.start.cfi);
-        saveProgress(location.start.cfi, location.start.percentage);
+        
+        // Calculate progress using book locations
+        const currentLocation = epubBook.locations.locationFromCfi(location.start.cfi);
+        const totalLocations = epubBook.locations.total;
+        const progress = currentLocation / totalLocations;
+        
+        console.log('Progress:', currentLocation, '/', totalLocations, '=', (progress * 100).toFixed(2) + '%');
+        saveProgress(location.start.cfi, progress);
       });
 
       setBook(epubBook);
