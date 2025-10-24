@@ -119,8 +119,6 @@ async def update_reading_progress(
     db: Session = Depends(get_db)
 ):
     """Update reading progress"""
-    print(f"Progress update: book_id={book_id}, progress={request.progress}, location={request.last_read_location[:50] if request.last_read_location else None}")
-    
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
