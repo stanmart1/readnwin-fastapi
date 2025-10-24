@@ -127,30 +127,19 @@ async def upload_proof_of_payment(
         # Validate file type
         allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf']
         if file.content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail="Invalid file type")
+            raise HTTPException(status_code=400, detail="Invalid file type. Allowed: JPG, PNG, GIF, PDF")
         
         # Validate file size (5MB max)
-        if file.size and file.size > 5 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="File too large")
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size: 5MB")
         
-        # Create uploads directory if it doesn't exist
-        import os
-        upload_dir = "uploads/proofs"
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        # Generate unique filename
-        import uuid
-        file_extension = file.filename.split('.')[-1] if file.filename else 'jpg'
-        unique_filename = f"{uuid.uuid4()}_{payment.transaction_reference}.{file_extension}"
-        file_path = os.path.join(upload_dir, unique_filename)
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+        # Use storage manager to save file
+        from core.storage import save_file
+        file_url = save_file(content, file.filename, 'proofs')
         
         # Update payment record with proof URL
-        payment.proof_of_payment_url = f"/uploads/proofs/{unique_filename}"
+        payment.proof_of_payment_url = file_url
         payment.status = PaymentStatus.AWAITING_APPROVAL
         
         db.commit()
@@ -163,6 +152,8 @@ async def upload_proof_of_payment(
             "payment_id": payment.id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(

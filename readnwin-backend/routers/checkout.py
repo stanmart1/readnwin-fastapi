@@ -6,19 +6,18 @@ from models.cart import Cart
 from models.book import Book
 from models.user import User
 from models.order import Order, OrderItem
-from models.payment import Payment, PaymentStatus
+from models.payment import Payment, PaymentStatus, PaymentMethodType
+from models.payment_settings import PaymentGateway
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
 import uuid
-import os
 import requests
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+import logging
 
-load_dotenv()
-
-router = APIRouter()
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/checkout", tags=["checkout"])
 
 class ShippingAddress(BaseModel):
     first_name: str
@@ -245,23 +244,25 @@ async def create_order(
 def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: Session):
     """Initialize Flutterwave payment and get redirect URL"""
     try:
-        print(f"🔍 Initializing Flutterwave payment for order {order.order_number}")
+        logger.info(f"Initializing Flutterwave payment for order {order.order_number}")
         
-        secret_key = os.getenv("RAVE_LIVE_SECRET_KEY")
-        print(f"🔍 Secret key found: {'Yes' if secret_key else 'No'}")
-        print(f"🔍 Secret key length: {len(secret_key) if secret_key else 0}")
+        # Get Flutterwave settings from database
+        gateway = db.query(PaymentGateway).filter(PaymentGateway.id == "flutterwave").first()
+        
+        if not gateway or not gateway.enabled:
+            raise HTTPException(status_code=400, detail="Flutterwave payment gateway not enabled")
+        
+        api_keys = gateway.api_keys or {}
+        secret_key = api_keys.get('secret_key')
         
         if not secret_key:
-            print(f"❌ RAVE_LIVE_SECRET_KEY not found in environment")
             raise HTTPException(status_code=400, detail="Flutterwave API keys not configured")
         
         if not secret_key.startswith('FLWSECK-'):
-            print(f"❌ Invalid secret key format: {secret_key[:10]}...")
             raise HTTPException(status_code=400, detail="Invalid Flutterwave secret key format")
         
         # Create payment record
         tx_ref = f'FLW_{order.order_number}_{int(datetime.now().timestamp())}'
-        from models.payment import PaymentMethodType
         payment = Payment(
             amount=order.total_amount,
             currency='NGN',
@@ -274,17 +275,21 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
         )
         
         db.add(payment)
-        db.flush()  # Don't commit here, let the main function handle it
+        db.flush()
         db.refresh(payment)
         
-        print(f"🔍 Payment record created with reference: {tx_ref}")
+        logger.info(f"Payment record created with reference: {tx_ref}")
+        
+        # Get frontend URL from environment or use default
+        import os
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
         
         # Prepare payment data for Flutterwave API
         payload = {
             "tx_ref": payment.transaction_reference,
             "amount": float(order.total_amount),
             "currency": "NGN",
-            "redirect_url": f"http://localhost:3000/payment/callback",
+            "redirect_url": f"{frontend_url}/payment/callback",
             "payment_options": "card,mobilemoney,ussd,banktransfer",
             "customer": {
                 "email": shipping.email,
@@ -294,7 +299,7 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
             "customizations": {
                 "title": "ReadnWin Payment",
                 "description": f"Payment for order {order.order_number}",
-                "logo": f"http://localhost:3000/logo.png"
+                "logo": f"{frontend_url}/logo.png"
             },
             "meta": {
                 "order_id": order.id,
@@ -309,22 +314,20 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
             "Content-Type": "application/json"
         }
         
-        print(f"🔍 Making request to Flutterwave API")
-        print(f"🔍 Payload: {payload}")
+        logger.info("Making request to Flutterwave API")
 
         # Make request to Flutterwave API
         response = requests.post(
             "https://api.flutterwave.com/v3/payments",
             json=payload,
-            headers=headers
+            headers=headers,
+            timeout=30
         )
         
-        print(f"🔍 Response status: {response.status_code}")
-        print(f"🔍 Response text: {response.text}")
+        logger.info(f"Response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
-            print(f"🔍 Response data: {data}")
             if data.get("status") == "success":
                 return {
                     "payment_url": data["data"]["link"],
@@ -332,31 +335,36 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
                 }
             else:
                 error_msg = data.get("message", "Payment initialization failed")
-                print(f"❌ Flutterwave API error: {error_msg}")
+                logger.error(f"Flutterwave API error: {error_msg}")
                 raise HTTPException(status_code=400, detail=error_msg)
         else:
-            error_text = response.text
-            print(f"❌ HTTP error {response.status_code}: {error_text}")
-            raise HTTPException(status_code=response.status_code, detail=f"Failed to initialize payment: {error_text}")
+            logger.error(f"HTTP error {response.status_code}: {response.text}")
+            raise HTTPException(status_code=500, detail="Payment gateway error")
         
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ Flutterwave initialization error: {str(e)}")
-        import traceback
-        print(f"❌ Traceback: {traceback.format_exc()}")
+        logger.error(f"Flutterwave initialization error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize Flutterwave payment: {str(e)}")
 
 def initialize_bank_transfer(order: Order, db: Session):
     """Initialize bank transfer payment"""
     try:
-        print(f"🔍 Initializing bank transfer for order {order.order_number}")
+        logger.info(f"Initializing bank transfer for order {order.order_number}")
         
-        # Order should already have an ID from the flush operation
         if not order.id:
             raise HTTPException(status_code=400, detail="Order must be saved before creating payment")
         
+        # Get bank transfer settings from database
+        gateway = db.query(PaymentGateway).filter(PaymentGateway.id == "bank_transfer").first()
+        
+        if not gateway or not gateway.enabled:
+            raise HTTPException(status_code=400, detail="Bank transfer payment not enabled")
+        
+        bank_account = gateway.bank_account or {}
+        
         # Create payment record
         tx_ref = f'BT_{order.order_number}_{int(datetime.now().timestamp())}'
-        from models.payment import PaymentMethodType
         payment = Payment(
             amount=order.total_amount,
             currency='NGN',
@@ -368,25 +376,21 @@ def initialize_bank_transfer(order: Order, db: Session):
             status=PaymentStatus.AWAITING_APPROVAL
         )
         
-        print(f"🔍 Payment data: amount={order.total_amount}, order_id={order.id}, user_id={order.user_id}")
-        
         db.add(payment)
-        db.flush()  # Don't commit here, let the main function handle it
+        db.flush()
         db.refresh(payment)
-        print(f"🔍 Payment record created with ID: {payment.id}")
+        logger.info(f"Payment record created with ID: {payment.id}")
         
-        print(f"🔍 Bank transfer payment record created with reference: {tx_ref}")
-        
-        # Bank transfer details
+        # Bank transfer details from database settings
         bank_details = {
             "amount": float(order.total_amount),
             "reference": payment.transaction_reference,
             "expires_at": (datetime.now() + timedelta(hours=24)).isoformat(),
             "bank_account": {
-                "bank_name": "Access Bank",
-                "account_number": "0101234567",
-                "account_name": "Lagsale Online Resources",
-                "account_type": "Current"
+                "bank_name": bank_account.get('bank_name', 'Access Bank'),
+                "account_number": bank_account.get('account_number', '0101234567'),
+                "account_name": bank_account.get('account_name', 'Lagsale Online Resources'),
+                "account_type": bank_account.get('account_type', 'Current')
             },
             "instructions": f"Please use reference: {payment.transaction_reference} when making payment"
         }
@@ -396,8 +400,8 @@ def initialize_bank_transfer(order: Order, db: Session):
             "details": bank_details
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ Bank transfer initialization error: {str(e)}")
-        import traceback
-        print(f"❌ Traceback: {traceback.format_exc()}")
+        logger.error(f"Bank transfer initialization error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize bank transfer: {str(e)}")

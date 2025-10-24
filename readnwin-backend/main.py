@@ -105,11 +105,11 @@ app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
 from routers import (
-    auth, auth_log, books, cart, checkout, checkout_fixed, checkout_unified, test_checkout, payment_verification, orders, orders_enhanced, admin, blog, contact,
+    auth, auth_log, books, cart, checkout, payment_verification, orders, orders_enhanced, admin, blog, contact,
     faq, user, about, portfolio, reviews, rbac, users, dashboard, reading_goals,
     reading, reading_enhanced, admin_enhanced, admin_email,
     analytics, payment, shopping_enhanced, testing, ereader, ereader_enhanced, upload,
-    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, checkout_enhanced, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard, admin_library, admin_cache
+    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard, admin_library, admin_cache
 )
 
 # Import optional routers
@@ -158,11 +158,7 @@ app.include_router(ereader.router, tags=["ereader"])
 app.include_router(ereader_enhanced.router, tags=["ereader-enhanced"])
 app.include_router(reader_settings.router, tags=["reader"])
 app.include_router(cart.router, prefix="/cart", tags=["cart"])
-app.include_router(checkout.router, prefix="/checkout-legacy", tags=["checkout"])
-app.include_router(checkout_enhanced.router, prefix="/checkout-enhanced", tags=["checkout"])
-app.include_router(checkout_fixed.router, prefix="/checkout-fixed", tags=["checkout"])
-app.include_router(checkout_unified.router, tags=["checkout"])
-app.include_router(test_checkout.router, tags=["test"])
+app.include_router(checkout.router, tags=["checkout"])
 app.include_router(payment_verification.router, prefix="/payment", tags=["payment"])
 app.include_router(orders.router, prefix="/orders", tags=["orders"])
 app.include_router(reading.router, tags=["reading"])
