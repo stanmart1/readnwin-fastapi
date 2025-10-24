@@ -66,6 +66,14 @@ async def get_user_library(
         enhanced_items.append({
             "id": item.id,
             "book_id": item.book_id,
+            "title": item.book.title,
+            "author": author_name,
+            "cover_image": storage.get_url(item.book.cover_image) if item.book.cover_image else None,
+            "description": item.book.description,
+            "format": item.book.format or "ebook",
+            "price": float(item.book.price) if item.book.price else 0,
+            "rating": 0,
+            "total_pages": total_pages,
             "book": {
                 "id": item.book.id,
                 "title": item.book.title,
@@ -74,7 +82,7 @@ async def get_user_library(
                 "cover_image": storage.get_url(item.book.cover_image) if item.book.cover_image else None,
                 "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image else None,
                 "price": float(item.book.price) if item.book.price else 0,
-                "format": item.format if hasattr(item, 'format') and item.format else ("ebook" if (item.book.format or "ebook") == "ebook" else (item.book.format or "ebook")),
+                "format": item.book.format or "ebook",
                 "pages": total_pages,
                 "ebook_file_url": item.book.file_path,
                 "description": item.book.description,
