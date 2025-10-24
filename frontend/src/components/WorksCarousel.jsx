@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../lib/fileService';
 import { useWorks } from '../hooks';
 
 export default function WorksCarousel() {
@@ -79,7 +80,7 @@ export default function WorksCarousel() {
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={work.image_path}
+                      src={getImageUrl(work.image_path)}
                       alt={work.alt_text || work.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -126,7 +127,7 @@ export default function WorksCarousel() {
             >
               <div className="relative h-64">
                 <img
-                  src={selectedWork.image_path}
+                  src={getImageUrl(selectedWork.image_path)}
                   alt={selectedWork.title}
                   className="w-full h-full object-cover"
                 />

@@ -355,11 +355,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate, onPaymentSt
                 <i className="ri-close-line text-2xl"></i>
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] flex items-center justify-center bg-gray-100">
               <img
                 src={getImageUrl(displayOrder.payment_proof_url)}
                 alt="Payment Proof"
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
               />
             </div>
           </div>

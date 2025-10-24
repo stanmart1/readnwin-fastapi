@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { getImageUrl } from '../../lib/fileService';
 import { useAdminWorks } from '../../hooks/useAdminWorks';
 
 const WorksManagement = () => {
@@ -287,7 +288,7 @@ const WorksManagement = () => {
             <div key={work.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="relative">
                 <img
-                  src={work.image_path}
+                  src={getImageUrl(work.image_path)}
                   alt={work.alt_text}
                   className="w-full h-48 object-cover"
                 />
@@ -383,7 +384,7 @@ const WorksManagement = () => {
                     />
                     {previewUrl && (
                       <div className="mt-2">
-                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                        <img src={getImageUrl(previewUrl)} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
                       </div>
                     )}
                   </div>
