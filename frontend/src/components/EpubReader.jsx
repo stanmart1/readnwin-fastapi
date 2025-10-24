@@ -16,9 +16,11 @@ export default function EpubReader({ bookId, onClose }) {
   const [fontSize, setFontSize] = useState(100);
   const [theme, setTheme] = useState('light');
   const [bookInfo, setBookInfo] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const viewerRef = useRef(null);
   const bookRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     console.log('useEffect triggered, viewerRef.current:', viewerRef.current);
@@ -146,14 +148,28 @@ export default function EpubReader({ bookId, onClose }) {
   };
 
   const saveProgress = async (cfi, percentage) => {
-    try {
-      await api.post(`/ereader/${bookId}/progress`, {
-        progress: percentage * 100,
-        last_read_location: cfi
-      });
-    } catch (err) {
-      console.error('Error saving progress:', err);
+    // Throttle saves - only save every 3 seconds
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (isSaving) return;
+      
+      try {
+        setIsSaving(true);
+        const progressPercent = (percentage || 0) * 100;
+        await api.post(`/ereader/${bookId}/progress`, {
+          progress: progressPercent,
+          last_read_location: cfi
+        });
+        console.log('Progress saved:', progressPercent.toFixed(2) + '%');
+      } catch (err) {
+        console.error('Error saving progress:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 3000);
   };
 
   const nextPage = () => {
