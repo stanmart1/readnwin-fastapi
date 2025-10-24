@@ -11,6 +11,7 @@ from core.security import get_current_user_from_token, check_admin_access
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin", tags=["admin-email-templates"])
+logger = logging.getLogger(__name__)
 
 # Pydantic models
 class EmailTemplateCreate(BaseModel):
@@ -188,11 +189,21 @@ def delete_email_template(
         if not template:
             raise HTTPException(status_code=404, detail="Template not found")
         
+        # Save slug for filesystem deletion
+        template_slug = template.slug
+        
         # Delete associated assignments first
         db.query(AdminEmailFunctionAssignment).filter(AdminEmailFunctionAssignment.template_id == template_id).delete()
         
         db.delete(template)
         db.commit()
+        
+        # Sync deletion to filesystem
+        try:
+            from services.template_sync_service import TemplateSyncService
+            TemplateSyncService.delete_from_filesystem(template_slug)
+        except Exception as e:
+            logger.warning(f"Failed to delete template from filesystem: {e}")
         
         return {"message": "Email template deleted successfully"}
     except Exception as e:

@@ -12,7 +12,7 @@ class ResendEmailService:
     
     def __init__(self, db: Session):
         self.db = db
-        self.template_manager = get_template_manager()
+        self.template_manager = get_template_manager(db_session=db)
         # Load API key from database or environment
         self._load_api_key()
         self._load_from_email()

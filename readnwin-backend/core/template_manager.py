@@ -26,13 +26,14 @@ class TemplateManager:
             lstrip_blocks=True
         )
     
-    def render(self, template_name: str, context: dict) -> str:
+    def render(self, template_name: str, context: dict, use_db: bool = True) -> str:
         """
         Render a template with the given context
         
         Args:
             template_name: Path to template relative to templates/ (e.g., 'emails/welcome.html')
             context: Dictionary of variables to pass to template
+            use_db: Whether to try loading from database first
         
         Returns:
             Rendered HTML string
@@ -41,6 +42,16 @@ class TemplateManager:
             TemplateNotFound: If template doesn't exist
         """
         try:
+            # Try to load from database first if session available
+            if use_db and self.db_session:
+                html_content = self._get_template_from_db(template_name)
+                if html_content:
+                    # Render the database template content directly
+                    from jinja2 import Template as Jinja2Template
+                    template = Jinja2Template(html_content)
+                    return template.render(context)
+            
+            # Fallback to filesystem template
             template = self.env.get_template(template_name)
             return template.render(context)
         except TemplateNotFound:
@@ -49,6 +60,33 @@ class TemplateManager:
         except Exception as e:
             logger.error(f"Error rendering template {template_name}: {str(e)}")
             raise
+    
+    def _get_template_from_db(self, template_name: str) -> str:
+        """Get template content from database
+        
+        Args:
+            template_name: Path like 'emails/welcome.html'
+        
+        Returns:
+            Template HTML content or None if not found
+        """
+        try:
+            from models.email_templates import AdminEmailTemplate
+            
+            # Extract slug from template name (e.g., 'emails/welcome.html' -> 'welcome')
+            slug = Path(template_name).stem
+            
+            template = self.db_session.query(AdminEmailTemplate).filter(
+                AdminEmailTemplate.slug == slug,
+                AdminEmailTemplate.is_active == True
+            ).first()
+            
+            if template:
+                return template.html_content
+        except Exception as e:
+            logger.debug(f"Could not load template from database: {e}")
+        
+        return None
     
     def render_welcome_email(self, username: str, app_url: str) -> str:
         """Render welcome email template"""
@@ -237,10 +275,13 @@ class TemplateManager:
         return self.render("emails/system_maintenance.html", context)
 
 
-# Global instance
-template_manager = TemplateManager()
-
-
-def get_template_manager() -> TemplateManager:
-    """Get the global template manager instance"""
-    return template_manager
+def get_template_manager(db_session: Session = None) -> TemplateManager:
+    """Get template manager instance with optional database session
+    
+    Args:
+        db_session: Optional database session for loading templates from DB
+        
+    Returns:
+        TemplateManager instance
+    """
+    return TemplateManager(db_session=db_session)
