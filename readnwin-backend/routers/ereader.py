@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ import bleach
 
 from core.database import get_db
 from core.security import get_current_user_from_token
+from core.storage import storage
 from models.user import User
 from models.book import Book
 from models.user_library import UserLibrary
@@ -18,6 +20,7 @@ class ProgressUpdateRequest(BaseModel):
     progress: float
     currentPosition: Optional[int] = 0
     scrollPosition: Optional[int] = 0
+    last_read_location: Optional[str] = None
 
 class HighlightCreate(BaseModel):
     book_id: int
@@ -130,12 +133,15 @@ async def update_reading_progress(
             user_id=current_user.id,
             book_id=book_id,
             status="reading",
-            progress=request.progress / 100
+            progress=request.progress / 100,
+            last_read_location=request.last_read_location
         )
         db.add(library_entry)
     else:
         library_entry.progress = request.progress / 100
         library_entry.last_read_at = datetime.now(timezone.utc)
+        if request.last_read_location:
+            library_entry.last_read_location = request.last_read_location
         if request.progress >= 100:
             library_entry.status = "completed"
         elif request.progress > 0:
@@ -360,3 +366,40 @@ async def delete_note(
     db.commit()
     
     return {"success": True}
+
+@router.get("/book/{book_id}/file")
+async def get_book_file(
+    book_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Serve EPUB file for reading"""
+    # Check if user has access to this book
+    library_entry = db.query(UserLibrary).filter(
+        UserLibrary.user_id == current_user.id,
+        UserLibrary.book_id == book_id
+    ).first()
+    
+    if not library_entry:
+        raise HTTPException(status_code=403, detail="Access denied to this book")
+    
+    # Get book
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    if not book.file_path:
+        raise HTTPException(status_code=404, detail="Book file not found")
+    
+    # Get absolute file path
+    file_path = storage.get_absolute_path(book.file_path)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Book file not accessible")
+    
+    # Serve the file
+    return FileResponse(
+        path=file_path,
+        media_type='application/epub+zip',
+        filename=f"{book.title}.epub"
+    )

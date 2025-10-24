@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from core.database import Base
@@ -12,6 +12,7 @@ class UserLibrary(Base):
     format = Column(String, default="ebook")  # ebook, physical, hybrid
     status = Column(String, default="unread")  # unread, reading, completed
     progress = Column(Float, default=0.0)
+    last_read_location = Column(Text, nullable=True)  # EPUB CFI location
     last_read_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

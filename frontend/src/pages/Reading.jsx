@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import EReader from '../components/EReader';
+import EpubReader from '../components/EpubReader';
 
 export default function Reading() {
   const { bookId } = useParams();
@@ -9,5 +9,5 @@ export default function Reading() {
     navigate('/dashboard/library');
   };
 
-  return <EReader bookId={bookId} onClose={handleClose} />;
+  return <EpubReader bookId={bookId} onClose={handleClose} />;
 }

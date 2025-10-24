@@ -90,6 +90,7 @@ async def get_user_library(
             },
             "status": item.status,
             "progress": item.progress or 0,
+            "last_read_location": item.last_read_location,
             "is_favorite": getattr(item, 'is_favorite', False),
             "purchase_date": item.created_at.isoformat() if item.created_at else None,
             "last_read_at": item.last_read_at.isoformat() if item.last_read_at else None,

@@ -154,6 +154,14 @@ class StorageManager:
         # Remove any leading slashes and 'uploads/' prefix if present
         clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)
         return f"{self.url_prefix}/{clean_path}"
+    
+    def get_absolute_path(self, relative_path: str) -> str:
+        """Get absolute filesystem path for a file"""
+        if not relative_path:
+            return None
+        # Remove any leading slashes and 'uploads/' prefix
+        clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)
+        return str(self.base_dir / clean_path)
 
 
 # Global instance
