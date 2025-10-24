@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     csrf_secret_key: str = config('CSRF_SECRET_KEY', default='dev-csrf-key-change-in-production')
     frontend_url: str = config('FRONTEND_URL', default='http://localhost:3000')
     redis_url: str = config('REDIS_URL', default='')
+    environment: str = config('ENVIRONMENT', default='development')
     
     @property
     def database_url(self) -> str:
@@ -23,6 +24,6 @@ class Settings(BaseSettings):
     
     @property
     def is_production(self) -> bool:
-        return config('ENVIRONMENT', default='development') == 'production'
+        return self.environment == 'production'
 
 settings = Settings()

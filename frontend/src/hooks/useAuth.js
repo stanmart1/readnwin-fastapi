@@ -20,6 +20,9 @@ export const useAuth = () => {
           localStorage.setItem('permissions', JSON.stringify(response.data.user.permissions));
         }
         
+        // Transfer guest cart after login
+        await transferGuestCartAfterLogin();
+        
         return response.data;
       }
       return null;
@@ -28,6 +31,29 @@ export const useAuth = () => {
       return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const transferGuestCartAfterLogin = async () => {
+    try {
+      const guestCart = localStorage.getItem('readnwin_guest_cart');
+      if (!guestCart) return;
+      
+      const guestItems = JSON.parse(guestCart);
+      if (guestItems.length === 0) return;
+      
+      // Transfer cart items
+      await api.post('/cart/transfer-guest', {
+        cartItems: guestItems.map(item => ({
+          book_id: item.book_id,
+          quantity: item.quantity
+        }))
+      });
+      
+      // Clear guest cart
+      localStorage.removeItem('readnwin_guest_cart');
+    } catch (err) {
+      console.error('Error transferring guest cart:', err);
     }
   };
 
