@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks';
 import { useCheckout } from '../hooks/useCheckout';
 import api from '../lib/api';
@@ -22,16 +22,18 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       country: 'Nigeria'
     },
     billing: {
-      same_as_shipping: true
+      sameAsShipping: true
     },
-    shipping_method: null,
     payment: {
       method: 'flutterwave'
     }
   });
 
-  // Analyze cart
+  const { shippingMethods, paymentGateways } = useCheckout();
+
   const analyzeCart = useCallback(() => {
+    if (!cartItems || cartItems.length === 0) return null;
+
     const ebooks = cartItems.filter(item => item.book?.format === 'ebook');
     const physical = cartItems.filter(item => item.book?.format === 'physical');
     const isEbookOnly = ebooks.length > 0 && physical.length === 0;
@@ -44,11 +46,31 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     const tax = Math.round(subtotal * 0.075);
     const total = subtotal + shipping + tax;
 
-    return { isEbookOnly, subtotal, shipping, tax, total };
+    return { isEbookOnly, subtotal, shipping, tax, total, totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0) };
   }, [cartItems, formData.shipping_method]);
 
   const analytics = analyzeCart();
-  const { shippingMethods, paymentGateways, isLoading: dataLoading, error: dataError } = useCheckout(analytics.isEbookOnly);
+
+  const generateSteps = useCallback(() => {
+    if (!analytics) return [];
+    const steps = [
+      { id: 1, title: 'Customer Information', description: 'Contact details', icon: 'ri-user-line' }
+    ];
+    if (!analytics.isEbookOnly) {
+      steps.push(
+        { id: 2, title: 'Shipping Address', description: 'Delivery information', icon: 'ri-map-pin-line' },
+        { id: 3, title: 'Shipping Method', description: 'Delivery option', icon: 'ri-truck-line' }
+      );
+    }
+    steps.push({ id: steps.length + 1, title: 'Payment', description: 'Complete purchase', icon: 'ri-bank-card-line' });
+    return steps;
+  }, [analytics]);
+
+  useEffect(() => {
+    if (analytics?.isEbookOnly) {
+      setCurrentStep(2);
+    }
+  }, [analytics?.isEbookOnly]);
 
   const updateFormData = (section, data) => {
     setFormData(prev => ({
@@ -62,26 +84,27 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       case 1:
         return !!(formData.shipping.first_name && formData.shipping.last_name && formData.shipping.email);
       case 2:
-        if (analytics.isEbookOnly) return true;
-        return !!(formData.shipping.address && formData.shipping.city && formData.shipping.state);
+        if (analytics?.isEbookOnly) return true;
+        return !!(formData.shipping.address && formData.shipping.city && formData.shipping.state && formData.shipping.zip_code);
       case 3:
-        if (analytics.isEbookOnly) return true;
+        if (analytics?.isEbookOnly) return true;
         return !!formData.shipping_method;
-      case 4:
-        return !!formData.payment.method;
       default:
-        return false;
+        return true;
     }
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => prev + 1);
+    const steps = generateSteps();
+    if (validateStep(currentStep) && currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleSubmit = async () => {
@@ -113,74 +136,92 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   };
 
-  const steps = [
-    { id: 1, title: 'Customer Info', icon: '👤' },
-    ...(!analytics.isEbookOnly ? [
-      { id: 2, title: 'Shipping Address', icon: '📍' },
-      { id: 3, title: 'Shipping Method', icon: '🚚' }
-    ] : []),
-    { id: analytics.isEbookOnly ? 2 : 4, title: 'Payment', icon: '💳' }
-  ];
+  if (!analytics) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <i className="ri-loader-4-line animate-spin text-blue-600 text-2xl mr-2"></i>
+        <span>Loading checkout...</span>
+      </div>
+    );
+  }
+
+  const steps = generateSteps();
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+        <p className="text-gray-600">
+          {analytics.isEbookOnly ? 'Complete your digital purchase' : 'Complete your order'}
+        </p>
+      </div>
+
       {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
-                {step.icon}
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`w-16 h-0.5 mx-2 ${
-                  currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
-                }`} />
+      <div className="flex items-center justify-between mb-8">
+        {steps.map((step, index) => (
+          <div key={step.id} className="flex items-center">
+            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+              currentStep === step.id ? 'border-blue-600 bg-blue-600 text-white' :
+              currentStep > step.id ? 'border-green-600 bg-green-600 text-white' :
+              'border-gray-300 bg-gray-100 text-gray-500'
+            }`}>
+              {currentStep > step.id ? (
+                <i className="ri-check-line"></i>
+              ) : (
+                <i className={step.icon}></i>
               )}
             </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-2">
-          {steps.map(step => (
-            <div key={step.id} className="text-center">
+            <div className="ml-3 flex-1">
               <p className={`text-sm font-medium ${
-                currentStep >= step.id ? 'text-blue-600' : 'text-gray-500'
+                currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
               }`}>
                 {step.title}
               </p>
+              <p className="text-xs text-gray-500">{step.description}</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Cart Type Indicator */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center">
-          <span className="text-2xl mr-2">{analytics.isEbookOnly ? '📥' : '📦'}</span>
-          <div>
-            <h4 className="text-blue-900 font-medium">
-              {analytics.isEbookOnly ? 'Digital Purchase' : 'Physical Books'}
-            </h4>
-            <p className="text-blue-700 text-sm">
-              {analytics.isEbookOnly ? 'No shipping required • Instant access' : 'Shipping required • Delivery to your address'}
-            </p>
+            {index < steps.length - 1 && (
+              <div className={`w-16 h-0.5 mx-4 ${
+                currentStep > step.id ? 'bg-green-600' : 'bg-gray-300'
+              }`} />
+            )}
           </div>
-        </div>
+        ))}
       </div>
 
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-800">{error}</p>
+          <div className="flex items-center">
+            <i className="ri-alert-line text-red-600 mr-2"></i>
+            <span className="text-red-800">{error}</span>
+          </div>
         </div>
       )}
 
+      {/* Cart Type Indicator */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center space-x-2">
+          {analytics.isEbookOnly ? (
+            <>
+              <i className="ri-download-line text-blue-600"></i>
+              <span className="text-blue-900 font-medium">Digital Purchase</span>
+              <span className="text-blue-700">• No shipping required • Instant access</span>
+            </>
+          ) : (
+            <>
+              <i className="ri-box-3-line text-blue-600"></i>
+              <span className="text-blue-900 font-medium">Physical Books</span>
+              <span className="text-blue-700">• Shipping required • Delivery to your address</span>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Step Content */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {currentStep === 1 && (
-          <CustomerInfoStep formData={formData} updateFormData={updateFormData} />
+          <CustomerInformationStep formData={formData} updateFormData={updateFormData} />
         )}
         
         {currentStep === 2 && !analytics.isEbookOnly && (
@@ -189,14 +230,14 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
         
         {currentStep === 3 && !analytics.isEbookOnly && (
           <ShippingMethodStep 
-            formData={formData} 
+            formData={formData}
             updateFormData={updateFormData}
             shippingMethods={shippingMethods}
             analytics={analytics}
           />
         )}
         
-        {currentStep === (analytics.isEbookOnly ? 2 : 4) && (
+        {(currentStep === steps.length || (analytics.isEbookOnly && currentStep === 2)) && (
           <PaymentStep 
             formData={formData}
             updateFormData={updateFormData}
@@ -207,29 +248,41 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <button
           onClick={currentStep === 1 ? onCancel : prevStep}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800"
+          className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800"
         >
-          ← {currentStep === 1 ? 'Back to Cart' : 'Previous'}
+          <i className="ri-arrow-left-line mr-2"></i>
+          {currentStep === 1 ? 'Back to Cart' : 'Previous'}
         </button>
 
-        {currentStep < steps[steps.length - 1].id ? (
+        {currentStep < steps.length && (!analytics.isEbookOnly || currentStep < 2) ? (
           <button
             onClick={nextStep}
             disabled={!validateStep(currentStep)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continue →
+            Continue
+            <i className="ri-arrow-right-line ml-2"></i>
           </button>
         ) : (
           <button
             onClick={handleSubmit}
             disabled={isLoading || !validateStep(currentStep)}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Processing...' : 'Complete Order'}
+            {isLoading ? (
+              <>
+                <i className="ri-loader-4-line animate-spin mr-2"></i>
+                Processing...
+              </>
+            ) : (
+              <>
+                Complete Order
+                <i className="ri-arrow-right-line ml-2"></i>
+              </>
+            )}
           </button>
         )}
       </div>
@@ -237,11 +290,10 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   );
 }
 
-// Step Components
-function CustomerInfoStep({ formData, updateFormData }) {
+function CustomerInformationStep({ formData, updateFormData }) {
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">Customer Information</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -249,7 +301,7 @@ function CustomerInfoStep({ formData, updateFormData }) {
           <input
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.first_name}
             onChange={(e) => updateFormData('shipping', { first_name: e.target.value })}
           />
@@ -260,7 +312,7 @@ function CustomerInfoStep({ formData, updateFormData }) {
           <input
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.last_name}
             onChange={(e) => updateFormData('shipping', { last_name: e.target.value })}
           />
@@ -268,25 +320,31 @@ function CustomerInfoStep({ formData, updateFormData }) {
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-        <input
-          type="email"
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={formData.shipping.email}
-          onChange={(e) => updateFormData('shipping', { email: e.target.value })}
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+        <div className="relative">
+          <i className="ri-mail-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input
+            type="email"
+            required
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={formData.shipping.email}
+            onChange={(e) => updateFormData('shipping', { email: e.target.value })}
+          />
+        </div>
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-        <input
-          type="tel"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={formData.shipping.phone}
-          onChange={(e) => updateFormData('shipping', { phone: e.target.value })}
-          placeholder="+234 801 234 5678"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+        <div className="relative">
+          <i className="ri-phone-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input
+            type="tel"
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={formData.shipping.phone}
+            onChange={(e) => updateFormData('shipping', { phone: e.target.value })}
+            placeholder="+234 801 234 5678"
+          />
+        </div>
       </div>
     </div>
   );
@@ -295,29 +353,37 @@ function CustomerInfoStep({ formData, updateFormData }) {
 function ShippingAddressStep({ formData, updateFormData }) {
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">Shipping Address</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h3>
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Street Address *</label>
-        <input
-          type="text"
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={formData.shipping.address}
-          onChange={(e) => updateFormData('shipping', { address: e.target.value })}
-        />
+        <div className="relative">
+          <i className="ri-home-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input
+            type="text"
+            required
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={formData.shipping.address}
+            onChange={(e) => updateFormData('shipping', { address: e.target.value })}
+            placeholder="123 Main Street, Apartment 4B"
+          />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
-          <input
-            type="text"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            value={formData.shipping.city}
-            onChange={(e) => updateFormData('shipping', { city: e.target.value })}
-          />
+          <div className="relative">
+            <i className="ri-building-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              required
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={formData.shipping.city}
+              onChange={(e) => updateFormData('shipping', { city: e.target.value })}
+              placeholder="Lagos"
+            />
+          </div>
         </div>
         
         <div>
@@ -325,7 +391,7 @@ function ShippingAddressStep({ formData, updateFormData }) {
           <input
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.state}
             onChange={(e) => updateFormData('shipping', { state: e.target.value })}
           />
@@ -334,13 +400,14 @@ function ShippingAddressStep({ formData, updateFormData }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ZIP/Postal Code *</label>
           <input
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.zip_code}
             onChange={(e) => updateFormData('shipping', { zip_code: e.target.value })}
+            placeholder="100001"
           />
         </div>
         
@@ -349,7 +416,7 @@ function ShippingAddressStep({ formData, updateFormData }) {
           <input
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.country}
             onChange={(e) => updateFormData('shipping', { country: e.target.value })}
           />
@@ -362,27 +429,29 @@ function ShippingAddressStep({ formData, updateFormData }) {
 function ShippingMethodStep({ formData, updateFormData, shippingMethods, analytics }) {
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">Choose Shipping Method</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Shipping Method</h3>
       
       <div className="space-y-3">
-        {shippingMethods.map(method => (
+        {shippingMethods.filter(method => method.is_active !== false).map((method) => (
           <div
             key={method.id}
-            className={`border rounded-lg p-4 cursor-pointer ${
-              formData.shipping_method?.id === method.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              formData.shipping_method?.id === method.id 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300'
             }`}
             onClick={() => updateFormData('shipping_method', method)}
           >
-            <div className="flex justify-between">
+            <div className="flex justify-between items-start">
               <div>
-                <h4 className="font-medium">{method.name}</h4>
+                <h4 className="font-medium text-gray-900">{method.name}</h4>
                 <p className="text-sm text-gray-600">{method.description}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Delivery: {method.estimated_days_min}-{method.estimated_days_max} days
+                  Delivery: {method.estimated_days_min}-{method.estimated_days_max} business days
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">₦{method.base_cost.toLocaleString()}</p>
+                <p className="font-semibold text-gray-900">₦{method.base_cost.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -395,14 +464,14 @@ function ShippingMethodStep({ formData, updateFormData, shippingMethods, analyti
 function PaymentStep({ formData, updateFormData, paymentGateways, analytics }) {
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">Payment Method</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
       
       {/* Order Summary */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="font-medium mb-3">Order Summary</h4>
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="font-medium text-gray-900 mb-3">Order Summary</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span>Subtotal</span>
+            <span>Subtotal ({analytics.totalItems} items)</span>
             <span>₦{analytics.subtotal.toLocaleString()}</span>
           </div>
           {!analytics.isEbookOnly && (
@@ -424,22 +493,24 @@ function PaymentStep({ formData, updateFormData, paymentGateways, analytics }) {
       
       {/* Payment Gateways */}
       <div className="space-y-3">
-        {paymentGateways.filter(g => g.enabled).map(gateway => (
+        {paymentGateways.filter(gateway => gateway.enabled).map((gateway) => (
           <div
             key={gateway.id}
-            className={`border rounded-lg p-4 cursor-pointer ${
-              formData.payment.method === gateway.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              formData.payment.method === gateway.id 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300'
             }`}
             onClick={() => updateFormData('payment', { method: gateway.id })}
           >
             <div className="flex justify-between items-center">
               <div>
-                <h4 className="font-medium">{gateway.name}</h4>
+                <h4 className="font-medium text-gray-900">{gateway.name}</h4>
                 <p className="text-sm text-gray-600">{gateway.description}</p>
               </div>
-              <div className="text-2xl">
-                {gateway.id === 'flutterwave' ? '💳' : '🏦'}
-              </div>
+              <i className={`${gateway.id === 'flutterwave' ? 'ri-bank-card-line' : 'ri-bank-line'} text-2xl ${
+                formData.payment.method === gateway.id ? 'text-blue-600' : 'text-gray-400'
+              }`}></i>
             </div>
           </div>
         ))}

@@ -174,20 +174,6 @@ async def create_order(
         # NOTE: Cart will be cleared after successful payment confirmation
         # Do not clear cart here as payment might fail
         
-        # Send order confirmation email
-        try:
-            from services.resend_email_service import ResendEmailService
-            email_service = ResendEmailService(db)
-            import asyncio
-            asyncio.create_task(email_service.send_order_confirmation_email(
-                shipping_addr['email'],
-                f"{shipping_addr['first_name']} {shipping_addr['last_name']}",
-                order.order_number,
-                f"₦{final_total:,.2f}"
-            ))
-        except Exception as e:
-            print(f"Failed to send order confirmation email: {str(e)}")
-        
         # Handle payment method
         payment_method = checkout_data.formData.payment.method
         
@@ -253,7 +239,7 @@ def initialize_flutterwave_payment(order: Order, shipping: ShippingAddress, db: 
             raise HTTPException(status_code=400, detail="Flutterwave payment gateway not enabled")
         
         api_keys = gateway.api_keys or {}
-        secret_key = api_keys.get('secret_key')
+        secret_key = api_keys.get('secretKey') or api_keys.get('secret_key')
         
         if not secret_key:
             raise HTTPException(status_code=400, detail="Flutterwave API keys not configured")
