@@ -104,22 +104,31 @@ const AdminLayout = ({ children }) => {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto">
           <ul className="p-2 space-y-1">
-            {menuItems.map(item => (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  onClick={() => setMobileOpen(false)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    location.pathname === item.path
-                      ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <i className={`${item.icon} mr-3 text-lg`}></i>
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
+            {visibleMenuItems.length > 0 ? (
+              visibleMenuItems.map(item => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    onClick={() => setMobileOpen(false)}
+                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      location.pathname === item.path
+                        ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                    title={!collapsed ? '' : item.label}
+                  >
+                    <i className={`${item.icon} mr-3 text-lg`}></i>
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-2">
+                <p className="text-xs text-gray-500 text-center">
+                  No access to menu items
+                </p>
               </li>
-            ))}
+            )}
           </ul>
         </nav>
 
