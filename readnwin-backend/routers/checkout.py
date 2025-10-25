@@ -72,6 +72,13 @@ async def create_order(
             Book.is_active == True  # Only allow active books in checkout
         ).all()
         
+        # Enrich cart items with full book data including cover_image_url
+        for item in cart_items:
+            if item.book:
+                # Ensure cover_image_url is set if not present
+                if not hasattr(item.book, 'cover_image_url') or not item.book.cover_image_url:
+                    item.book.cover_image_url = item.book.cover_image
+        
         if not cart_items:
             print(f"❌ Cart is empty for user {current_user.id}")
             raise HTTPException(status_code=400, detail="Cart is empty or contains unavailable items")

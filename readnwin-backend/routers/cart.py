@@ -5,6 +5,7 @@ from core.security import get_current_user_from_token
 from models.cart import Cart
 from models.book import Book, Category
 from models.user import User
+from core.storage import storage
 
 from pydantic import BaseModel
 from typing import List
@@ -23,7 +24,7 @@ class CartResponse(BaseModel):
     book_author: str
     book_price: float
     book_original_price: float
-    book_cover: str
+    book_cover_url: str
     book_format: str
     book_category: str
     book_stock_quantity: int
@@ -49,7 +50,7 @@ def get_cart(current_user: User = Depends(get_current_user_from_token), db: Sess
                 book_author=item.book.author or "Unknown Author",
                 book_price=float(item.book.price),
                 book_original_price=float(item.book.original_price) if item.book.original_price else float(item.book.price),
-                book_cover=item.book.cover_image or "",
+                book_cover_url=storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else "",
                 book_format=item.book.format or "ebook",
                 book_category=item.book.category.name if item.book.category else "Uncategorized",
                 book_stock_quantity=item.book.stock_quantity or 0,

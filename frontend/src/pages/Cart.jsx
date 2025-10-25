@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useCart, useAuth } from '../hooks';
+import { getImageUrl } from '../lib/fileService';
 import Header from '../components/Header';
 
 export default function Cart() {
@@ -29,7 +30,7 @@ export default function Cart() {
       hasLoaded.current = true;
       refreshCart();
     }
-  }, [isAuthenticated, refreshCart]);
+  }, [isAuthenticated]);
 
   const handleUpdateQuantity = async (bookId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -252,7 +253,10 @@ export default function Cart() {
                   <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Cart Items</h2>
                   <AnimatePresence>
                     <div className="space-y-3 sm:space-y-4">
-                      {cartItems.map((item) => (
+                      {cartItems.map((item) => {
+                        // Use getImageUrl with cover_image_url from backend (like FeaturedBooks)
+                        const itemImageUrl = getImageUrl(item.book?.cover_image_url);
+                        return (
                         <motion.div
                           key={item.id}
                           initial={{ opacity: 0, x: -20 }}
@@ -264,11 +268,13 @@ export default function Cart() {
                           <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
                             <div className="flex-shrink-0">
                               <img
-                                src={item.book?.cover_image_url || item.book?.cover_image || '/placeholder-book.jpg'}
+                                src={itemImageUrl || '/placeholder-book.jpg'}
                                 alt={item.book?.title}
                                 className="w-16 h-20 sm:w-20 sm:h-28 rounded-lg object-cover shadow-md"
                                 onError={(e) => {
-                                  e.currentTarget.src = '/placeholder-book.jpg';
+                                  if (e.currentTarget.src !== '/placeholder-book.jpg') {
+                                    e.currentTarget.src = '/placeholder-book.jpg';
+                                  }
                                 }}
                               />
                             </div>
@@ -356,7 +362,8 @@ export default function Cart() {
                             </div>
                           </div>
                         </motion.div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </AnimatePresence>
                 </div>

@@ -193,9 +193,12 @@ function OrderSummarySidebar({ cartItems }) {
         {cartItems.map((item) => (
           <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
             <img
-              src={item.book?.cover_image_url || item.book?.cover_image}
+              src={item.book?.cover_image_url || '/placeholder-book.jpg'}
               alt={item.book?.title}
               className="w-12 h-16 object-cover rounded"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder-book.jpg';
+              }}
             />
             <div className="flex-1 min-w-0">
               <h4 className="text-sm font-medium text-gray-900 truncate">

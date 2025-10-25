@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import api from '../lib/api';
 import { useAuth } from './useAuth';
+import { getImageUrl } from '../lib/fileService';
 
 const GUEST_CART_KEY = 'readnwin_guest_cart';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const useCart = () => {
   const { isAuthenticated, getUser } = useAuth();
@@ -48,7 +48,7 @@ export const useCart = () => {
 
   // Load authenticated user cart from API
   const loadAuthenticatedCart = useCallback(async () => {
-    if (!isAuthenticated || isLoading) return;
+    if (!isAuthenticated) return;
     
     try {
       setIsLoading(true);
@@ -67,8 +67,7 @@ export const useCart = () => {
           author: item.book_author,
           price: item.book_price,
           original_price: item.book_original_price,
-          cover_image: item.book_cover,
-          cover_image_url: item.book_cover ? `${API_BASE_URL}/${item.book_cover}` : null,
+          cover_image_url: item.book_cover_url,
           format: item.book_format,
           category: item.book_category,
           stock_quantity: item.book_stock_quantity,
@@ -83,7 +82,7 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated]);
 
   // Transfer guest cart to authenticated user
   const transferGuestCart = useCallback(async () => {
