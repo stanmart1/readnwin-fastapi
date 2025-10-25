@@ -1,14 +1,10 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from models.achievement import Achievement
 
 def initialize_default_achievements(db: Session):
     """Initialize default achievements if they don't exist"""
     try:
-        # Check if achievements already exist
-        existing_count = db.query(Achievement).count()
-        if existing_count > 0:
-            return
-        
         default_achievements = [
             {
                 "name": "First Finish",
@@ -54,12 +50,27 @@ def initialize_default_achievements(db: Session):
             }
         ]
         
+        # Only add achievements that don't already exist
+        added_count = 0
         for achievement_data in default_achievements:
-            achievement = Achievement(**achievement_data)
-            db.add(achievement)
+            try:
+                existing = db.query(Achievement).filter(
+                    Achievement.achievement_type == achievement_data["achievement_type"]
+                ).first()
+                if not existing:
+                    achievement = Achievement(**achievement_data)
+                    db.add(achievement)
+                    db.commit()
+                    added_count += 1
+            except IntegrityError:
+                db.rollback()
+                # Silently skip if it already exists
+                continue
         
-        db.commit()
-        print("✅ Default achievements initialized")
+        if added_count > 0:
+            print(f"✅ Added {added_count} default achievements")
+        else:
+            print("⏭️  Achievements already exist, skipping initialization")
         
     except Exception as e:
         print(f"❌ Error initializing achievements: {e}")

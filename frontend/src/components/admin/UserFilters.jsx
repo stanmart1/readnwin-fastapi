@@ -1,4 +1,8 @@
-const UserFilters = ({ searchTerm, setSearchTerm, filterRole, setFilterRole, filterStatus, setFilterStatus, onCreateUser, selectedCount }) => {
+import { useEffect, useState } from 'react';
+import api from '../../lib/api';
+
+const UserFilters = ({ searchTerm, setSearchTerm, filterRole, setFilterRole, filterStatus, setFilterStatus, onCreateUser, selectedCount, roles = [] }) => {
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -8,7 +12,7 @@ const UserFilters = ({ searchTerm, setSearchTerm, filterRole, setFilterRole, fil
             <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search by email, username, or name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -24,8 +28,11 @@ const UserFilters = ({ searchTerm, setSearchTerm, filterRole, setFilterRole, fil
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="user">User</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.name}>
+                {role.display_name || role.name}
+              </option>
+            ))}
           </select>
 
           <select

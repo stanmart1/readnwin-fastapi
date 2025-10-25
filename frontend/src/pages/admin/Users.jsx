@@ -29,6 +29,7 @@ const AdminUsers = () => {
     fetchUsers,
     createUser,
     deleteUser,
+    updateUser,
     updateUserStatus,
     resetPassword,
     assignBooks
@@ -86,7 +87,7 @@ const AdminUsers = () => {
   const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1, { searchTerm: '', filterRole: 'all', filterStatus: 'all' });
     fetchRoles();
   }, []);
 
@@ -157,7 +158,17 @@ const AdminUsers = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 relative">
+        {/* Loading Overlay */}
+        {loading && users.length > 0 && (
+          <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 rounded-lg">
+            <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600 font-medium">Loading users...</p>
+            </div>
+          </div>
+        )}
+
         {/* Page Title */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
@@ -174,6 +185,7 @@ const AdminUsers = () => {
           setFilterStatus={setFilterStatus}
           onCreateUser={openCreateModal}
           selectedCount={selectedUsers.length}
+          roles={roles}
         />
 
         {/* Desktop Table View */}
@@ -218,6 +230,7 @@ const AdminUsers = () => {
             totalPages={totalPages}
             totalItems={totalUsers}
             itemsPerPage={10}
+            isLoading={loading}
             onPageChange={(page) => fetchUsers(page, { searchTerm, filterRole, filterStatus })}
           />
         </div>
