@@ -17,6 +17,13 @@ export default function Checkout() {
     refreshCart();
   }, []);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleCheckoutComplete = async (orderData) => {
     try {
       setIsProcessing(true);

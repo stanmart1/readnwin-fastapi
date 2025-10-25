@@ -160,17 +160,19 @@ export const useCart = () => {
         console.error('Error loading guest cart:', error);
       }
     } else {
-      // User just logged in
+      // User just logged in - wait a bit for token to be set
       if (!hasLoadedCart.current) {
         hasLoadedCart.current = true;
         
-        // Check if there's a guest cart to transfer
-        const guestCart = localStorage.getItem(GUEST_CART_KEY);
-        if (guestCart) {
-          transferGuestCart();
-        } else {
-          loadAuthenticatedCart();
-        }
+        // Small delay to ensure token is in localStorage
+        setTimeout(() => {
+          const guestCart = localStorage.getItem(GUEST_CART_KEY);
+          if (guestCart) {
+            transferGuestCart();
+          } else {
+            loadAuthenticatedCart();
+          }
+        }, 100);
       }
     }
   }, [isAuthenticated, transferGuestCart, loadAuthenticatedCart]);
@@ -203,15 +205,17 @@ export const useCart = () => {
     try {
       setError(null);
       
-      if (isAuthenticated) {
-        // Add to authenticated cart
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        // Authenticated user - use API
         await api.post('/cart/add', {
           book_id: book.id,
           quantity
         });
         await loadAuthenticatedCart();
       } else {
-        // Add to guest cart
+        // Guest user - use localStorage
         const existingIndex = cartItems.findIndex(item => item.book_id === book.id);
         let newCart;
         
@@ -236,7 +240,7 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [cartItems, loadAuthenticatedCart, saveGuestCart]);
 
   // Update quantity
   const updateQuantity = useCallback(async (bookId, quantity) => {

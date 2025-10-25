@@ -33,12 +33,12 @@ api.interceptors.response.use(
   (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
-      // Only redirect if we have a token (means token is invalid/expired)
-      // Don't redirect on login page since 401 is expected for invalid credentials
       const token = localStorage.getItem('token');
       const isLoginPage = window.location.pathname === '/login';
+      const isCartEndpoint = error.config?.url?.includes('/cart');
       
-      if (token && !isLoginPage) {
+      // Don't clear token for cart operations (might be guest cart transfer)
+      if (token && !isLoginPage && !isCartEndpoint) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem('token');
         window.location.href = '/login';

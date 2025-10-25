@@ -115,12 +115,12 @@ class StorageManager:
             target_dir = self.images_dir / subfolder
             target_dir.mkdir(parents=True, exist_ok=True)
             file_path = target_dir / filename
+            await self._save_file(file, file_path)
             return f"images/{subfolder}/{filename}"
         else:
             file_path = self.images_dir / filename
+            await self._save_file(file, file_path)
             return f"images/{filename}"
-        
-        await self._save_file(file, file_path)
     
     def delete_file(self, relative_path: str) -> bool:
         """Delete a file from storage"""
