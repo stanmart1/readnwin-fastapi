@@ -3,10 +3,29 @@ import { motion } from 'framer-motion';
 const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, onEdit, onStatusChange, onDelete, onAnalytics, onAssignBooks, onPasswordReset, onAssignRole }) => {
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'super_admin': return 'bg-red-100 text-red-800';
-      case 'user': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'super_admin': return 'bg-gradient-to-r from-purple-600 to-pink-600';
+      case 'admin': return 'bg-gradient-to-r from-blue-600 to-purple-600';
+      case 'moderator': return 'bg-gradient-to-r from-cyan-500 to-blue-500';
+      case 'author': return 'bg-gradient-to-r from-green-500 to-teal-500';
+      case 'user': return 'bg-gradient-to-r from-gray-500 to-gray-600';
+      default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
+    }
+  };
+
+  const getStatusColor = (isActive) => {
+    return isActive 
+      ? 'bg-gradient-to-r from-green-500 to-teal-500' 
+      : 'bg-gradient-to-r from-yellow-500 to-orange-500';
+  };
+
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'super_admin': return 'ri-shield-star-line';
+      case 'admin': return 'ri-shield-check-line';
+      case 'moderator': return 'ri-user-shield-line';
+      case 'author': return 'ri-book-line';
+      case 'user': return 'ri-user-line';
+      default: return 'ri-user-line';
     }
   };
 
@@ -62,14 +81,21 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role?.name)}`}>
-                    {user.role?.display_name || 'No Role'}
-                  </span>
+                  {user.role ? (
+                    <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full text-white ${getRoleColor(user.role?.name)}`}>
+                      <i className={`${getRoleIcon(user.role?.name)} mr-1`}></i>
+                      {user.role?.display_name}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full text-white bg-gradient-to-r from-gray-400 to-gray-500">
+                      <i className="ri-user-line mr-1"></i>
+                      No Role
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(user.is_active)}`}>
+                    <i className={`${user.is_active ? 'ri-check-circle-line' : 'ri-alert-circle-line'} mr-1`}></i>
                     {user.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
@@ -77,7 +103,7 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex space-x-1">
+                  <div className="flex gap-0.5">
                     <button
                       onClick={() => onView(user)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
