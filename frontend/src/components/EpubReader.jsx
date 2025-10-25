@@ -18,11 +18,17 @@ export default function EpubReader({ bookId, onClose }) {
   const [isSaving, setIsSaving] = useState(false);
   const [highlights, setHighlights] = useState([]);
   const [notes, setNotes] = useState([]);
-  const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+  const [showSelectionMenu, setShowSelectionMenu] = useState(false);
+  const [showHighlightColors, setShowHighlightColors] = useState(false);
+  const [showNoteInput, setShowNoteInput] = useState(false);
   const [selectedText, setSelectedText] = useState(null);
-  const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [showAnnotationsPanel, setShowAnnotationsPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState('notes'); // 'notes' or 'highlights'
   const [noteContent, setNoteContent] = useState('');
   const [editingNote, setEditingNote] = useState(null);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [isDeletingNote, setIsDeletingNote] = useState(null);
+  const [isDeletingHighlight, setIsDeletingHighlight] = useState(null);
 
   const viewerRef = useRef(null);
   const bookRef = useRef(null);
@@ -152,7 +158,7 @@ export default function EpubReader({ bookId, onClose }) {
         saveProgress(location.start.cfi, progress);
       });
 
-      // Handle text selection for highlights
+      // Handle text selection for highlights and notes
       renditionInstance.on('selected', (cfiRange, contents) => {
         const selection = contents.window.getSelection();
         const text = selection.toString().trim();
@@ -163,7 +169,9 @@ export default function EpubReader({ bookId, onClose }) {
             cfiRange,
             contents
           });
-          setShowHighlightMenu(true);
+          setShowSelectionMenu(true);
+          setShowHighlightColors(false);
+          setShowNoteInput(false);
         }
       });
 
@@ -189,7 +197,7 @@ export default function EpubReader({ bookId, onClose }) {
       },
       sepia: {
         'background': '#f4ecd8',
-        'color': '#5c4a2f'
+        'color': '#75603fff'
       },
       dark: {
         'background': '#1a1a1a',
@@ -341,7 +349,8 @@ export default function EpubReader({ bookId, onClose }) {
       }
 
       setHighlights([...highlights, response.data.highlight]);
-      setShowHighlightMenu(false);
+      setShowSelectionMenu(false);
+      setShowHighlightColors(false);
       setSelectedText(null);
     } catch (err) {
       console.error('Error creating highlight:', err);
@@ -351,31 +360,39 @@ export default function EpubReader({ bookId, onClose }) {
 
   const deleteHighlight = async (highlightId) => {
     try {
+      setIsDeletingHighlight(highlightId);
       await api.delete(`/ereader/${bookId}/highlights/${highlightId}`);
       setHighlights(highlights.filter(h => h.id !== highlightId));
     } catch (err) {
       console.error('Error deleting highlight:', err);
       alert('Failed to delete highlight');
+    } finally {
+      setIsDeletingHighlight(null);
     }
   };
 
-  const createNote = async () => {
-    if (!noteContent.trim()) return;
+  const createNote = async (content = noteContent) => {
+    if (!content.trim()) return;
 
     try {
+      setIsSavingNote(true);
       const response = await api.post(`/ereader/${bookId}/notes`, {
         book_id: parseInt(bookId),
-        content: noteContent,
+        content: content,
         highlight_id: null,
         position: 0
       });
 
       setNotes([...notes, response.data.note]);
       setNoteContent('');
-      alert('Note saved successfully!');
+      setShowNoteInput(false);
+      setShowSelectionMenu(false);
+      setSelectedText(null);
     } catch (err) {
       console.error('Error creating note:', err);
       alert('Failed to create note');
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -397,11 +414,14 @@ export default function EpubReader({ bookId, onClose }) {
     if (!confirm('Delete this note?')) return;
 
     try {
+      setIsDeletingNote(noteId);
       await api.delete(`/ereader/${bookId}/notes/${noteId}`);
       setNotes(notes.filter(n => n.id !== noteId));
     } catch (err) {
       console.error('Error deleting note:', err);
       alert('Failed to delete note');
+    } finally {
+      setIsDeletingNote(null);
     }
   };
 
@@ -457,7 +477,7 @@ export default function EpubReader({ bookId, onClose }) {
             <i className="ri-list-unordered text-xl"></i>
           </button>
           <button
-            onClick={() => setShowNotesPanel(!showNotesPanel)}
+            onClick={() => setShowAnnotationsPanel(!showAnnotationsPanel)}
             className="p-2 hover:bg-gray-700 rounded-lg transition-colors relative"
             title="Notes & Highlights"
           >
@@ -524,14 +544,14 @@ export default function EpubReader({ bookId, onClose }) {
         </div>
       )}
 
-      {/* Highlight Menu */}
-      {showHighlightMenu && selectedText && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-20 p-4">
+      {/* Selection Menu - Choose Note or Highlight */}
+      {showSelectionMenu && selectedText && !showHighlightColors && !showNoteInput && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-20 p-6 min-w-[320px]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900">Highlight Text</h3>
+            <h3 className="font-bold text-gray-900">Selected Text</h3>
             <button
               onClick={() => {
-                setShowHighlightMenu(false);
+                setShowSelectionMenu(false);
                 setSelectedText(null);
               }}
               className="p-1 hover:bg-gray-100 rounded"
@@ -539,176 +559,352 @@ export default function EpubReader({ bookId, onClose }) {
               <i className="ri-close-line text-xl"></i>
             </button>
           </div>
-          <p className="text-sm text-gray-600 mb-4 max-w-md line-clamp-3">"{selectedText.text}"</p>
-          <div className="flex gap-2">
+          <p className="text-sm text-gray-600 mb-6 max-w-md line-clamp-3 italic">"{selectedText.text}"</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowNoteInput(true)}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <i className="ri-sticky-note-line text-lg"></i>
+              Add Note
+            </button>
+            <button
+              onClick={() => setShowHighlightColors(true)}
+              className="flex-1 px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <i className="ri-mark-pen-line text-lg"></i>
+              Highlight
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Highlight Color Picker */}
+      {showHighlightColors && selectedText && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-20 p-6 min-w-[320px]">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setShowHighlightColors(false)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <i className="ri-arrow-left-line text-xl"></i>
+            </button>
+            <h3 className="font-bold text-gray-900">Choose Color</h3>
+            <button
+              onClick={() => {
+                setShowSelectionMenu(false);
+                setShowHighlightColors(false);
+                setSelectedText(null);
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <i className="ri-close-line text-xl"></i>
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-4 max-w-md line-clamp-3 italic">"{selectedText.text}"</p>
+          <div className="grid grid-cols-5 gap-3">
             <button
               onClick={() => createHighlight('#ffeb3b')}
-              className="w-10 h-10 rounded-full bg-yellow-300 hover:ring-2 ring-yellow-500"
+              className="w-12 h-12 rounded-full bg-yellow-300 hover:ring-4 ring-yellow-500 transition-all"
               title="Yellow"
             />
             <button
               onClick={() => createHighlight('#4caf50')}
-              className="w-10 h-10 rounded-full bg-green-400 hover:ring-2 ring-green-600"
+              className="w-12 h-12 rounded-full bg-green-400 hover:ring-4 ring-green-600 transition-all"
               title="Green"
             />
             <button
               onClick={() => createHighlight('#2196f3')}
-              className="w-10 h-10 rounded-full bg-blue-400 hover:ring-2 ring-blue-600"
+              className="w-12 h-12 rounded-full bg-blue-400 hover:ring-4 ring-blue-600 transition-all"
               title="Blue"
             />
             <button
               onClick={() => createHighlight('#f44336')}
-              className="w-10 h-10 rounded-full bg-red-400 hover:ring-2 ring-red-600"
+              className="w-12 h-12 rounded-full bg-red-400 hover:ring-4 ring-red-600 transition-all"
               title="Red"
             />
             <button
               onClick={() => createHighlight('#9c27b0')}
-              className="w-10 h-10 rounded-full bg-purple-400 hover:ring-2 ring-purple-600"
+              className="w-12 h-12 rounded-full bg-purple-400 hover:ring-4 ring-purple-600 transition-all"
               title="Purple"
             />
           </div>
         </div>
       )}
 
-      {/* Notes & Highlights Panel */}
-      {showNotesPanel && (
-        <div className="absolute top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-10 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-            <h2 className="text-lg font-bold">Notes & Highlights</h2>
+      {/* Note Input */}
+      {showNoteInput && selectedText && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-20 p-6 min-w-[400px]">
+          <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setShowNotesPanel(false)}
+              onClick={() => setShowNoteInput(false)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <i className="ri-arrow-left-line text-xl"></i>
+            </button>
+            <h3 className="font-bold text-gray-900">Add Note</h3>
+            <button
+              onClick={() => {
+                setShowSelectionMenu(false);
+                setShowNoteInput(false);
+                setSelectedText(null);
+                setNoteContent('');
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <i className="ri-close-line text-xl"></i>
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-4 max-w-md line-clamp-3 italic bg-gray-50 p-3 rounded">"{selectedText.text}"</p>
+          <textarea
+            value={noteContent}
+            onChange={(e) => setNoteContent(e.target.value)}
+            placeholder="Write your note about this text..."
+            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            rows="4"
+            autoFocus
+          />
+          <button
+            onClick={() => createNote()}
+            disabled={!noteContent.trim() || isSavingNote}
+            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {isSavingNote ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <i className="ri-save-line"></i>
+                Save Note
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Annotations Panel with Tabs */}
+      {showAnnotationsPanel && (
+        <div className="absolute top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-10 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white">
+            <h2 className="text-lg font-bold">Annotations</h2>
+            <button
+              onClick={() => setShowAnnotationsPanel(false)}
               className="p-2 hover:bg-gray-100 rounded-lg"
             >
               <i className="ri-close-line text-xl"></i>
             </button>
           </div>
 
-          {/* Add Note Section */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="font-semibold mb-2 text-sm text-gray-700">Add New Note</h3>
-            <textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Write your note here..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows="3"
-            />
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 bg-white">
             <button
-              onClick={createNote}
-              disabled={!noteContent.trim()}
-              className="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              onClick={() => setActiveTab('notes')}
+              className={`flex-1 px-4 py-3 font-semibold transition-colors relative ${activeTab === 'notes'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
             >
-              <i className="ri-save-line mr-2"></i>
-              Save Note
+              <div className="flex items-center justify-center gap-2">
+                <i className="ri-sticky-note-line"></i>
+                Notes
+                {notes.length > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'notes' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                    {notes.length}
+                  </span>
+                )}
+              </div>
+              {activeTab === 'notes' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('highlights')}
+              className={`flex-1 px-4 py-3 font-semibold transition-colors relative ${activeTab === 'highlights'
+                  ? 'text-yellow-600 bg-yellow-50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <i className="ri-mark-pen-line"></i>
+                Highlights
+                {highlights.length > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'highlights' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                    {highlights.length}
+                  </span>
+                )}
+              </div>
+              {activeTab === 'highlights' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-600"></div>
+              )}
             </button>
           </div>
 
-          {/* Notes List */}
-          {notes.length > 0 && (
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="font-semibold mb-3 text-sm text-gray-700 flex items-center">
-                <i className="ri-sticky-note-line mr-2"></i>
-                Notes ({notes.length})
-              </h3>
-              <div className="space-y-3">
-                {notes.map(note => (
-                  <div key={note.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    {editingNote === note.id ? (
-                      <div>
-                        <textarea
-                          defaultValue={note.content}
-                          className="w-full p-2 border border-gray-300 rounded resize-none"
-                          rows="3"
-                          id={`note-edit-${note.id}`}
-                        />
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => {
-                              const content = document.getElementById(`note-edit-${note.id}`).value;
-                              updateNote(note.id, content);
-                            }}
-                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingNote(null)}
-                            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
-                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                          <span>{new Date(note.created_at).toLocaleDateString()}</span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingNote(note.id)}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <i className="ri-edit-line"></i>
-                            </button>
-                            <button
-                              onClick={() => deleteNote(note.id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <i className="ri-delete-bin-line"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Notes Tab */}
+            {activeTab === 'notes' && (
+              <div>
 
-          {/* Highlights List */}
-          {highlights.length > 0 && (
-            <div className="p-4">
-              <h3 className="font-semibold mb-3 text-sm text-gray-700 flex items-center">
-                <i className="ri-mark-pen-line mr-2"></i>
-                Highlights ({highlights.length})
-              </h3>
-              <div className="space-y-3">
-                {highlights.map(highlight => (
-                  <div key={highlight.id} className="border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-start gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full flex-shrink-0 mt-1"
-                        style={{ backgroundColor: highlight.color }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-800">"{highlight.text}"</p>
-                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                          <span>{new Date(highlight.created_at).toLocaleDateString()}</span>
-                          <button
-                            onClick={() => deleteHighlight(highlight.id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <i className="ri-delete-bin-line"></i>
-                          </button>
+                {/* Add Note Section */}
+                <div className="p-4 border-b border-gray-200 bg-blue-50">
+                  <h3 className="font-semibold mb-2 text-sm text-gray-700">Add New Note</h3>
+                  <textarea
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    placeholder="Write your note here..."
+                    className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows="3"
+                  />
+                  <button
+                    onClick={() => createNote()}
+                    disabled={!noteContent.trim() || isSavingNote}
+                    className="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSavingNote ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-save-line"></i>
+                        Save Note
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Notes List */}
+                {notes.length > 0 && (
+                  <div className="p-4">
+                    <h3 className="font-semibold mb-3 text-sm text-gray-700 flex items-center">
+                      <i className="ri-sticky-note-line mr-2"></i>
+                      Notes ({notes.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {notes.map(note => (
+                        <div key={note.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          {editingNote === note.id ? (
+                            <div>
+                              <textarea
+                                defaultValue={note.content}
+                                className="w-full p-2 border border-gray-300 rounded resize-none"
+                                rows="3"
+                                id={`note-edit-${note.id}`}
+                              />
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => {
+                                    const content = document.getElementById(`note-edit-${note.id}`).value;
+                                    updateNote(note.id, content);
+                                  }}
+                                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingNote(null)}
+                                  className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+                              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                                <span>{new Date(note.created_at).toLocaleDateString()}</span>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => setEditingNote(note.id)}
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    <i className="ri-edit-line"></i>
+                                  </button>
+                                  <button
+                                    onClick={() => deleteNote(note.id)}
+                                    disabled={isDeletingNote === note.id}
+                                    className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {isDeletingNote === note.id ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                    ) : (
+                                      <i className="ri-delete-bin-line"></i>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Empty State */}
-          {notes.length === 0 && highlights.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              <i className="ri-sticky-note-line text-4xl mb-2"></i>
-              <p className="text-sm">No notes or highlights yet</p>
-              <p className="text-xs mt-1">Select text to create highlights</p>
-            </div>
-          )}
+                {/* Empty State */}
+                {notes.length === 0 && (
+                  <div className="p-8 text-center text-gray-500">
+                    <i className="ri-sticky-note-line text-4xl mb-2"></i>
+                    <p className="text-sm">No notes yet</p>
+                    <p className="text-xs mt-1">Select text and choose "Add Note"</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Highlights Tab */}
+            {activeTab === 'highlights' && (
+              <div>
+                {/* Highlights List */}
+                {highlights.length > 0 ? (
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      {highlights.map(highlight => (
+                        <div key={highlight.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+                          <div className="flex items-start gap-2">
+                            <div
+                              className="w-4 h-4 rounded-full flex-shrink-0 mt-1"
+                              style={{ backgroundColor: highlight.color }}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-800">"{highlight.text}"</p>
+                              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                                <span>{new Date(highlight.created_at).toLocaleDateString()}</span>
+                                <button
+                                  onClick={() => deleteHighlight(highlight.id)}
+                                  disabled={isDeletingHighlight === highlight.id}
+                                  className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {isDeletingHighlight === highlight.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                  ) : (
+                                    <i className="ri-delete-bin-line"></i>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    <i className="ri-mark-pen-line text-4xl mb-2"></i>
+                    <p className="text-sm">No highlights yet</p>
+                    <p className="text-xs mt-1">Select text and choose "Highlight"</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -754,8 +950,8 @@ export default function EpubReader({ bookId, onClose }) {
                   key={font}
                   onClick={() => changeFontFamily(font)}
                   className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${fontFamily === font
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
                     }`}
                   style={{ fontFamily: font }}
                 >
