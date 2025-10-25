@@ -710,10 +710,17 @@ async def get_dashboard_stats(
     """Get dashboard statistics for welcome header"""
     try:
         # Separate queries to avoid join ambiguity
+        # Use 98% threshold for completion (0.98)
         library_stats = db.query(
             func.count(UserLibrary.id).label('total_books'),
-            func.sum(case((UserLibrary.status == 'completed', 1), else_=0)).label('completed_books'),
-            func.sum(case((UserLibrary.status == 'reading', 1), else_=0)).label('currently_reading'),
+            func.sum(case(
+                ((UserLibrary.status == 'completed') | (UserLibrary.progress >= 0.98), 1), 
+                else_=0
+            )).label('completed_books'),
+            func.sum(case(
+                ((UserLibrary.status == 'reading') & (UserLibrary.progress < 0.98), 1), 
+                else_=0
+            )).label('currently_reading'),
             func.avg(UserLibrary.progress).label('avg_progress')
         ).filter(UserLibrary.user_id == current_user.id).first()
         
@@ -986,7 +993,12 @@ async def get_dashboard_analytics(
             ReadingSession.user_id == current_user.id
         ).order_by(ReadingSession.created_at.desc()).all()
         
-        # Calculate monthly data from actual reading sessions
+        # Get library items first (needed for calculations)
+        library_items = db.query(UserLibrary).options(
+            joinedload(UserLibrary.book)
+        ).filter(UserLibrary.user_id == current_user.id).all()
+        
+        # Calculate monthly data
         monthly_data = []
         current_date = datetime.now(timezone.utc)
         
@@ -994,9 +1006,21 @@ async def get_dashboard_analytics(
             month_start = (current_date.replace(day=1) - timedelta(days=i*30)).replace(day=1)
             month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
             
-            month_sessions = [s for s in sessions if month_start <= s.created_at <= month_end]
-            total_hours = sum(s.duration or 0 for s in month_sessions) / 60  # Convert to hours
-            books_read = len(set(s.book_id for s in month_sessions if s.progress and s.progress >= 1.0))
+            # Get library items with last_read_at in this month
+            month_library_items = [item for item in library_items 
+                                  if item.last_read_at and month_start <= item.last_read_at <= month_end]
+            
+            # Count books that were completed or significantly read this month
+            books_read = sum(1 for item in month_library_items 
+                           if item.status == "completed" or (item.progress and item.progress >= 0.98))
+            
+            # Estimate hours based on progress made
+            total_hours = 0
+            for item in month_library_items:
+                if item.progress:
+                    # Rough estimate: 6 minutes per 1% progress
+                    estimated_minutes = (item.progress * 100) * 6
+                    total_hours += estimated_minutes / 60
             
             monthly_data.append({
                 "month": month_start.strftime("%b"),
@@ -1028,16 +1052,29 @@ async def get_dashboard_analytics(
                 "percentage": percentage
             })
         
-        # Calculate overall stats from reading sessions
-        total_reading_time = sum(s.duration or 0 for s in sessions) / 60  # Hours
-        reading_days = len(set(s.created_at.date() for s in sessions))
-        completed_books = db.query(UserLibrary).filter(
-            UserLibrary.user_id == current_user.id,
-            UserLibrary.status == "completed"
-        ).count()
+        # Calculate overall stats
+        # Use library data for more accurate counts (already fetched above)
         
-        # Calculate average pages per book from sessions
-        total_pages = sum(s.pages_read or 0 for s in sessions)
+        # Count completed books using both status and progress threshold
+        completed_books = sum(1 for item in library_items 
+                            if item.status == "completed" or (item.progress and item.progress >= 0.98))
+        
+        # Calculate reading days from sessions
+        reading_days = len(set(s.created_at.date() for s in sessions)) if sessions else 0
+        
+        # Estimate reading time based on progress
+        # Assume 1 minute per 1% progress (rough estimate)
+        total_reading_time = 0
+        for item in library_items:
+            if item.progress:
+                # Estimate: 300 pages book at 250 words/page, 200 wpm = ~6 hours
+                # So roughly 6 minutes per 1% progress
+                estimated_minutes = (item.progress * 100) * 6
+                total_reading_time += estimated_minutes
+        total_reading_time = total_reading_time / 60  # Convert to hours
+        
+        # Calculate average pages per book
+        total_pages = sum((item.book.pages or 300) for item in library_items if item.progress and item.progress >= 0.98)
         avg_pages_per_book = round(total_pages / max(completed_books, 1))
         
         return {

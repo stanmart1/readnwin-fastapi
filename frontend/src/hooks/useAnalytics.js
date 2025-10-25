@@ -16,11 +16,11 @@ export const useAnalytics = (period = 'week') => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch analytics from dashboard
       const analyticsResponse = await api.get('/dashboard/analytics');
       const analyticsData = analyticsResponse.data.analytics;
-      
+
       // Transform stats to match expected format
       const transformedStats = {
         total_time: Math.round((analyticsData.stats?.totalHours || 0) * 60), // Convert hours to minutes
@@ -29,16 +29,16 @@ export const useAnalytics = (period = 'week') => {
         current_streak: analyticsData.stats?.readingDays || 0,
         longest_streak: analyticsData.stats?.readingDays || 0
       };
-      
+
       setStats(transformedStats);
-      
+
       // Transform monthlyData to match expected format
       const transformedData = (analyticsData.monthlyData || []).map(item => ({
         day: item.month,
         minutes: Math.round(item.hours * 60),
         pages: item.books * (analyticsData.stats?.avgPagesPerBook || 0)
       }));
-      
+
       setWeeklyData(transformedData);
 
       // Fetch reading goals
