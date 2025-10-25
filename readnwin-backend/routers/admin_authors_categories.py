@@ -5,6 +5,7 @@ from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
 from models.book import Category
 from models.author import Author
+from models.order import Order, OrderItem
 from pydantic import BaseModel, validator
 from typing import Optional
 
@@ -174,6 +175,9 @@ def get_authors(
     """Get all authors with pagination and filters"""
     check_admin_access(current_user)
     try:
+        from models.book import Book
+        
+        # Query authors from Author table with book counts
         query = db.query(Author)
         
         # Apply filters
@@ -193,25 +197,30 @@ def get_authors(
         # Apply pagination
         authors = query.offset((page - 1) * limit).limit(limit).all()
         
-        # Get book counts
-        from models.book import Book
+        # Build response with book and sales data
         authors_data = []
         for author in authors:
+            # Count books by author_id
             book_count = db.query(func.count(Book.id)).filter(Book.author_id == author.id).scalar() or 0
+            
+            # Get sales statistics
+            sales_stats = db.query(
+                func.count(OrderItem.id).label('total_sales'),
+                func.sum(OrderItem.price * OrderItem.quantity).label('total_revenue')
+            ).join(Order).join(Book).filter(
+                Book.author_id == author.id,
+                Order.status == 'completed'
+            ).first()
+            
             authors_data.append({
                 "id": author.id,
                 "name": author.name,
-                "email": author.email or "",
-                "bio": author.bio or "",
-                "avatar_url": author.avatar_url or "",
-                "website": author.website or "",
-                "is_active": author.is_active,
+                "email": author.email,
                 "books_count": book_count,
-                "total_sales": 0,
-                "revenue": 0,
                 "status": "active" if author.is_active else "inactive",
                 "created_at": author.created_at.isoformat() if author.created_at else None,
-                "updated_at": author.updated_at.isoformat() if author.updated_at else None
+                "total_sales": sales_stats.total_sales or 0 if sales_stats else 0,
+                "revenue": float(sales_stats.total_revenue or 0) if sales_stats else 0
             })
         
         return {

@@ -3,9 +3,7 @@ import { useAuthors } from '../../hooks/useAuthors';
 import api from '../../lib/api';
 
 const AuthorsManagement = () => {
-  const { authors: hookAuthors, fetchAuthors } = useAuthors();
-  const [authors, setAuthors] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { authors, loading, filters, setFilters, fetchAuthors } = useAuthors();
   const [showModal, setShowModal] = useState(false);
   const [editingAuthor, setEditingAuthor] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,27 +13,18 @@ const AuthorsManagement = () => {
     avatar_url: '',
     status: 'active'
   });
-  const [filters, setFilters] = useState({
-    search: '',
-    status: ''
-  });
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   useEffect(() => {
-    loadAuthors();
-  }, [filters.search, filters.status]);
-
-  useEffect(() => {
-    setAuthors(hookAuthors);
-  }, [hookAuthors]);
-
-  const loadAuthors = async () => {
-    setLoading(true);
-    await fetchAuthors();
-    setLoading(false);
-  };
+    if (filters.search !== '' || filters.status !== '') {
+      const debounceTimer = setTimeout(() => {
+        fetchAuthors();
+      }, 300);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [filters.search, filters.status, fetchAuthors]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +46,7 @@ const AuthorsManagement = () => {
 
       setShowModal(false);
       resetForm();
-      loadAuthors();
+      fetchAuthors();
     } catch (error) {
       console.error('Save error:', error);
       alert(error.response?.data?.error || 'Failed to save author');
@@ -87,7 +76,7 @@ const AuthorsManagement = () => {
     try {
       await api.delete(`/admin/authors/${authorId}`);
       alert('Author deleted successfully!');
-      loadAuthors();
+      fetchAuthors();
     } catch (error) {
       console.error('Delete error:', error);
       alert(error.response?.data?.error || 'Failed to delete author');
@@ -103,7 +92,7 @@ const AuthorsManagement = () => {
     try {
       await api.put(`/admin/authors/${authorId}`, { status: newStatus });
       alert(`Author ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
-      loadAuthors();
+      fetchAuthors();
     } catch (error) {
       console.error('Status update error:', error);
       alert(error.response?.data?.error || 'Failed to update author status');
@@ -128,15 +117,6 @@ const AuthorsManagement = () => {
     resetForm();
   };
 
-  const filteredAuthors = authors.filter(author => {
-    const matchesSearch = !filters.search || 
-      author.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      author.email?.toLowerCase().includes(filters.search.toLowerCase());
-    
-    const matchesStatus = !filters.status || author.status === filters.status;
-    
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="p-6">
@@ -153,13 +133,13 @@ const AuthorsManagement = () => {
               type="text"
               placeholder="Search authors by name or email..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <select
             value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Status</option>
@@ -224,16 +204,8 @@ const AuthorsManagement = () => {
                     </button>
                   </td>
                 </tr>
-              ) : filteredAuthors.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <i className="ri-search-line text-4xl text-gray-400 mb-4 block"></i>
-                    <h3 className="text-lg font-medium text-gray-900">No authors match your filters</h3>
-                    <p className="text-gray-500 mt-1">Try adjusting your search or filters</p>
-                  </td>
-                </tr>
               ) : (
-                filteredAuthors.map((author) => (
+                authors.map((author) => (
                   <tr key={author.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -259,7 +231,7 @@ const AuthorsManagement = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(author.created_at).toLocaleDateString()}
+                      {author.created_at ? new Date(author.created_at).toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../lib/api';
 
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
   const fetchCategories = async () => {
     try {
@@ -21,6 +22,13 @@ export const useCategories = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!initialized) {
+      fetchCategories();
+      setInitialized(true);
+    }
+  }, []);
 
   return {
     categories,

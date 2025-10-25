@@ -15,6 +15,7 @@ export const useAuthors = () => {
     search: '',
     status: ''
   });
+  const [initialized, setInitialized] = useState(false);
 
   const fetchAuthors = useCallback(async () => {
     try {
@@ -31,7 +32,10 @@ export const useAuthors = () => {
       const response = await api.get('/admin/authors', { params });
       const result = response.data;
 
-      setAuthors(result.authors || []);
+      // Handle both array and object responses
+      const authorsData = Array.isArray(result) ? result : (result.authors || []);
+      setAuthors(authorsData);
+      
       if (result.pagination) {
         setPagination(prev => ({
           ...prev,
@@ -88,8 +92,11 @@ export const useAuthors = () => {
   };
 
   useEffect(() => {
-    fetchAuthors();
-  }, [fetchAuthors]);
+    if (!initialized) {
+      fetchAuthors();
+      setInitialized(true);
+    }
+  }, []);
 
   return {
     authors,

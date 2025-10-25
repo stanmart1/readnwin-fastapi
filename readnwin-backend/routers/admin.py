@@ -1133,51 +1133,8 @@ def delete_admin_category(
         print(f"Error deleting category: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete category")
 
-# Authors Management Endpoints
-@router.get("/authors")
-def get_admin_authors(
-    current_user: User = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db)
-):
-    """Get all authors with statistics"""
-    check_admin_access(current_user)
-
-    try:
-        # Get unique authors from books table
-        authors = db.query(
-            Book.author,
-            func.count(Book.id).label('books_count'),
-            func.coalesce(func.sum(Book.price), 0).label('total_value')
-        ).filter(Book.author.isnot(None)).group_by(Book.author).all()
-
-        result = []
-        for author in authors:
-            # Get sales statistics
-            sales_stats = db.query(
-                func.count(OrderItem.id).label('total_sales'),
-                func.sum(OrderItem.price * OrderItem.quantity).label('total_revenue')
-            ).join(Order).join(Book).filter(
-                Book.author == author.author,
-                Order.status == 'completed'
-            ).first()
-
-            result.append({
-                "name": author.author,
-                "email": f"{author.author.lower().replace(' ', '.')}@example.com",
-                "books_count": author.books_count,
-                "total_sales": sales_stats.total_sales or 0,
-                "total_revenue": float(sales_stats.total_revenue or 0),
-                "revenue": float(sales_stats.total_revenue or 0),
-                "status": "active",
-                "avatar_url": "",
-                "created_at": ""
-            })
-
-        return result
-
-    except Exception as e:
-        print(f"Error fetching authors: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch authors")
+# Authors Management Endpoints are now in admin_authors_categories.py
+# (Removed conflicting endpoint that was querying Book.author instead of Author table)
 
 class AuthorCreateRequest(BaseModel):
     name: str

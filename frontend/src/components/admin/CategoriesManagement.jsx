@@ -3,8 +3,7 @@ import { useCategories } from '../../hooks/useCategories';
 import api from '../../lib/api';
 
 const CategoriesManagement = () => {
-  const { categories, fetchCategories } = useCategories();
-  const [loading, setLoading] = useState(true);
+  const { categories, loading, fetchCategories } = useCategories();
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
@@ -20,15 +19,6 @@ const CategoriesManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
-  useEffect(() => {
-    loadCategories();
-  }, [filters.search, filters.status]);
-
-  const loadCategories = async () => {
-    setLoading(true);
-    await fetchCategories();
-    setLoading(false);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +40,7 @@ const CategoriesManagement = () => {
       
       setShowModal(false);
       resetForm();
-      loadCategories();
+      fetchCategories();
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save category');
@@ -78,7 +68,7 @@ const CategoriesManagement = () => {
     try {
       await api.delete(`/admin/categories/${categoryId}`);
       alert('Category deleted successfully!');
-      loadCategories();
+      fetchCategories();
     } catch (error) {
       console.error('Delete error:', error);
       alert('Failed to delete category');
@@ -95,7 +85,7 @@ const CategoriesManagement = () => {
         status: newStatus
       });
       alert(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
-      loadCategories();
+      fetchCategories();
     } catch (error) {
       console.error('Status update error:', error);
       alert('Failed to update category status');
@@ -145,13 +135,13 @@ const CategoriesManagement = () => {
               type="text"
               placeholder="Search categories..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <select
             value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Status</option>

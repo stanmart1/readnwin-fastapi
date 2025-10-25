@@ -723,14 +723,15 @@ async def get_authors(
     check_admin_access(current_user)
     
     from models.author import Author
+    from sqlalchemy import func
     authors = db.query(Author).all()
     return [
         {
             "id": author.id,
             "name": author.name,
             "email": author.email,
-            "books_count": 0,
-            "status": "active"
+            "books_count": db.query(func.count(Book.id)).filter(Book.author_id == author.id).scalar() or 0,
+            "status": "active" if author.is_active else "inactive"
         }
         for author in authors
     ]
