@@ -89,11 +89,21 @@ async def get_user_library(
                     session_progress = (latest_session.pages_read or 0) / item.book.pages * 100
                     progress = max(progress, session_progress)
 
+                # Get author name from author_id
+                author_name = "Unknown Author"
+                if item.book.author_id:
+                    from models.author import Author
+                    author = db.query(Author).filter(Author.id == item.book.author_id).first()
+                    if author:
+                        author_name = author.name
+                elif item.book.author:
+                    author_name = item.book.author
+
                 library_books.append({
                     "id": item.id,
                     "book_id": item.book_id,
                     "title": item.book.title,
-                    "author": item.book.author,
+                    "author": author_name,
                     "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else None,
                     "status": item.status or "unread",
                     "progress": min(progress, 100.0),
