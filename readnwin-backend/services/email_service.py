@@ -33,6 +33,21 @@ def send_password_reset_email(to_email: str, reset_token: str, first_name: Optio
         print(f"Failed to send password reset email: {str(e)}")
         return False
 
+def send_password_changed_email(to_email: str, first_name: Optional[str] = None, db_session: Optional[Session] = None) -> bool:
+    """Send password changed confirmation email using Resend API"""
+    try:
+        if not db_session:
+            return False
+        resend_service = get_resend_service(db_session)
+        result = resend_service.send_password_changed_email(
+            to_email=to_email,
+            first_name=first_name or "User"
+        )
+        return result.get("success", False)
+    except Exception as e:
+        print(f"Failed to send password changed email: {str(e)}")
+        return False
+
 def send_order_confirmation_email(to_email: str, order_data: Dict[str, Any], first_name: Optional[str] = None, db_session: Optional[Session] = None) -> bool:
     """Send order confirmation email using Resend API"""
     try:

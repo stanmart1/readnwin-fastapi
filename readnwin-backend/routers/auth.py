@@ -780,8 +780,8 @@ def change_password(data: ChangePassword, current_user: User = Depends(get_curre
 
         # Send password changed confirmation email
         try:
-            from services.email_service import send_password_reset_email
-            send_password_reset_email(current_user.email, current_user.first_name or current_user.username, db)
+            from services.email_service import send_password_changed_email
+            send_password_changed_email(current_user.email, current_user.first_name or current_user.username, db)
         except Exception as e:
             logger.warning(f"Failed to send password changed email: {e}")
 

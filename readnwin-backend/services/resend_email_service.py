@@ -115,6 +115,25 @@ class ResendEmailService:
             logger.error(f"Failed to send password reset email to {to_email}: {e}")
             return {"success": False, "error": str(e)}
     
+    def send_password_changed_email(self, to_email: str, first_name: str = "User") -> Dict[str, Any]:
+        """Send password changed confirmation email"""
+        try:
+            # Using password reset template for now (same format)
+            html_content = self.template_manager.render_password_reset(
+                username=first_name,
+                reset_url=f"{settings.frontend_url}/dashboard"
+            )
+            
+            return self.send_email(
+                to=[to_email],
+                subject="Password Changed Successfully - ReadnWin",
+                html_content=html_content
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to send password changed email to {to_email}: {e}")
+            return {"success": False, "error": str(e)}
+    
     def send_verification_email(self, to_email: str, username: str, verification_token: str) -> Dict[str, Any]:
         """Send email verification link"""
         try:
