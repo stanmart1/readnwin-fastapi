@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks';
+import { Link } from 'react-router-dom';
+import { useCart } from '../hooks';
 import { getImageUrl } from '../lib/fileService';
-import api from '../lib/api';
 
 export default function BookCard({ book, onCartUpdate }) {
   const [isHovered, setIsHovered] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const displayAuthor = book.author_name || book.author || '';
   const displayCover = getImageUrl(book.cover_image_url || book.cover_image);
@@ -18,19 +16,14 @@ export default function BookCard({ book, onCartUpdate }) {
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
     try {
       setAddingToCart(true);
-      await api.post('/cart/add', { book_id: book.id, quantity: 1 });
+      await addToCart(book, 1);
       if (onCartUpdate) onCartUpdate();
       alert('Book added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert(error.response?.data?.detail || 'Failed to add to cart');
+      alert('Failed to add to cart');
     } finally {
       setAddingToCart(false);
     }
