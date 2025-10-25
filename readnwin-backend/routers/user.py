@@ -82,7 +82,8 @@ async def get_user_library(
                     ReadingSession.book_id == item.book_id
                 ).order_by(ReadingSession.created_at.desc()).first()
 
-                progress = item.progress or 0.0
+                # Progress is stored as 0-1, convert to 0-100 for frontend
+                progress = (item.progress or 0.0) * 100
                 last_read_at = item.last_read_at.isoformat() if item.last_read_at else None
                 if latest_session and item.book.pages:
                     # Calculate progress from reading session if available

@@ -13,8 +13,12 @@ export default function Library() {
   const { books, loading, refetch } = useLibrary();
 
   const { filteredBooks, counts } = useMemo(() => {
-    const readingBooks = books.filter(b => b.progress > 0 && b.progress < 100);
-    const completedBooks = books.filter(b => b.progress >= 100);
+    // Consider books >= 98% as completed (industry standard)
+    // This accounts for end pages like "About the Author", "Copyright", etc.
+    const COMPLETION_THRESHOLD = 98;
+    
+    const readingBooks = books.filter(b => b.progress > 0 && b.progress < COMPLETION_THRESHOLD);
+    const completedBooks = books.filter(b => b.progress >= COMPLETION_THRESHOLD || b.status === 'completed');
     
     const filtered = (() => {
       switch (filter) {
@@ -173,10 +177,10 @@ export default function Library() {
                         <div className="flex-1 bg-white/20 rounded-full h-1.5">
                           <div 
                             className="bg-white h-1.5 rounded-full transition-all duration-300"
-                            style={{ width: `${book.progress * 100}%` }}
+                            style={{ width: `${book.progress}%` }}
                           />
                         </div>
-                        <span className="text-white text-xs font-medium">{Math.round(book.progress * 100)}%</span>
+                        <span className="text-white text-xs font-medium">{Math.round(book.progress)}%</span>
                       </div>
                     </div>
                   )}
@@ -196,7 +200,7 @@ export default function Library() {
                   {/* Reading Stats */}
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                     {(book.format || book.book?.format) === 'ebook' && (
-                      <span>{Math.round((book.progress || 0) * 100)}%</span>
+                      <span>{Math.round(book.progress || 0)}%</span>
                     )}
                   </div>
 

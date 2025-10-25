@@ -142,7 +142,8 @@ async def update_reading_progress(
         library_entry.last_read_at = datetime.now(timezone.utc)
         if request.last_read_location:
             library_entry.last_read_location = request.last_read_location
-        if request.progress >= 100:
+        # Mark as completed at 98% (accounts for end pages like "About the Author")
+        if request.progress >= 98:
             library_entry.status = "completed"
         elif request.progress > 0:
             library_entry.status = "reading"
