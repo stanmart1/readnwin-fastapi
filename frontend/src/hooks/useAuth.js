@@ -79,10 +79,27 @@ export const useAuth = () => {
     try {
       setLoading(true);
       setError('');
-      await api.post('/auth/forgot-password', { email });
+      await api.post('/auth/reset-password', { email });
       return true;
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to send reset email.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (token, newPassword) => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await api.post('/auth/reset-password/confirm', {
+        token,
+        new_password: newPassword
+      });
+      return response.data.message === 'Password reset successfully';
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to reset password.');
       return false;
     } finally {
       setLoading(false);
@@ -114,6 +131,7 @@ export const useAuth = () => {
     login,
     signup,
     forgotPassword,
+    resetPassword,
     logout,
     isAuthenticated,
     getUser,
