@@ -6,13 +6,14 @@ import { getImageUrl } from '../lib/fileService';
 const GUEST_CART_KEY = 'readnwin_guest_cart';
 
 export const useCart = () => {
-  const { isAuthenticated, getUser } = useAuth();
+  const { isAuthenticated: isAuthenticatedFn, getUser } = useAuth();
+  const isAuthenticated = isAuthenticatedFn();
   const user = getUser();
   const hasLoadedCart = useRef(false);
   
   const [cartItems, setCartItems] = useState(() => {
     // Initialize from localStorage for guest users
-    if (typeof window !== 'undefined' && !isAuthenticated) {
+    if (typeof window !== 'undefined' && !isAuthenticatedFn()) {
       try {
         const stored = localStorage.getItem(GUEST_CART_KEY);
         return stored ? JSON.parse(stored) : [];
