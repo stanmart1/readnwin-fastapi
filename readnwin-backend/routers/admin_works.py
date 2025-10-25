@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from models.user import User
 from models.portfolio import Portfolio
 from pydantic import BaseModel
 from typing import Optional
-import os
-import uuid
-from pathlib import Path
 
 router = APIRouter(prefix="/admin/works", tags=["admin", "works"])
 
@@ -70,25 +68,14 @@ async def create_work(
     check_admin_access(current_user)
     
     try:
-        # Create uploads directory if it doesn't exist
-        upload_dir = Path("uploads/works")
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generate unique filename
-        file_extension = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
-        filename = f"{uuid.uuid4()}.{file_extension}"
-        file_path = upload_dir / filename
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            content = await image.read()
-            buffer.write(content)
+        # Save image using storage manager
+        image_path = await storage.save_image(image, subfolder="works")
         
         # Create database record
         new_work = Portfolio(
             title=title,
             description=description,
-            image_url=f"/uploads/works/{filename}",
+            image_url=image_path,
             order_index=order_index,
             is_active=is_active
         )
@@ -135,18 +122,12 @@ async def update_work(
         
         # Handle image update if provided
         if image:
-            upload_dir = Path("uploads/works")
-            upload_dir.mkdir(parents=True, exist_ok=True)
+            # Delete old image if exists
+            if work.image_url:
+                storage.delete_file(work.image_url)
             
-            file_extension = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
-            filename = f"{uuid.uuid4()}.{file_extension}"
-            file_path = upload_dir / filename
-            
-            with open(file_path, "wb") as buffer:
-                content = await image.read()
-                buffer.write(content)
-            
-            work.image_url = f"/uploads/works/{filename}"
+            # Save new image using storage manager
+            work.image_url = await storage.save_image(image, subfolder="works")
         
         db.commit()
         
