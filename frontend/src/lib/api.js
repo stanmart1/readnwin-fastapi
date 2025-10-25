@@ -33,9 +33,16 @@ api.interceptors.response.use(
   (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Only redirect if we have a token (means token is invalid/expired)
+      // Don't redirect on login page since 401 is expected for invalid credentials
+      const token = localStorage.getItem('token');
+      const isLoginPage = window.location.pathname === '/login';
+      
+      if (token && !isLoginPage) {
+        // Unauthorized - clear token and redirect to login
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
