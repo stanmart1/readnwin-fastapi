@@ -1,6 +1,6 @@
 import { getImageUrl } from '../../lib/fileService';
 
-const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) => {
+const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction, editLoading }) => {
   const handleSelectAll = (checked) => {
     if (checked) {
       onSelectionChange(books.map(book => book.id));
@@ -107,9 +107,14 @@ const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) =>
               </button>
               <button
                 onClick={() => onBookAction('edit', book)}
-                className="text-green-600 hover:text-green-800 flex items-center text-sm whitespace-nowrap"
+                disabled={editLoading}
+                className={`flex items-center text-sm whitespace-nowrap ${
+                  editLoading ? 'text-gray-400 cursor-not-allowed' : 'text-green-600 hover:text-green-800'
+                }`}
               >
-                <i className="ri-edit-line mr-1"></i>
+                <i className={`mr-1 ${
+                  editLoading ? 'ri-loader-4-line animate-spin' : 'ri-edit-line'
+                }`}></i>
                 Edit
               </button>
               <button
@@ -253,10 +258,15 @@ const BookTable = ({ books, selectedBooks, onSelectionChange, onBookAction }) =>
                       </button>
                       <button
                         onClick={() => onBookAction('edit', book)}
-                        className="text-green-600 hover:text-green-800 cursor-pointer transition-colors duration-200"
+                        disabled={editLoading}
+                        className={`cursor-pointer transition-colors duration-200 ${
+                          editLoading ? 'text-gray-400 cursor-not-allowed' : 'text-green-600 hover:text-green-800'
+                        }`}
                         title="Edit Book"
                       >
-                        <i className="ri-edit-line"></i>
+                        <i className={`${
+                          editLoading ? 'ri-loader-4-line animate-spin' : 'ri-edit-line'
+                        }`}></i>
                       </button>
                       <button
                         onClick={() => onBookAction('assign', book)}

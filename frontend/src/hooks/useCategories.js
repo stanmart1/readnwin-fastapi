@@ -12,8 +12,10 @@ export const useCategories = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/admin/categories');
-      setCategories(response.data.categories || response.data || []);
-      return { success: true, data: response.data };
+      // Handle both array and object responses
+      const categoriesData = Array.isArray(response.data) ? response.data : (response.data.categories || response.data || []);
+      setCategories(categoriesData);
+      return { success: true, data: categoriesData };
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError(err.message);

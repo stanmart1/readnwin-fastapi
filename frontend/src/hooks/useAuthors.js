@@ -33,7 +33,16 @@ export const useAuthors = () => {
       const result = response.data;
 
       // Handle both array and object responses
-      const authorsData = Array.isArray(result) ? result : (result.authors || []);
+      let authorsData = [];
+      if (Array.isArray(result)) {
+        authorsData = result;
+      } else if (result.authors && Array.isArray(result.authors)) {
+        authorsData = result.authors;
+      } else if (result.data && Array.isArray(result.data)) {
+        authorsData = result.data;
+      } else {
+        authorsData = [];
+      }
       setAuthors(authorsData);
       
       if (result.pagination) {

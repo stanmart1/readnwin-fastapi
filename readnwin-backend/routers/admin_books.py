@@ -759,7 +759,9 @@ async def get_book(
     return {
         "id": book.id,
         "title": book.title,
+        "author_id": book.author_id,
         "author_name": get_author_name(book, db),
+        "category_id": book.category_id,
         "category_name": category_name,
         "price": float(book.price),
         "status": book.status,
@@ -767,12 +769,15 @@ async def get_book(
         "is_featured": book.is_featured,
         "is_active": book.is_active if hasattr(book, 'is_active') else True,
         "cover_image_url": storage.get_url(book.cover_image) if book.cover_image else None,
+        "cover_image": book.cover_image,
+        "file_path": book.file_path,
         "format": book.format,
         "description": book.description,
         "isbn": book.isbn,
         "language": book.language,
         "pages": book.pages,
         "publisher": book.publisher,
+        "inventory_enabled": book.inventory_enabled if hasattr(book, 'inventory_enabled') else False,
         "created_at": book.created_at.isoformat() if book.created_at else ""
     }
 

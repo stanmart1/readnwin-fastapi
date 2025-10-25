@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../../lib/fileService';
+import api from '../../lib/api';
 import AdminLayout from '../../components/AdminLayout';
 import { useBookManagement } from '../../hooks/useBookManagement';
 import { useCategories } from '../../hooks/useCategories';
@@ -23,6 +24,16 @@ const AdminBooks = () => {
   const { categories, fetchCategories } = useCategories();
   const { authors, fetchAuthors } = useAuthors();
   const { users, fetchUsers, assignBookToUser } = useUsers();
+  
+  const fetchBookDetails = async (bookId) => {
+    try {
+      const response = await api.get(`/admin/books/${bookId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch book details:', error);
+      return null;
+    }
+  };
   
   const {
     books,
@@ -50,7 +61,7 @@ const AdminBooks = () => {
     batchUpdate: false, 
     bookAssign: false 
   });
-  const [loadingStates, setLoadingStates] = useState({ delete: false, assign: false });
+  const [loadingStates, setLoadingStates] = useState({ delete: false, assign: false, editLoading: false });
   const [forms, setForms] = useState({ 
     userSearch: '', 
     selectedFormat: 'both',
@@ -73,6 +84,13 @@ const AdminBooks = () => {
       loadUsers();
     }
   }, [modals.bookAssign]);
+
+  // Load categories and authors when edit modal opens
+  useEffect(() => {
+    if (modals.edit && (data.categories.length === 0 || data.authors.length === 0)) {
+      loadAuthorsAndCategories();
+    }
+  }, [modals.edit, data.categories.length, data.authors.length]);
 
   const loadAuthorsAndCategories = async () => {
     await Promise.all([
@@ -165,7 +183,15 @@ const AdminBooks = () => {
         }
         break;
       case 'edit':
-        setSelection(prev => ({ ...prev, bookForAction: book }));
+        setLoadingStates(prev => ({ ...prev, editLoading: true }));
+        // Fetch full book details with IDs
+        const fullBook = await fetchBookDetails(book.id);
+        setLoadingStates(prev => ({ ...prev, editLoading: false }));
+        if (fullBook) {
+          setSelection(prev => ({ ...prev, bookForAction: fullBook }));
+        } else {
+          setSelection(prev => ({ ...prev, bookForAction: book }));
+        }
         setModals(prev => ({ ...prev, edit: true }));
         break;
       case 'view':
@@ -247,6 +273,15 @@ const AdminBooks = () => {
             </div>
           )}
 
+          {loadingStates.editLoading && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-xl">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+                <p className="mt-4 text-gray-700">Loading book details...</p>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex overflow-x-auto scrollbar-thin px-3 sm:px-4 md:px-6">
@@ -322,6 +357,7 @@ const AdminBooks = () => {
                       selectedBooks={selection.books}
                       onSelectionChange={(bookIds) => setSelection(prev => ({ ...prev, books: bookIds }))}
                       onBookAction={handleBookAction}
+                      editLoading={loadingStates.editLoading}
                     />
                   )}
 

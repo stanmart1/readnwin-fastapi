@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, desc, text
 from datetime import datetime, timedelta
+from decimal import Decimal
 from core.database import get_db
 from core.storage import storage
 from core.security import get_current_user_from_token, check_admin_access
@@ -851,18 +852,23 @@ def get_admin_book(
         "id": book.id,
         "title": book.title,
         "author": book.author,
+        "author_id": book.author_id,
         "description": book.description,
         "price": float(book.price),
         "status": book.status,
         "stock_quantity": book.stock_quantity,
         "is_featured": book.is_featured,
         "cover_image": book.cover_image,
+        "cover_image_url": storage.get_url(book.cover_image) if book.cover_image else None,
+        "file_path": book.file_path,
         "format": book.format,
         "isbn": book.isbn,
         "pages": book.pages,
         "language": book.language,
         "publisher": book.publisher,
         "publication_date": book.publication_date.isoformat() if book.publication_date else None,
+        "category_id": book.category_id,
+        "inventory_enabled": book.inventory_enabled if hasattr(book, 'inventory_enabled') else False,
         "created_at": book.created_at.isoformat(),
         "sales_stats": {
             "total_orders": sales_stats.total_orders or 0,
@@ -879,22 +885,25 @@ def get_admin_book(
 
 
 @router.put("/books/{book_id}")
-def update_admin_book(
+async def update_admin_book(
     book_id: int,
-    title: Optional[str] = None,
-    author: Optional[str] = None,
-    description: Optional[str] = None,
-    price: Optional[float] = None,
-    category_id: Optional[int] = None,
-    isbn: Optional[str] = None,
-    format: Optional[str] = None,
-    stock_quantity: Optional[int] = None,
-    is_featured: Optional[bool] = None,
-    status: Optional[str] = None,
+    title: Optional[str] = Form(None),
+    author: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    price: Optional[str] = Form(None),
+    category_id: Optional[str] = Form(None),
+    author_id: Optional[str] = Form(None),
+    isbn: Optional[str] = Form(None),
+    format: Optional[str] = Form(None),
+    stock_quantity: Optional[str] = Form(None),
+    is_featured: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    cover_image: Optional[UploadFile] = File(None),
+    ebook_file: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    """Update book information"""
+    """Update book information with file upload support"""
     check_admin_access(current_user)
 
     book = db.query(Book).filter(Book.id == book_id).first()
@@ -910,9 +919,11 @@ def update_admin_book(
         if description is not None:
             book.description = description
         if price is not None:
-            book.price = price
+            book.price = Decimal(price)
         if category_id is not None:
-            book.category_id = category_id
+            book.category_id = int(category_id)
+        if author_id is not None:
+            book.author_id = int(author_id) if author_id else None
         if isbn is not None:
             # Check if ISBN is already used by another book
             existing_book = db.query(Book).filter(Book.isbn == isbn, Book.id != book_id).first()
@@ -922,18 +933,30 @@ def update_admin_book(
         if format is not None:
             book.format = format
         if stock_quantity is not None:
-            book.stock_quantity = stock_quantity
+            book.stock_quantity = int(stock_quantity)
         if is_featured is not None:
-            book.is_featured = is_featured
+            book.is_featured = is_featured.lower() == "true"
         if status is not None:
             book.status = status
 
+        # Handle file uploads
+        if cover_image and cover_image.filename:
+            book.cover_image = await storage.save_cover(cover_image)
+        if ebook_file and ebook_file.filename:
+            book.file_path = await storage.save_book(ebook_file)
+
         book.updated_at = datetime.utcnow()
         db.commit()
+        db.refresh(book)
 
         return {
             "message": "Book updated successfully",
-            "book_id": book.id
+            "book_id": book.id,
+            "book": {
+                "id": book.id,
+                "title": book.title,
+                "cover_image_url": storage.get_url(book.cover_image) if book.cover_image else None
+            }
         }
 
     except HTTPException:
