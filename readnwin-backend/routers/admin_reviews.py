@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from models.user import User
 from models.review import Review
 from pydantic import BaseModel
@@ -102,7 +103,7 @@ def get_reviews(
                     "created_at": review.created_at.isoformat(),
                     "updated_at": None,
                     "book_title": review.book.title,
-                    "book_cover": f"/{review.book.cover_image}" if review.book.cover_image else None,
+                    "book_cover": storage.get_url(review.book.cover_image) if review.book.cover_image else None,
                     "book_author": review.book.author
                 }
                 for review in reviews

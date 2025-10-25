@@ -70,10 +70,10 @@ const AdminLayout = ({ children }) => {
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 80 : 288 }}
-        className={`fixed left-0 bg-white shadow-lg z-50 transform transition-all duration-300 ${
+        className={`fixed left-0 bg-white shadow-lg z-40 transform transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 overflow-y-auto overflow-x-hidden border-r border-gray-200`}
-        style={{ top: 0, height: '100vh' }}
+        style={{ top: '64px', height: 'calc(100vh - 64px)' }}
       >
         {/* User Profile Section */}
         <div className="p-4 border-b border-gray-200">

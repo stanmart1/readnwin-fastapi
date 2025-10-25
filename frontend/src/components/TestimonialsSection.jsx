@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import api, { API_BASE_URL } from '../lib/api';
+import api from '../lib/api';
+import { getImageUrl } from '../lib/fileService';
 
 export default function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState([]);
@@ -23,7 +24,7 @@ export default function TestimonialsSection() {
           lastName: review.last_name,
           bookTitle: review.book_title,
           bookAuthor: review.book_author,
-          bookCover: review.book_cover ? `${API_BASE_URL}${review.book_cover}` : null,
+          bookCover: getImageUrl(review.book_cover),
           title: review.title,
           content: review.review_text,
           rating: review.rating,

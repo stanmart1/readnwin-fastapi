@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useReviews } from '../../hooks/useReviews';
-import { API_BASE_URL } from '../../lib/api';
+import { getImageUrl } from '../../lib/fileService';
 
 const ReviewManagement = () => {
   const {
@@ -121,6 +121,10 @@ const ReviewManagement = () => {
     );
   };
 
+  const getBookImage = (review) => {
+    return getImageUrl(review.book_cover);
+  };
+
   const getRatingStars = (rating) => {
     return (
       <div className="flex items-center">
@@ -145,13 +149,11 @@ const ReviewManagement = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {review.book_cover && (
-            <img
-              src={`${API_BASE_URL}${review.book_cover}`}
-              alt={review.book_title}
-              className="w-12 h-16 object-cover rounded flex-shrink-0"
-            />
-          )}
+          <img
+            src={getBookImage(review)}
+            alt={review.book_title}
+            className="w-12 h-16 object-cover rounded flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-gray-900 truncate">
               {review.book_title}
@@ -444,13 +446,11 @@ const ReviewManagement = () => {
             
             <div className="space-y-4">
               <div className="flex items-start gap-4">
-                {selectedReviewDetail.book_cover && (
-                  <img
-                    src={`${API_BASE_URL}${selectedReviewDetail.book_cover}`}
-                    alt={selectedReviewDetail.book_title}
-                    className="w-24 h-32 object-cover rounded"
-                  />
-                )}
+              <img
+                src={getBookImage(selectedReviewDetail)}
+                alt={selectedReviewDetail.book_title}
+                className="w-24 h-32 object-cover rounded"
+              />
                 <div className="flex-1">
                   <h4 className="text-lg font-semibold text-gray-900">{selectedReviewDetail.book_title}</h4>
                   {selectedReviewDetail.book_author && (
