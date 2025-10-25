@@ -11,7 +11,7 @@ export default function EpubReader({ bookId, onClose }) {
   const [toc, setToc] = useState([]);
   const [showToc, setShowToc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(100);
+  const [fontSize, setFontSize] = useState(120);
   const [fontFamily, setFontFamily] = useState('Georgia');
   const [theme, setTheme] = useState('light');
   const [bookInfo, setBookInfo] = useState(null);
