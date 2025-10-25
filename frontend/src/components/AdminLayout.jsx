@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { usePermissions } from '../hooks/usePermissions';
+import api from '../lib/api';
 import Header from './Header';
 
 const AdminLayout = ({ children }) => {
@@ -9,28 +11,62 @@ const AdminLayout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, getUser } = useAuth();
+  const { logout, getUser, getPermissions } = useAuth();
   const user = getUser();
+  const { hasPermission, isAdmin } = usePermissions();
+  const [permissions, setPermissions] = useState(getPermissions());
+
+  // Fetch permissions if not cached
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (permissions.length === 0 && user) {
+        try {
+          const response = await api.get('/auth/permissions');
+          if (response.data.permissions) {
+            localStorage.setItem('permissions', JSON.stringify(response.data.permissions));
+            setPermissions(response.data.permissions);
+          }
+        } catch (error) {
+          console.error('Failed to fetch permissions:', error);
+        }
+      }
+    };
+    fetchPermissions();
+  }, [user]);
+
+  // Debug: Log permissions
+  console.log('User:', user);
+  console.log('Permissions:', permissions);
 
   const menuItems = [
-    { path: '/admin', icon: 'ri-dashboard-line', label: 'Overview' },
-    { path: '/admin/users', icon: 'ri-user-line', label: 'Users' },
-    { path: '/admin/roles', icon: 'ri-shield-user-line', label: 'Roles' },
-    { path: '/admin/audit', icon: 'ri-file-list-line', label: 'Audit Log' },
-    { path: '/admin/books', icon: 'ri-book-line', label: 'Books' },
-    { path: '/admin/reviews', icon: 'ri-star-line', label: 'Reviews' },
-    { path: '/admin/orders', icon: 'ri-shopping-cart-line', label: 'Orders' },
-    { path: '/admin/shipping', icon: 'ri-truck-line', label: 'Shipping' },
-    { path: '/admin/reading', icon: 'ri-line-chart-line', label: 'Reading Analytics' },
-    { path: '/admin/reports', icon: 'ri-file-text-line', label: 'Reports' },
-    { path: '/admin/email-templates', icon: 'ri-mail-line', label: 'Email Templates' },
-    { path: '/admin/blog', icon: 'ri-file-text-line', label: 'Blog' },
-    { path: '/admin/works', icon: 'ri-image-line', label: 'Works' },
-    { path: '/admin/about', icon: 'ri-information-line', label: 'About' },
-    { path: '/admin/contact', icon: 'ri-customer-service-line', label: 'Contact' },
-    { path: '/admin/faq', icon: 'ri-question-line', label: 'FAQ' },
-    { path: '/admin/settings', icon: 'ri-settings-line', label: 'Settings' },
+    { path: '/admin', icon: 'ri-dashboard-line', label: 'Overview', permission: 'analytics.view' },
+    { path: '/admin/users', icon: 'ri-user-line', label: 'Users', permission: 'users.view' },
+    { path: '/admin/roles', icon: 'ri-shield-user-line', label: 'Roles', permission: 'roles.view' },
+    { path: '/admin/audit', icon: 'ri-file-list-line', label: 'Audit Log', permission: 'audit_logs.view' },
+    { path: '/admin/books', icon: 'ri-book-line', label: 'Books', permission: 'books.view' },
+    { path: '/admin/reviews', icon: 'ri-star-line', label: 'Reviews', permission: 'reviews.view' },
+    { path: '/admin/orders', icon: 'ri-shopping-cart-line', label: 'Orders', permission: 'orders.view' },
+    { path: '/admin/shipping', icon: 'ri-truck-line', label: 'Shipping', permission: 'shipping.view' },
+    { path: '/admin/reading', icon: 'ri-line-chart-line', label: 'Reading Analytics', permission: 'reading.view_analytics' },
+    { path: '/admin/reports', icon: 'ri-file-text-line', label: 'Reports', permission: 'reports.view' },
+    { path: '/admin/email-templates', icon: 'ri-mail-line', label: 'Email Templates', permission: 'email_templates.view' },
+    { path: '/admin/blog', icon: 'ri-file-text-line', label: 'Blog', permission: 'blog.view' },
+    { path: '/admin/works', icon: 'ri-image-line', label: 'Works', permission: 'works.view' },
+    { path: '/admin/about', icon: 'ri-information-line', label: 'About', permission: 'settings.view' },
+    { path: '/admin/contact', icon: 'ri-customer-service-line', label: 'Contact', permission: 'settings.view' },
+    { path: '/admin/faq', icon: 'ri-question-line', label: 'FAQ', permission: 'faq.view' },
+    { path: '/admin/settings', icon: 'ri-settings-line', label: 'Settings', permission: 'settings.view' },
   ];
+
+  const visibleMenuItems = useMemo(() => {
+    const filtered = menuItems.filter(item => {
+      const hasAccess = hasPermission(item.permission);
+      console.log(`${item.label} (${item.permission}):`, hasAccess);
+      return hasAccess;
+    });
+    console.log('Visible menu items:', filtered.length);
+    return filtered;
+  }, [hasPermission, menuItems]);
 
   const handleLogout = () => {
     logout();

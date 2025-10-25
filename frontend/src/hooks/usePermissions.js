@@ -8,26 +8,30 @@ export const usePermissions = () => {
   const hasPermission = (permissionName) => {
     if (!user) return false;
     
-    // Super admin and admin have all permissions
-    if (user.role?.name === 'super_admin' || user.role?.name === 'admin') {
+    // Super admin has all permissions
+    if (user.role?.name === 'super_admin') {
       return true;
     }
 
     // Check cached permissions first
     if (cachedPermissions.length > 0) {
-      return cachedPermissions.some(p => p.name === permissionName);
+      return cachedPermissions.some(p => 
+        (typeof p === 'string' ? p : p.name) === permissionName
+      );
     }
 
     // Fallback to user.permissions
     const permissions = user.permissions || [];
-    return permissions.some(p => p.name === permissionName);
+    return permissions.some(p => 
+      (typeof p === 'string' ? p : p.name) === permissionName
+    );
   };
 
   const hasRole = (roleName) => {
-    if (!user) return false;
+    if (!user || !user.role) return false;
     
     const allowedRoles = Array.isArray(roleName) ? roleName : [roleName];
-    return allowedRoles.includes(user.role?.name);
+    return allowedRoles.includes(user.role.name);
   };
 
   const hasAnyPermission = (permissionNames) => {

@@ -15,9 +15,14 @@ export const useAuth = () => {
         localStorage.setItem('token', response.data.access_token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
-        // Cache permissions for quick access
-        if (response.data.user.permissions) {
-          localStorage.setItem('permissions', JSON.stringify(response.data.user.permissions));
+        // Fetch and cache permissions separately
+        try {
+          const permResponse = await api.get('/auth/permissions');
+          if (permResponse.data.permissions) {
+            localStorage.setItem('permissions', JSON.stringify(permResponse.data.permissions));
+          }
+        } catch (permErr) {
+          console.error('Failed to fetch permissions:', permErr);
         }
         
         // Transfer guest cart after login
