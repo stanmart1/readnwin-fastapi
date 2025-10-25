@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from models.about_content import AboutContent
 from models.user import User
 from typing import Dict, Any
-import os
-import uuid
 import bleach
-from pathlib import Path
 
 router = APIRouter()
 
@@ -73,31 +71,12 @@ async def upload_image(
     """Upload image for about section"""
     check_admin_access(current_user)
     
-    # Validate file type
-    if not image.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    
-    # Validate file size (5MB max)
-    if image.size > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
-    
     try:
-        # Create uploads directory if it doesn't exist
-        upload_dir = Path("../public/images/uploads")
-        upload_dir.mkdir(parents=True, exist_ok=True)
+        # Save image using storage manager
+        image_path = await storage.save_image(image, subfolder="about")
         
-        # Generate unique filename
-        file_extension = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
-        unique_filename = f"about-section-{uuid.uuid4().hex[:16]}.{file_extension}"
-        file_path = upload_dir / unique_filename
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            content = await image.read()
-            buffer.write(content)
-        
-        # Return URL path
-        return {"url": f"/images/uploads/{unique_filename}"}
+        # Return full URL
+        return {"url": storage.get_url(image_path)}
     
     except Exception as e:
         print(f"Error uploading image: {e}")

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
 import axios from 'axios';
+import { getFileUrl } from '../../lib/fileService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -170,6 +171,36 @@ const AdminAbout = () => {
                           rows={3}
                           className="w-full px-4 py-3 border rounded-lg"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Hero Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              try {
+                                const token = localStorage.getItem('token');
+                                const response = await axios.post(`${API_BASE_URL}/api/about/upload-image`, formData, {
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                updateContent('hero', { ...content.hero, image_url: response.data.url });
+                              } catch (error) {
+                                console.error('Upload error:', error);
+                                alert('Failed to upload image');
+                              }
+                            }
+                          }}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                        {content.hero?.image_url && (
+                          <div className="mt-2">
+                            <img src={getFileUrl(content.hero.image_url)} alt="Hero" className="w-full h-48 object-cover rounded-lg" />
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

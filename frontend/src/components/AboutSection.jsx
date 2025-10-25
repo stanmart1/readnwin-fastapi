@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAbout } from '../hooks';
+import { getFileUrl } from '../lib/fileService';
 
 export default function AboutSection() {
   const { content, loading } = useAbout();
@@ -59,8 +60,8 @@ export default function AboutSection() {
           >
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
-                src={aboutContent.aboutSection?.image || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"}
-                alt={aboutContent.aboutSection?.imageAlt || "ReadnWin - Empowering minds through reading"}
+                src={getFileUrl(aboutContent.hero?.image_url) || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"}
+                alt="ReadnWin - Empowering minds through reading"
                 className="w-full h-auto object-cover"
               />
             </div>

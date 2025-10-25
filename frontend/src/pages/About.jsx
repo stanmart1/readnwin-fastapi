@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAbout } from '../hooks';
+import { getFileUrl } from '../lib/fileService';
 
 export default function About() {
   const { content, loading } = useAbout();
@@ -30,7 +31,11 @@ export default function About() {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-20">
+      <section className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-20" style={aboutData.hero?.image_url ? {
+        backgroundImage: `linear-gradient(rgba(147, 51, 234, 0.8), rgba(79, 70, 229, 0.8)), url(${getFileUrl(aboutData.hero.image_url)})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      } : {}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
