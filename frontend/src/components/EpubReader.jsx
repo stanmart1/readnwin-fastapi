@@ -30,6 +30,17 @@ export default function EpubReader({ bookId, onClose }) {
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isDeletingNote, setIsDeletingNote] = useState(null);
   const [isDeletingHighlight, setIsDeletingHighlight] = useState(null);
+  
+  // Progress tracking states
+  const [progressData, setProgressData] = useState({
+    currentPage: 0,
+    totalPages: 0,
+    percentage: 0,
+    currentChapter: '',
+    timeRemaining: 0
+  });
+  const [readingStartTime, setReadingStartTime] = useState(null);
+  const [totalReadingTime, setTotalReadingTime] = useState(0);
 
   const viewerRef = useRef(null);
   const bookRef = useRef(null);
@@ -180,6 +191,9 @@ export default function EpubReader({ bookId, onClose }) {
       // Track location changes
       renditionInstance.on('relocated', (location) => {
         setCurrentLocation(location.start.cfi);
+
+        // Calculate progress data
+        updateProgressData(epubBook, location);
 
         // Skip saving on initial load
         if (isInitialLoadRef.current) {
@@ -337,6 +351,99 @@ export default function EpubReader({ bookId, onClose }) {
     }
   };
 
+  const updateProgressData = (epubBook, location) => {
+    if (!epubBook || !epubBook.locations || !location) return;
+
+    try {
+      // Get current location
+      const currentLoc = epubBook.locations.locationFromCfi(location.start.cfi);
+      const totalLocs = epubBook.locations.total;
+      
+      // Calculate percentage
+      const percentage = Math.round((currentLoc / totalLocs) * 100);
+      
+      // Get current chapter from TOC
+      const currentChapter = getCurrentChapter(location.start.href);
+      
+      // Calculate pages (estimate based on locations)
+      const currentPage = currentLoc;
+      const totalPages = totalLocs;
+      
+      // Calculate time remaining
+      const pagesRemaining = totalPages - currentPage;
+      const timeRemaining = calculateTimeRemaining(pagesRemaining);
+      
+      setProgressData({
+        currentPage,
+        totalPages,
+        percentage,
+        currentChapter,
+        timeRemaining
+      });
+    } catch (err) {
+      console.error('Error updating progress:', err);
+    }
+  };
+
+  const getCurrentChapter = (href) => {
+    if (!toc || toc.length === 0) return '';
+    
+    // Find the current chapter from TOC
+    for (let i = 0; i < toc.length; i++) {
+      if (href.includes(toc[i].href)) {
+        return toc[i].label;
+      }
+    }
+    return toc[0]?.label || '';
+  };
+
+  const calculateTimeRemaining = (pagesRemaining) => {
+    // Calculate average reading speed
+    // Assume 250 words per page, 200-250 words per minute average reading speed
+    const wordsPerPage = 250;
+    const wordsPerMinute = 225; // Average reading speed
+    
+    const wordsRemaining = pagesRemaining * wordsPerPage;
+    const minutesRemaining = Math.ceil(wordsRemaining / wordsPerMinute);
+    
+    return minutesRemaining;
+  };
+
+  const formatTimeRemaining = (minutes) => {
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return `${minutes} min`;
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours === 1) return mins > 0 ? `1 hr ${mins} min` : '1 hr';
+    return mins > 0 ? `${hours} hrs ${mins} min` : `${hours} hrs`;
+  };
+
+  // Track reading time
+  useEffect(() => {
+    if (!loading && !error) {
+      setReadingStartTime(Date.now());
+      
+      const interval = setInterval(() => {
+        setTotalReadingTime(prev => prev + 1);
+      }, 60000); // Update every minute
+      
+      return () => clearInterval(interval);
+    }
+  }, [loading, error]);
+
+  const formatReadingTime = (minutes) => {
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return `${minutes} min`;
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours === 1) return mins > 0 ? `1h ${mins}m` : '1h';
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
   const loadHighlights = async () => {
     try {
       const response = await api.get(`/ereader/${bookId}/highlights`);
@@ -491,47 +598,93 @@ export default function EpubReader({ bookId, onClose }) {
         </div>
       )}
       {/* Header */}
-      <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-lg">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <i className="ri-arrow-left-line text-xl"></i>
-          </button>
-          <div>
-            <h1 className="font-semibold text-lg">{bookInfo?.title || 'Reading'}</h1>
-            <p className="text-sm text-gray-400">{bookInfo?.author || ''}</p>
+      <div className="bg-gray-800 text-white shadow-lg">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <i className="ri-arrow-left-line text-xl"></i>
+            </button>
+            <div>
+              <h1 className="font-semibold text-lg">{bookInfo?.title || 'Reading'}</h1>
+              <p className="text-sm text-gray-400">{bookInfo?.author || ''}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowToc(!showToc)}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              title="Table of Contents"
+            >
+              <i className="ri-list-unordered text-xl"></i>
+            </button>
+            <button
+              onClick={() => setShowAnnotationsPanel(!showAnnotationsPanel)}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors relative"
+              title="Notes & Highlights"
+            >
+              <i className="ri-sticky-note-line text-xl"></i>
+              {(notes.length + highlights.length) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {notes.length + highlights.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              title="Settings"
+            >
+              <i className="ri-settings-3-line text-xl"></i>
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowToc(!showToc)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            title="Table of Contents"
-          >
-            <i className="ri-list-unordered text-xl"></i>
-          </button>
-          <button
-            onClick={() => setShowAnnotationsPanel(!showAnnotationsPanel)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors relative"
-            title="Notes & Highlights"
-          >
-            <i className="ri-sticky-note-line text-xl"></i>
-            {(notes.length + highlights.length) > 0 && (
-              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {notes.length + highlights.length}
+        {/* Progress Bar */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-between text-xs text-gray-300 mb-2">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <i className="ri-file-list-line"></i>
+                Page {progressData.currentPage} / {progressData.totalPages}
+              </span>
+              <span className="flex items-center gap-1">
+                <i className="ri-percent-line"></i>
+                {progressData.percentage}%
+              </span>
+              {progressData.timeRemaining > 0 && (
+                <span className="flex items-center gap-1">
+                  <i className="ri-time-line"></i>
+                  {formatTimeRemaining(progressData.timeRemaining)} left
+                </span>
+              )}
+            </div>
+            {totalReadingTime > 0 && (
+              <span className="flex items-center gap-1">
+                <i className="ri-timer-line"></i>
+                {formatReadingTime(totalReadingTime)}
               </span>
             )}
-          </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            title="Settings"
-          >
-            <i className="ri-settings-3-line text-xl"></i>
-          </button>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="relative h-1.5 bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 rounded-full"
+              style={{ width: `${progressData.percentage}%` }}
+            />
+          </div>
+          
+          {/* Chapter name */}
+          {progressData.currentChapter && (
+            <div className="mt-2 text-xs text-gray-400 truncate">
+              <i className="ri-book-open-line mr-1"></i>
+              {progressData.currentChapter}
+            </div>
+          )}
         </div>
       </div>
 
