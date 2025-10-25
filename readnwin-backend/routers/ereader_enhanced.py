@@ -19,7 +19,8 @@ from models.user import User
 from models.book import Book
 from models.user_library import UserLibrary
 from models.reading_session import ReadingSession
-from models.reader_settings import ReaderSettings, Bookmark, Note
+from models.reader_settings import ReaderSettings, Bookmark
+from models.reading import Note, Highlight
 from services.reading_analytics import ReadingAnalyticsService
 
 # Pydantic models
