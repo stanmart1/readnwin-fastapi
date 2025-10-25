@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart, useAuth } from '../hooks';
+import { getImageUrl } from '../lib/fileService';
 import Header from '../components/Header';
 import CheckoutFlow from '../components/CheckoutFlow';
 
@@ -190,14 +191,18 @@ function OrderSummarySidebar({ cartItems }) {
       
       {/* Cart Items */}
       <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
-        {cartItems.map((item) => (
+        {cartItems.map((item) => {
+          const itemImageUrl = getImageUrl(item.book?.cover_image_url);
+          return (
           <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
             <img
-              src={item.book?.cover_image_url || '/placeholder-book.jpg'}
+              src={itemImageUrl || '/placeholder-book.jpg'}
               alt={item.book?.title}
               className="w-12 h-16 object-cover rounded"
               onError={(e) => {
-                e.currentTarget.src = '/placeholder-book.jpg';
+                if (e.currentTarget.src !== '/placeholder-book.jpg') {
+                  e.currentTarget.src = '/placeholder-book.jpg';
+                }
               }}
             />
             <div className="flex-1 min-w-0">
@@ -224,7 +229,8 @@ function OrderSummarySidebar({ cartItems }) {
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="space-y-3 mb-4 border-t pt-4">
