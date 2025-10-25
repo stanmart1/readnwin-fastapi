@@ -39,7 +39,7 @@ def get_works(
                     "id": work.id,
                     "title": work.title,
                     "description": work.description or "",
-                    "image_path": work.image_url or "",
+                    "image_path": storage.get_url(work.image_url) if work.image_url else "",
                     "alt_text": work.title,  # Use title as alt text
                     "order_index": work.order_index,
                     "is_active": work.is_active,

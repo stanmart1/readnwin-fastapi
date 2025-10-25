@@ -50,6 +50,10 @@ export const useCart = () => {
   const loadAuthenticatedCart = useCallback(async () => {
     if (!isAuthenticated) return;
     
+    // Check if token exists
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
     try {
       setIsLoading(true);
       setError(null);
@@ -78,7 +82,10 @@ export const useCart = () => {
       setCartItems(transformedItems);
     } catch (err) {
       console.error('Error loading cart:', err);
-      setError(err.message);
+      // Don't set error for 401 - just means not authenticated
+      if (err.response?.status !== 401) {
+        setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
