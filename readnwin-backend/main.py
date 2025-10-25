@@ -29,7 +29,7 @@ async def startup_event():
             return
         
         # Import all models to ensure they're registered
-        from models import user, role, book, order, cart, contact, contact_settings, blog, faq, portfolio, review, notification, reading_session, user_library, auth_log, payment, payment_settings, shipping, enhanced_shopping, email, email_templates, author, about_content, email_gateway, reader_settings, achievement, system_settings, token_blacklist, security_log
+        from models import user, role, book, order, cart, contact, contact_settings, blog, faq, portfolio, review, notification, reading_session, user_library, auth_log, payment, payment_settings, shipping, enhanced_shopping, email, email_templates, author, about_content, email_gateway, reader_settings, achievement, system_settings, token_blacklist, security_log, reading
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully")
         
