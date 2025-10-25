@@ -33,6 +33,12 @@ export default function Reading() {
 
       const book = libraryItem.book;
       
+      // Check if book exists
+      if (!book) {
+        setError('Book data not available');
+        return;
+      }
+      
       // Detect format from file_path or format field
       let format = 'html'; // default
       
