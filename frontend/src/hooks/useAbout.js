@@ -14,7 +14,7 @@ export const useAbout = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/api/about');
+      const response = await api.get('/api/about/');
       setContent(response.data);
     } catch (err) {
       setError(err.message);
