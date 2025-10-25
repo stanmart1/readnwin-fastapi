@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from core.database import get_db
+from core.storage import storage
 from models.portfolio import Portfolio
 from typing import List, Dict, Any
 
@@ -21,7 +22,7 @@ def get_public_works(db: Session = Depends(get_db)) -> Dict[str, Any]:
                     "id": work.id,
                     "title": work.title,
                     "description": work.description or "",
-                    "image_path": work.image_url or "",
+                    "image_path": storage.get_url(work.image_url) if work.image_url else "",
                     "alt_text": work.title,
                     "category": getattr(work, 'category', None),
                     "order_index": work.order_index
