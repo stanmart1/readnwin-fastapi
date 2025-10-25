@@ -22,5 +22,9 @@ RUN mkdir -p /app/storage/books /app/storage/covers /app/storage/samples /app/st
 # Expose port
 EXPOSE 8000
 
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD echo "healthy"
+
 # Run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
