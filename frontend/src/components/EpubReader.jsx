@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ePub from 'epubjs';
 import api from '../lib/api';
+import { getCachedEpub, cacheEpub, cacheLocations } from '../lib/epubCache';
 
 export default function EpubReader({ bookId, onClose }) {
   const [book, setBook] = useState(null);
@@ -84,18 +85,33 @@ export default function EpubReader({ bookId, onClose }) {
 
       setBookInfo(libraryItem);
 
-      // Fetch EPUB file as blob
-      const response = await fetch(`${api.defaults.baseURL}/ereader/book/${bookId}/file`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+      // Try to get cached EPUB first
+      let blob;
+      let cachedData = await getCachedEpub(bookId);
+      
+      if (cachedData && cachedData.blob) {
+        console.log('📖 Using cached EPUB');
+        blob = cachedData.blob;
+      } else {
+        console.log('📥 Downloading EPUB from server');
+        // Fetch EPUB file as blob
+        const response = await fetch(`${api.defaults.baseURL}/ereader/book/${bookId}/file`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch EPUB file');
         }
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch EPUB file');
+        blob = await response.blob();
+        
+        // Cache the EPUB for next time (don't await, do in background)
+        cacheEpub(bookId, blob).catch(err => {
+          console.warn('Failed to cache EPUB:', err);
+        });
       }
-
-      const blob = await response.blob();
 
       // Initialize epub.js with blob
       const epubBook = ePub(blob);
@@ -104,8 +120,29 @@ export default function EpubReader({ bookId, onClose }) {
       // Load the book
       await epubBook.ready;
 
-      // Generate locations for progress tracking
-      await epubBook.locations.generate(1024);
+      // Check if we have cached locations
+      if (cachedData && cachedData.locations) {
+        console.log('📍 Using cached locations');
+        try {
+          epubBook.locations.load(cachedData.locations);
+        } catch (err) {
+          console.warn('Failed to load cached locations, regenerating:', err);
+          await epubBook.locations.generate(1024);
+          // Cache the new locations
+          cacheLocations(bookId, epubBook.locations.save()).catch(err => {
+            console.warn('Failed to cache locations:', err);
+          });
+        }
+      } else {
+        console.log('🔄 Generating locations...');
+        // Generate locations for progress tracking
+        await epubBook.locations.generate(1024);
+        
+        // Cache the locations (don't await, do in background)
+        cacheLocations(bookId, epubBook.locations.save()).catch(err => {
+          console.warn('Failed to cache locations:', err);
+        });
+      }
 
       // Get table of contents
       const navigation = await epubBook.loaded.navigation;
