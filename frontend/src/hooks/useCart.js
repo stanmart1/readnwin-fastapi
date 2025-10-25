@@ -90,17 +90,40 @@ export const useCart = () => {
     
     try {
       const guestCart = localStorage.getItem(GUEST_CART_KEY);
-      if (!guestCart) return;
+      if (!guestCart) {
+        await loadAuthenticatedCart();
+        return;
+      }
       
       const guestItems = JSON.parse(guestCart);
-      if (guestItems.length === 0) return;
+      if (guestItems.length === 0) {
+        await loadAuthenticatedCart();
+        return;
+      }
       
-      // Transfer each item to user cart
-      for (const item of guestItems) {
-        await api.post('/cart/add', {
-          book_id: item.book_id,
-          quantity: item.quantity
+      console.log('Transferring guest cart to authenticated user...', guestItems);
+      
+      // Use dedicated transfer endpoint if available
+      try {
+        await api.post('/cart/transfer-guest', {
+          items: guestItems.map(item => ({
+            book_id: item.book_id,
+            quantity: item.quantity
+          }))
         });
+      } catch (err) {
+        // Fallback: Transfer each item individually
+        console.log('Using fallback transfer method');
+        for (const item of guestItems) {
+          try {
+            await api.post('/cart/add', {
+              book_id: item.book_id,
+              quantity: item.quantity
+            });
+          } catch (addErr) {
+            console.error('Error adding item:', addErr);
+          }
+        }
       }
       
       // Clear guest cart
@@ -108,8 +131,12 @@ export const useCart = () => {
       
       // Reload authenticated cart
       await loadAuthenticatedCart();
+      
+      console.log('Guest cart transferred successfully');
     } catch (err) {
       console.error('Error transferring cart:', err);
+      // Still load authenticated cart even if transfer fails
+      await loadAuthenticatedCart();
     }
   }, [isAuthenticated, loadAuthenticatedCart]);
 
@@ -125,8 +152,21 @@ export const useCart = () => {
       } catch (error) {
         console.error('Error loading guest cart:', error);
       }
+    } else {
+      // User just logged in
+      if (!hasLoadedCart.current) {
+        hasLoadedCart.current = true;
+        
+        // Check if there's a guest cart to transfer
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          transferGuestCart();
+        } else {
+          loadAuthenticatedCart();
+        }
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, transferGuestCart, loadAuthenticatedCart]);
 
   // Update analytics when cart changes
   useEffect(() => {

@@ -163,7 +163,7 @@ const WorksManagement = () => {
       order_index: work.order_index,
       is_active: work.is_active
     });
-    setPreviewUrl(work.image_path);
+    setPreviewUrl(getImageUrl(work.image_path));
     setShowEditForm(true);
   };
 
@@ -406,7 +406,7 @@ const WorksManagement = () => {
                     />
                     {previewUrl && (
                       <div className="mt-2">
-                        <img src={getImageUrl(previewUrl)} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
                       </div>
                     )}
                   </div>

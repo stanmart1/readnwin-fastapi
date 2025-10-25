@@ -156,6 +156,10 @@ def delete_work(
         if not work:
             raise HTTPException(status_code=404, detail="Work not found")
         
+        # Delete associated image file
+        if work.image_url:
+            storage.delete_file(work.image_url)
+        
         db.delete(work)
         db.commit()
         
