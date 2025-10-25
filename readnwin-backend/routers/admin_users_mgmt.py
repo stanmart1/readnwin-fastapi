@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from core.database import get_db
-from core.security import get_current_user_from_token, check_admin_access, verify_token
+from core.security import get_current_user_from_token, check_admin_access, verify_token, get_password_hash
 from models.user import User
 from models.role import Role
 from typing import Optional
-
 from pydantic import BaseModel
+import re
 
 router = APIRouter(prefix="/admin", tags=["admin", "users"])
 
@@ -18,6 +18,9 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     is_active: Optional[bool] = None
     role_id: Optional[int] = None
+
+class PasswordResetRequest(BaseModel):
+    new_password: str
 
 def get_admin_without_active_check(authorization: str = Header(None), db: Session = Depends(get_db)):
     """Get admin user without checking active status"""
@@ -217,6 +220,61 @@ def delete_user(
         db.rollback()
         print(f"Error deleting user: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete user")
+
+@router.post("/users/{user_id}/reset-password")
+def reset_user_password(
+    user_id: int,
+    password_data: PasswordResetRequest,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to reset a user's password"""
+    check_admin_access(current_user)
+    
+    try:
+        # Prevent admin from resetting their own password via this endpoint
+        if user_id == current_user.id:
+            raise HTTPException(status_code=400, detail="Use the change-password endpoint to change your own password")
+        
+        # Find the user
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Validate password strength (same as registration)
+        pwd = password_data.new_password
+        
+        if not pwd or len(pwd) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        if not re.search(r'[A-Z]', pwd):
+            raise HTTPException(status_code=400, detail="Password must contain at least one uppercase letter")
+        if not re.search(r'[a-z]', pwd):
+            raise HTTPException(status_code=400, detail="Password must contain at least one lowercase letter")
+        if not re.search(r'\d', pwd):
+            raise HTTPException(status_code=400, detail="Password must contain at least one number")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', pwd):
+            raise HTTPException(status_code=400, detail="Password must contain at least one special character")
+        
+        # Update password
+        user.password_hash = get_password_hash(password_data.new_password)
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "message": "Password reset successfully",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error resetting password: {e}")
+        raise HTTPException(status_code=500, detail="Failed to reset password")
 
 @router.get("/users/stats")
 def get_user_stats(
