@@ -34,10 +34,6 @@ const AdminLayout = ({ children }) => {
     fetchPermissions();
   }, [user]);
 
-  // Debug: Log permissions
-  console.log('User:', user);
-  console.log('Permissions:', permissions);
-
   const menuItems = [
     { path: '/admin', icon: 'ri-dashboard-line', label: 'Overview', permission: 'analytics.view' },
     { path: '/admin/users', icon: 'ri-user-line', label: 'Users', permission: 'users.view' },
@@ -59,13 +55,7 @@ const AdminLayout = ({ children }) => {
   ];
 
   const visibleMenuItems = useMemo(() => {
-    const filtered = menuItems.filter(item => {
-      const hasAccess = hasPermission(item.permission);
-      console.log(`${item.label} (${item.permission}):`, hasAccess);
-      return hasAccess;
-    });
-    console.log('Visible menu items:', filtered.length);
-    return filtered;
+    return menuItems.filter(item => hasPermission(item.permission));
   }, [hasPermission, menuItems]);
 
   const handleLogout = () => {
