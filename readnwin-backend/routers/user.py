@@ -4,6 +4,7 @@ from sqlalchemy import desc, and_, func
 from datetime import datetime, timedelta
 from core.database import get_db
 from core.security import get_current_user_from_token
+from core.storage import storage
 from models.user import User
 from models.order import Order, OrderItem
 from models.user_library import UserLibrary
@@ -93,7 +94,7 @@ async def get_user_library(
                     "book_id": item.book_id,
                     "title": item.book.title,
                     "author": item.book.author,
-                    "cover_image": item.book.cover_image,
+                    "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else None,
                     "status": item.status or "unread",
                     "progress": min(progress, 100.0),
                     "last_read_location": item.last_read_location,
