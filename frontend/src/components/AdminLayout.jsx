@@ -52,8 +52,8 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/email-templates', icon: 'ri-mail-line', label: 'Email Templates', permission: 'email_templates.view' },
     { path: '/admin/blog', icon: 'ri-file-text-line', label: 'Blog', permission: 'blog.view' },
     { path: '/admin/works', icon: 'ri-image-line', label: 'Works', permission: 'works.view' },
-    { path: '/admin/about', icon: 'ri-information-line', label: 'About', permission: 'settings.view' },
-    { path: '/admin/contact', icon: 'ri-customer-service-line', label: 'Contact', permission: 'settings.view' },
+    { path: '/admin/about', icon: 'ri-information-line', label: 'About', permission: 'about.view' },
+    { path: '/admin/contact', icon: 'ri-customer-service-line', label: 'Contact', permission: 'contact.view' },
     { path: '/admin/faq', icon: 'ri-question-line', label: 'FAQ', permission: 'faq.view' },
     { path: '/admin/settings', icon: 'ri-settings-line', label: 'Settings', permission: 'settings.view' },
   ];

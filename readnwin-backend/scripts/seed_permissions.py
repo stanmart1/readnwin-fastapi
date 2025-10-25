@@ -107,6 +107,16 @@ PERMISSIONS = {
         {"name": "faq.delete", "display_name": "Delete FAQs", "action": "delete"},
     ],
     
+    "about": [
+        {"name": "about.view", "display_name": "View About Page", "action": "read"},
+        {"name": "about.update", "display_name": "Update About Page", "action": "update"},
+    ],
+    
+    "contact": [
+        {"name": "contact.view", "display_name": "View Contact Page", "action": "read"},
+        {"name": "contact.update", "display_name": "Update Contact Page", "action": "update"},
+    ],
+    
     # Email Management
     "email_templates": [
         {"name": "email_templates.view", "display_name": "View Email Templates", "action": "read"},
@@ -237,7 +247,8 @@ def create_default_roles(db: Session):
                 "reviews.view", "reviews.moderate", "reviews.approve",
                 "blog.view", "blog.create", "blog.update", "blog.publish",
                 "analytics.view", "reports.view", "reports.generate",
-                "audit_logs.view"
+                "audit_logs.view", "about.view", "about.update",
+                "contact.view", "contact.update"
             ]
         },
         {
