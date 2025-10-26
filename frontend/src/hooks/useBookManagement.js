@@ -68,7 +68,11 @@ export const useBookManagement = () => {
       // Optimistically remove books from UI
       setBooks(prevBooks => prevBooks.filter(book => !bookIds.includes(book.id)));
       
-      await api.delete('/admin/books', { data: { ids: bookIds } });
+      if (bookIds.length === 1) {
+        await api.delete(`/admin/books/${bookIds[0]}`);
+      } else {
+        await api.post('/admin/books/bulk-delete', { book_ids: bookIds });
+      }
       
       // Refresh the list
       await loadBooks();

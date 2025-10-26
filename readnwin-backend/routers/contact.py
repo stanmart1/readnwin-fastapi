@@ -150,6 +150,7 @@ def get_admin_contact_data(
         raise HTTPException(status_code=500, detail="Failed to fetch contact data")
 
 @router.post("/admin")
+@router.put("/admin")
 def save_admin_contact_data(
     contact_data: Dict[str, Any],
     current_user: User = Depends(get_current_user_from_token),

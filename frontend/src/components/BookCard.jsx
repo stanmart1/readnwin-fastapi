@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../hooks';
 import { getImageUrl } from '../lib/fileService';
 
-export default function BookCard({ book, onCartUpdate }) {
+export default function BookCard({ book }) {
   const [isHovered, setIsHovered] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const { addToCart } = useCart();
@@ -19,7 +19,6 @@ export default function BookCard({ book, onCartUpdate }) {
     try {
       setAddingToCart(true);
       await addToCart(book, 1);
-      if (onCartUpdate) onCartUpdate();
       alert('Book added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);

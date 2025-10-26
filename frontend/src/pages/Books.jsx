@@ -5,13 +5,11 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookCard from '../components/BookCard';
 import { useBooks } from '../hooks';
-import { useCartContext } from '../context/CartContext';
 
 export default function Books() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
-  const { refreshCart } = useCartContext();
 
   const params = {
     page,
@@ -76,7 +74,7 @@ export default function Books() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
-                  <BookCard book={book} onCartUpdate={refreshCart} />
+                  <BookCard book={book} />
                 </motion.div>
               ))}
             </div>
