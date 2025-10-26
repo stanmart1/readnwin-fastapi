@@ -14,7 +14,8 @@ export const useUsers = () => {
     try {
       setLoading(true);
       setError(null);
-      const skip = (page - 1) * itemsPerPage;
+      const validPage = Number(page) || 1;
+      const skip = (validPage - 1) * itemsPerPage;
       const params = {
         skip,
         limit: itemsPerPage

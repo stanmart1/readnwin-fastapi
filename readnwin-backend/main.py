@@ -78,12 +78,18 @@ async def shutdown_event():
         pass
 
 # CORS configuration
+import os
 allowed_origins = [
     "http://localhost:3000",  # Development
     "http://127.0.0.1:3000",  # Development
     "https://readnwin.com",  # Production
     "https://www.readnwin.com",  # Production with www
 ]
+
+# Add frontend URL from environment if provided
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
