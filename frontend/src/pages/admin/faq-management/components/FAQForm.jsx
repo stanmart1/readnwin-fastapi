@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function FAQForm({ faq, categories, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
@@ -81,28 +83,35 @@ export default function FAQForm({ faq, categories, onSubmit, onCancel }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Question *</label>
-            <textarea
+            <ReactQuill
+              theme="snow"
               value={formData.question}
-              onChange={(e) => handleChange('question', e.target.value)}
-              rows={3}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.question ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onChange={(value) => handleChange('question', value)}
+              className="bg-white rounded-lg"
               placeholder="Enter the question..."
+              modules={{ toolbar: [['bold', 'italic'], ['clean']] }}
             />
             {errors.question && <p className="mt-1 text-sm text-red-600">{errors.question}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Answer *</label>
-            <textarea
+            <ReactQuill
+              theme="snow"
               value={formData.answer}
-              onChange={(e) => handleChange('answer', e.target.value)}
-              rows={6}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.answer ? 'border-red-500' : 'border-gray-300'
-              }`}
+              onChange={(value) => handleChange('answer', value)}
+              className="bg-white rounded-lg"
               placeholder="Enter the answer..."
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline'],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  ['link'],
+                  ['clean']
+                ]
+              }}
+              style={{ height: '200px', marginBottom: '50px' }}
             />
             {errors.answer && <p className="mt-1 text-sm text-red-600">{errors.answer}</p>}
           </div>

@@ -277,20 +277,23 @@ export const useCart = () => {
     try {
       setError(null);
       
+      // Optimistically update UI immediately
+      const newCart = cartItems.filter(item => item.book_id !== bookId);
+      setCartItems(newCart);
+      
       if (isAuthenticated) {
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
           await api.delete(`/cart/${cartItem.id}`);
-          await loadAuthenticatedCart();
         }
       } else {
-        const newCart = cartItems.filter(item => item.book_id !== bookId);
-        setCartItems(newCart);
         saveGuestCart(newCart);
       }
     } catch (err) {
       console.error('Error removing from cart:', err);
       setError(err.message);
+      // Revert on error
+      await loadAuthenticatedCart();
       throw err;
     }
   }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);

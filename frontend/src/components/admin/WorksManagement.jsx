@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { getImageUrl } from '../../lib/fileService';
 import { useAdminWorks } from '../../hooks/useAdminWorks';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const WorksManagement = () => {
   const { works, loading, error: hookError, fetchWorks, uploadWork, updateWork, deleteWork } = useAdminWorks();
@@ -424,12 +426,25 @@ const WorksManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-1">Description</label>
-                    <textarea
+                    <ReactQuill
+                      theme="snow"
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      required
+                      onChange={(value) => setFormData({ ...formData, description: value })}
+                      className="bg-white rounded-lg"
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                          [{ 'font': [] }],
+                          [{ 'size': ['small', false, 'large', 'huge'] }],
+                          ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+                          [{ 'align': [] }],
+                          ['link', 'image', 'video'],
+                          [{ 'color': [] }, { 'background': [] }],
+                          ['clean']
+                        ]
+                      }}
+                      style={{ height: '200px', marginBottom: '50px' }}
                     />
                   </div>
 

@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAdminBlog } from '../../hooks/useAdminBlog';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const BlogManagement = () => {
   const {
@@ -457,23 +459,46 @@ const BlogManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-1">Excerpt</label>
-                    <textarea
+                    <ReactQuill
+                      theme="snow"
                       value={formData.excerpt}
-                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                      rows={2}
+                      onChange={(value) => setFormData({ ...formData, excerpt: value })}
+                      className="bg-white rounded-lg"
                       placeholder="Brief description"
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline'],
+                          ['clean']
+                        ]
+                      }}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-1">Content</label>
-                    <textarea
+                    <ReactQuill
+                      theme="snow"
                       value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                      rows={10}
-                      placeholder="Post content (HTML supported)"
+                      onChange={(value) => setFormData({ ...formData, content: value })}
+                      className="bg-white rounded-lg"
+                      placeholder="Post content"
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                          [{ 'font': [] }],
+                          [{ 'size': ['small', false, 'large', 'huge'] }],
+                          ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                          [{ 'script': 'sub'}, { 'script': 'super' }],
+                          [{ 'indent': '-1'}, { 'indent': '+1' }],
+                          [{ 'direction': 'rtl' }],
+                          [{ 'align': [] }],
+                          ['link', 'image', 'video', 'formula'],
+                          [{ 'color': [] }, { 'background': [] }],
+                          ['clean']
+                        ]
+                      }}
+                      style={{ height: '300px', marginBottom: '50px' }}
                     />
                   </div>
 

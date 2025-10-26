@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
 import axios from 'axios';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { getFileUrl } from '../../lib/fileService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -165,11 +167,12 @@ const AdminAbout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Subtitle</label>
-                        <textarea
+                        <ReactQuill
+                          theme="snow"
                           value={content.hero?.subtitle || ''}
-                          onChange={(e) => updateContent('hero', { ...content.hero, subtitle: e.target.value })}
-                          rows={3}
-                          className="w-full px-4 py-3 border rounded-lg"
+                          onChange={(value) => updateContent('hero', { ...content.hero, subtitle: value })}
+                          className="bg-white rounded-lg"
+                          modules={{ toolbar: [['bold', 'italic', 'underline'], ['clean']] }}
                         />
                       </div>
                       <div>
@@ -220,11 +223,13 @@ const AdminAbout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Description</label>
-                        <textarea
+                        <ReactQuill
+                          theme="snow"
                           value={content.mission?.description || ''}
-                          onChange={(e) => updateContent('mission', { ...content.mission, description: e.target.value })}
-                          rows={6}
-                          className="w-full px-4 py-3 border rounded-lg"
+                          onChange={(value) => updateContent('mission', { ...content.mission, description: value })}
+                          className="bg-white rounded-lg"
+                          modules={{ toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'bullet' }], ['clean']] }}
+                          style={{ height: '150px', marginBottom: '50px' }}
                         />
                       </div>
                       <div>
@@ -350,16 +355,17 @@ const AdminAbout = () => {
                               }}
                               className="w-full px-3 py-2 border rounded-lg"
                             />
-                            <textarea
-                              placeholder="Description"
+                            <ReactQuill
+                              theme="snow"
                               value={value.description}
-                              onChange={(e) => {
+                              onChange={(val) => {
                                 const newValues = [...content.values];
-                                newValues[idx] = { ...value, description: e.target.value };
+                                newValues[idx] = { ...value, description: val };
                                 updateContent('values', newValues);
                               }}
-                              rows={4}
-                              className="w-full px-3 py-2 border rounded-lg"
+                              className="bg-white rounded-lg"
+                              placeholder="Description"
+                              modules={{ toolbar: [['bold', 'italic'], ['clean']] }}
                             />
                           </div>
                         ))}
@@ -388,11 +394,12 @@ const AdminAbout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Description</label>
-                        <textarea
+                        <ReactQuill
+                          theme="snow"
                           value={content.cta?.description || ''}
-                          onChange={(e) => updateContent('cta', { ...content.cta, description: e.target.value })}
-                          rows={4}
-                          className="w-full px-4 py-3 border rounded-lg"
+                          onChange={(value) => updateContent('cta', { ...content.cta, description: value })}
+                          className="bg-white rounded-lg"
+                          modules={{ toolbar: [['bold', 'italic', 'underline'], ['clean']] }}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">

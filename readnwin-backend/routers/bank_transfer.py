@@ -184,6 +184,102 @@ async def upload_proof_of_payment(
             detail=f"Failed to upload proof: {str(e)}"
         )
 
+@router.post("/approve/{order_id}")
+async def approve_bank_transfer(
+    order_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to approve bank transfer payment"""
+    from core.security import check_admin_access
+    from models.user_library import UserLibrary
+    from models.book import Book
+    from datetime import datetime
+    
+    check_admin_access(current_user)
+    
+    try:
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        payment = db.query(Payment).filter(Payment.order_id == order_id).first()
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment not found")
+        
+        if payment.payment_method != "bank_transfer":
+            raise HTTPException(status_code=400, detail="Not a bank transfer payment")
+        
+        if payment.status == "completed":
+            raise HTTPException(status_code=400, detail="Payment already approved")
+        
+        payment.status = "completed"
+        payment.updated_at = datetime.utcnow()
+        order.status = "completed"
+        order.updated_at = datetime.utcnow()
+        
+        ebook_items = db.query(OrderItem).join(Book).filter(
+            OrderItem.order_id == order_id,
+            Book.format.in_(["ebook", "both"])
+        ).all()
+        
+        for item in ebook_items:
+            existing = db.query(UserLibrary).filter(
+                UserLibrary.user_id == order.user_id,
+                UserLibrary.book_id == item.book_id
+            ).first()
+            
+            if not existing:
+                library_item = UserLibrary(
+                    user_id=order.user_id,
+                    book_id=item.book_id,
+                    status="unread",
+                    added_at=datetime.utcnow()
+                )
+                db.add(library_item)
+        
+        db.commit()
+        
+        return {"message": "Bank transfer approved", "ebooks_added": len(ebook_items)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/reject/{order_id}")
+async def reject_bank_transfer(
+    order_id: int,
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to reject bank transfer payment"""
+    from core.security import check_admin_access
+    from datetime import datetime
+    
+    check_admin_access(current_user)
+    
+    try:
+        payment = db.query(Payment).filter(Payment.order_id == order_id).first()
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment not found")
+        
+        payment.status = "failed"
+        payment.updated_at = datetime.utcnow()
+        
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if order:
+            order.status = "cancelled"
+            order.updated_at = datetime.utcnow()
+        
+        db.commit()
+        return {"message": "Bank transfer rejected"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/create")
 async def create_bank_transfer_payment(
     order_id: int,
