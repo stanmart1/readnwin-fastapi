@@ -75,6 +75,8 @@ export default function HeroSection() {
               src={book.image}
               alt={book.title}
               className="w-36 h-48 object-cover rounded-lg shadow-2xl"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
               {book.title}

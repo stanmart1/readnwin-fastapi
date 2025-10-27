@@ -160,6 +160,8 @@ export default function TestimonialsSection() {
                             src={testimonial.bookCover}
                             alt={testimonial.bookTitle}
                             className="w-12 h-16 object-cover rounded-lg shadow-sm mr-3"
+                            loading="lazy"
+                            decoding="async"
                           />
                         )}
                         <div className="flex-1">

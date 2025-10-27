@@ -179,6 +179,8 @@ export default function FeaturedBooks() {
                       src={getBookImage(book)}
                       alt={book.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
                     />
                     {/* Overlay on Hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -297,6 +299,8 @@ export default function FeaturedBooks() {
                         src={getBookImage(book)}
                         alt={book.title}
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                       {/* Badge */}
                       {book.is_featured && (

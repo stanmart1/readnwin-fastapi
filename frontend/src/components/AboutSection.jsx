@@ -63,6 +63,8 @@ export default function AboutSection() {
                 src={getFileUrl(aboutContent.hero?.image_url) || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"}
                 alt="ReadnWin - Empowering minds through reading"
                 className="w-full h-auto object-cover"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </motion.div>

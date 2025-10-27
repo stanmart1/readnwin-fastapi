@@ -102,6 +102,8 @@ export default function BlogSection() {
                       src={post.cover_image || post.images?.[0] || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute top-4 left-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(post.category)}`}>
