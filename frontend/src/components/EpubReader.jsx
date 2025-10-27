@@ -32,7 +32,7 @@ export default function EpubReader({ bookId, onClose }) {
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isDeletingNote, setIsDeletingNote] = useState(null);
   const [isDeletingHighlight, setIsDeletingHighlight] = useState(null);
-  
+
   // Progress tracking states
   const [progressData, setProgressData] = useState({
     currentPage: 0,
@@ -101,7 +101,7 @@ export default function EpubReader({ bookId, onClose }) {
       // Try to get cached EPUB first
       let blob;
       let cachedData = await getCachedEpub(bookId);
-      
+
       if (cachedData && cachedData.blob) {
         console.log('📖 Using cached EPUB');
         blob = cachedData.blob;
@@ -119,7 +119,7 @@ export default function EpubReader({ bookId, onClose }) {
         }
 
         blob = await response.blob();
-        
+
         // Cache the EPUB for next time (don't await, do in background)
         cacheEpub(bookId, blob).catch(err => {
           console.warn('Failed to cache EPUB:', err);
@@ -150,7 +150,7 @@ export default function EpubReader({ bookId, onClose }) {
         console.log('🔄 Generating locations...');
         // Generate locations for progress tracking
         await epubBook.locations.generate(1024);
-        
+
         // Cache the locations (don't await, do in background)
         cacheLocations(bookId, epubBook.locations.save()).catch(err => {
           console.warn('Failed to cache locations:', err);
@@ -161,12 +161,13 @@ export default function EpubReader({ bookId, onClose }) {
       const navigation = await epubBook.loaded.navigation;
       setToc(navigation.toc);
 
-      // Create rendition
+      // Create rendition with explicit settings to prevent double-page spread
       const renditionInstance = epubBook.renderTo(viewerRef.current, {
         width: '100%',
         height: '100%',
         spread: 'none',
-        flow: 'paginated'
+        flow: 'paginated',
+        minSpreadWidth: 99999 // Force single page by setting impossible spread width
       });
 
       setRendition(renditionInstance);
@@ -174,6 +175,10 @@ export default function EpubReader({ bookId, onClose }) {
       // Load saved location or start from beginning
       const savedLocation = libraryItem.last_read_location;
       if (savedLocation) {
+        // Wait for rendition to be ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Display the saved location
         await renditionInstance.display(savedLocation);
 
         // Calculate and save progress for the restored location
@@ -366,21 +371,21 @@ export default function EpubReader({ bookId, onClose }) {
       // Get current location
       const currentLoc = epubBook.locations.locationFromCfi(location.start.cfi);
       const totalLocs = epubBook.locations.total;
-      
+
       // Calculate percentage
       const percentage = Math.round((currentLoc / totalLocs) * 100);
-      
+
       // Get current chapter from TOC
       const currentChapter = getCurrentChapter(location.start.href);
-      
+
       // Calculate pages (estimate based on locations)
       const currentPage = currentLoc;
       const totalPages = totalLocs;
-      
+
       // Calculate time remaining
       const pagesRemaining = totalPages - currentPage;
       const timeRemaining = calculateTimeRemaining(pagesRemaining);
-      
+
       setProgressData({
         currentPage,
         totalPages,
@@ -395,7 +400,7 @@ export default function EpubReader({ bookId, onClose }) {
 
   const getCurrentChapter = (href) => {
     if (!toc || toc.length === 0) return '';
-    
+
     // Find the current chapter from TOC
     for (let i = 0; i < toc.length; i++) {
       if (href.includes(toc[i].href)) {
@@ -410,20 +415,20 @@ export default function EpubReader({ bookId, onClose }) {
     // Assume 250 words per page, 200-250 words per minute average reading speed
     const wordsPerPage = 250;
     const wordsPerMinute = 225; // Average reading speed
-    
+
     const wordsRemaining = pagesRemaining * wordsPerPage;
     const minutesRemaining = Math.ceil(wordsRemaining / wordsPerMinute);
-    
+
     return minutesRemaining;
   };
 
   const formatTimeRemaining = (minutes) => {
     if (minutes < 1) return '< 1 min';
     if (minutes < 60) return `${minutes} min`;
-    
+
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours === 1) return mins > 0 ? `1 hr ${mins} min` : '1 hr';
     return mins > 0 ? `${hours} hrs ${mins} min` : `${hours} hrs`;
   };
@@ -432,11 +437,11 @@ export default function EpubReader({ bookId, onClose }) {
   useEffect(() => {
     if (!loading && !error) {
       setReadingStartTime(Date.now());
-      
+
       const interval = setInterval(() => {
         setTotalReadingTime(prev => prev + 1);
       }, 60000); // Update every minute
-      
+
       return () => clearInterval(interval);
     }
   }, [loading, error]);
@@ -444,10 +449,10 @@ export default function EpubReader({ bookId, onClose }) {
   const formatReadingTime = (minutes) => {
     if (minutes < 1) return '< 1 min';
     if (minutes < 60) return `${minutes} min`;
-    
+
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours === 1) return mins > 0 ? `1h ${mins}m` : '1h';
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
@@ -663,49 +668,7 @@ export default function EpubReader({ bookId, onClose }) {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-between text-xs text-gray-300 mb-2">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <i className="ri-file-list-line"></i>
-                Page {progressData.currentPage} / {progressData.totalPages}
-              </span>
-              <span className="flex items-center gap-1">
-                <i className="ri-percent-line"></i>
-                {progressData.percentage}%
-              </span>
-              {progressData.timeRemaining > 0 && (
-                <span className="flex items-center gap-1">
-                  <i className="ri-time-line"></i>
-                  {formatTimeRemaining(progressData.timeRemaining)} left
-                </span>
-              )}
-            </div>
-            {totalReadingTime > 0 && (
-              <span className="flex items-center gap-1">
-                <i className="ri-timer-line"></i>
-                {formatReadingTime(totalReadingTime)}
-              </span>
-            )}
-          </div>
-          
-          {/* Progress bar */}
-          <div className="relative h-1.5 bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 rounded-full"
-              style={{ width: `${progressData.percentage}%` }}
-            />
-          </div>
-          
-          {/* Chapter name */}
-          {progressData.currentChapter && (
-            <div className="mt-2 text-xs text-gray-400 truncate">
-              <i className="ri-book-open-line mr-1"></i>
-              {progressData.currentChapter}
-            </div>
-          )}
-        </div>
+
       </div>
 
       {/* Main Content */}
@@ -915,8 +878,8 @@ export default function EpubReader({ bookId, onClose }) {
             <button
               onClick={() => setActiveTab('notes')}
               className={`flex-1 px-4 py-3 font-semibold transition-colors relative ${activeTab === 'notes'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -936,8 +899,8 @@ export default function EpubReader({ bookId, onClose }) {
             <button
               onClick={() => setActiveTab('highlights')}
               className={`flex-1 px-4 py-3 font-semibold transition-colors relative ${activeTab === 'highlights'
-                  ? 'text-yellow-600 bg-yellow-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'text-yellow-600 bg-yellow-50'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               <div className="flex items-center justify-center gap-2">
