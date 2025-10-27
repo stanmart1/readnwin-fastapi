@@ -384,10 +384,10 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                       type="button"
                       onClick={() => handleInputChange('format', 'ebook')}
                       className={`p-3 rounded-xl border-2 transition-all text-center ${formData.format === 'ebook'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : errors.format
-                            ? 'border-red-400 hover:border-red-300 text-gray-600'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : errors.format
+                          ? 'border-red-400 hover:border-red-300 text-gray-600'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
                         }`}
                     >
                       <i className="ri-smartphone-line text-xl mb-1 block"></i>
@@ -397,10 +397,10 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                       type="button"
                       onClick={() => handleInputChange('format', 'physical')}
                       className={`p-3 rounded-xl border-2 transition-all text-center ${formData.format === 'physical'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : errors.format
-                            ? 'border-red-400 hover:border-red-300 text-gray-600'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : errors.format
+                          ? 'border-red-400 hover:border-red-300 text-gray-600'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
                         }`}
                     >
                       <i className="ri-book-line text-xl mb-1 block"></i>
@@ -434,8 +434,8 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                       type="button"
                       onClick={() => handleInputChange('status', 'published')}
                       className={`p-3 rounded-xl border-2 transition-all text-center ${formData.status === 'published'
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
                         }`}
                     >
                       <i className="ri-check-line text-xl mb-1 block"></i>
@@ -445,8 +445,8 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                       type="button"
                       onClick={() => handleInputChange('status', 'draft')}
                       className={`p-3 rounded-xl border-2 transition-all text-center ${formData.status === 'draft'
-                          ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
                         }`}
                     >
                       <i className="ri-draft-line text-xl mb-1 block"></i>
@@ -571,7 +571,7 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                   onDragOver={(e) => handleDrag(e, 'cover')}
                   onDrop={(e) => handleDrop(e, 'cover')}
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${dragActive.cover ? 'border-blue-500 bg-blue-50' :
-                      errors.cover_image ? 'border-red-500' : 'border-gray-300 hover:border-blue-400'
+                    errors.cover_image ? 'border-red-500' : 'border-gray-300 hover:border-blue-400'
                     }`}
                   onClick={() => coverInputRef.current?.click()}
                 >
@@ -603,7 +603,7 @@ const BookAddModal = ({ isOpen, onClose, categories, authors, onSuccess }) => {
                     onDragOver={(e) => handleDrag(e, 'ebook')}
                     onDrop={(e) => handleDrop(e, 'ebook')}
                     className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${dragActive.ebook ? 'border-blue-500 bg-blue-50' :
-                        errors.ebook_file ? 'border-red-500' : 'border-gray-300 hover:border-blue-400'
+                      errors.ebook_file ? 'border-red-500' : 'border-gray-300 hover:border-blue-400'
                       }`}
                     onClick={() => ebookInputRef.current?.click()}
                   >

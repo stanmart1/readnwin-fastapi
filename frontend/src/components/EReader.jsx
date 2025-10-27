@@ -19,7 +19,7 @@ export default function EReader({ bookId, onClose }) {
   const [noteContent, setNoteContent] = useState('');
   const [activeTab, setActiveTab] = useState('notes');
   const [editingNote, setEditingNote] = useState(null);
-  
+
   const contentRef = useRef(null);
   const saveTimeoutRef = useRef(null);
 
@@ -27,6 +27,14 @@ export default function EReader({ bookId, onClose }) {
     loadBook();
     loadHighlights();
     loadNotes();
+
+    // Cleanup styles on unmount
+    return () => {
+      const styleElement = document.getElementById(`ereader-styles-${bookId}`);
+      if (styleElement) {
+        styleElement.remove();
+      }
+    };
   }, [bookId]);
 
   useEffect(() => {
@@ -34,7 +42,7 @@ export default function EReader({ bookId, onClose }) {
     const handleSelection = () => {
       const selection = window.getSelection();
       const text = selection.toString().trim();
-      
+
       if (text && text.length > 0 && contentRef.current?.contains(selection.anchorNode)) {
         setSelectedText({
           text,
@@ -57,17 +65,52 @@ export default function EReader({ bookId, onClose }) {
 
       const bookResponse = await api.get(`/user/library`);
       const libraryItem = bookResponse.data.libraryItems.find(item => item.book_id === parseInt(bookId));
-      
+
       if (!libraryItem) {
         throw new Error('Book not found in your library');
       }
 
-      setBook(libraryItem.book);
+      console.log('Library item:', libraryItem);
+      console.log('Library item.book:', libraryItem.book);
+
+      // Use libraryItem.book if it exists, otherwise use libraryItem itself
+      const bookData = libraryItem.book || libraryItem;
+      setBook(bookData);
       setProgress(libraryItem.progress || 0);
 
       const contentResponse = await api.get(`/ereader/${bookId}/content`);
-      setContent(contentResponse.data.content || contentResponse.data.html_content || '');
-      
+      let htmlContent = contentResponse.data.content || contentResponse.data.html_content || '';
+      console.log('HTML content loaded:', htmlContent ? `${htmlContent.length} characters` : 'empty');
+
+      // Extract and inject styles into document head
+      const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      const styles = [];
+      let match;
+
+      while ((match = styleRegex.exec(htmlContent)) !== null) {
+        styles.push(match[1]);
+      }
+
+      // Remove style tags from content
+      htmlContent = htmlContent.replace(styleRegex, '');
+
+      // Inject styles into document head
+      if (styles.length > 0) {
+        const styleElement = document.createElement('style');
+        styleElement.id = `ereader-styles-${bookId}`;
+        styleElement.textContent = styles.join('\n');
+
+        // Remove old styles if they exist
+        const oldStyles = document.getElementById(`ereader-styles-${bookId}`);
+        if (oldStyles) {
+          oldStyles.remove();
+        }
+
+        document.head.appendChild(styleElement);
+      }
+
+      setContent(htmlContent);
+
     } catch (err) {
       console.error('Error loading book:', err);
       setError(err.response?.data?.detail || err.message || 'Failed to load book');
@@ -116,7 +159,7 @@ export default function EReader({ bookId, onClose }) {
     const element = e.target;
     const scrollPercentage = (element.scrollTop / (element.scrollHeight - element.clientHeight)) * 100;
     const newProgress = Math.min(100, Math.max(0, scrollPercentage)) / 100;
-    
+
     if (Math.abs(newProgress - progress) > 0.02) {
       updateProgress(newProgress);
     }
@@ -251,7 +294,13 @@ export default function EReader({ bookId, onClose }) {
     );
   }
 
-  if (!book) return null;
+  if (!book) {
+    console.log('Book is null, not rendering');
+    return null;
+  }
+
+  console.log('Rendering EReader with book:', book);
+  console.log('Content length:', content?.length);
 
   return (
     <div className={`fixed inset-0 z-50 ${getThemeClasses()} transition-colors duration-200`}>
@@ -271,15 +320,15 @@ export default function EReader({ bookId, onClose }) {
         <div className="flex items-center space-x-2">
           {/* Font Size */}
           <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2">
-            <button 
-              onClick={() => setFontSize(Math.max(12, fontSize - 2))} 
+            <button
+              onClick={() => setFontSize(Math.max(12, fontSize - 2))}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
             >
               <i className="ri-font-size-2 text-lg"></i>
             </button>
             <span className="text-sm px-2 min-w-[3rem] text-center">{fontSize}px</span>
-            <button 
-              onClick={() => setFontSize(Math.min(32, fontSize + 2))} 
+            <button
+              onClick={() => setFontSize(Math.min(32, fontSize + 2))}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
             >
               <i className="ri-font-size text-lg"></i>
@@ -287,9 +336,9 @@ export default function EReader({ bookId, onClose }) {
           </div>
 
           {/* Theme Selector */}
-          <select 
-            value={theme} 
-            onChange={(e) => setTheme(e.target.value)} 
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="light">Light</option>
@@ -310,7 +359,7 @@ export default function EReader({ bookId, onClose }) {
 
       {/* Progress Bar */}
       <div className="h-1 bg-gray-200 dark:bg-gray-700">
-        <div 
+        <div
           className="h-full bg-blue-600 transition-all duration-300"
           style={{ width: `${progress * 100}%` }}
         />
@@ -318,16 +367,22 @@ export default function EReader({ bookId, onClose }) {
 
       <div className="flex h-[calc(100vh-5rem)]">
         {/* Content */}
-        <div 
+        <div
           ref={contentRef}
           className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-16 lg:px-32 py-8"
           onScroll={handleScroll}
         >
-          <div 
-            className="max-w-4xl mx-auto prose prose-lg dark:prose-invert"
-            style={{ fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          {content ? (
+            <div
+              className="max-w-4xl mx-auto prose prose-lg dark:prose-invert"
+              style={{ fontSize: `${fontSize}px` }}
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          ) : (
+            <div className="max-w-4xl mx-auto text-center py-20">
+              <p className="text-gray-500">No content available</p>
+            </div>
+          )}
         </div>
 
         {/* Annotations Panel */}
@@ -348,21 +403,19 @@ export default function EReader({ bookId, onClose }) {
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => setActiveTab('notes')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
-                    activeTab === 'notes'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800'
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'notes'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800'
+                    }`}
                 >
                   Notes ({notes.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('highlights')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
-                    activeTab === 'highlights'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800'
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'highlights'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800'
+                    }`}
                 >
                   Highlights ({highlights.length})
                 </button>
