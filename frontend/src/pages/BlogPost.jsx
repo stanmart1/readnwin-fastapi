@@ -24,8 +24,6 @@ export default function BlogPost() {
       const postData = response.data.post || response.data;
       setPost(postData);
 
-      console.log('Fetched blog post:', postData);
-
       // Fetch related posts
       const related = await api.get('/api/blog/posts?limit=3');
       const relatedData = Array.isArray(related.data) ? related.data : [];
