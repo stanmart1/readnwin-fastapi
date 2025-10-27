@@ -140,7 +140,7 @@ export default function TestimonialsSection() {
 
             <div
               ref={carouselRef}
-              className="flex space-x-6 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
+              className="flex space-x-6 overflow-x-auto scrollbar-hide pb-4 scroll-smooth px-2"
             >
               {testimonials.map((testimonial, index) => (
                 <motion.div

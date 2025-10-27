@@ -141,7 +141,7 @@ export default function Header() {
         initial={{ x: '100%' }}
         animate={{ x: isMenuOpen ? '0%' : '100%' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed right-0 top-0 h-full w-64 bg-white z-40 md:hidden shadow-lg overflow-y-auto"
+        className="fixed right-0 top-0 h-full w-64 bg-white z-40 md:hidden shadow-lg overflow-y-auto overflow-x-hidden"
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

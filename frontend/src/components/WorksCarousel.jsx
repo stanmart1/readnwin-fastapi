@@ -64,7 +64,7 @@ export default function WorksCarousel() {
             {/* Carousel Container */}
             <div
               ref={carouselRef}
-              className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-12 snap-x snap-mandatory"
+              className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-2 md:px-12 snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {works.map((work, index) => (
