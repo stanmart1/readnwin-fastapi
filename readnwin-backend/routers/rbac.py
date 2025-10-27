@@ -90,9 +90,15 @@ def get_roles(user: User = Depends(require_permission("manage_roles")), db: Sess
         from sqlalchemy.orm import joinedload
         
         # Eager load permissions to avoid N+1 queries
-        roles = db.query(Role).options(
+        query = db.query(Role).options(
             joinedload(Role.permissions).joinedload(RolePermission.permission)
-        ).all()
+        )
+        
+        # Hide super_admin role from non-super_admin users
+        if user.role and user.role.name != 'super_admin':
+            query = query.filter(Role.name != 'super_admin')
+        
+        roles = query.all()
         
         result = []
         for role in roles:
@@ -588,6 +594,16 @@ def assign_role_to_user(
         role = db.query(Role).filter(Role.id == role_id).first()
         if not role:
             raise HTTPException(status_code=404, detail="Role not found")
+        
+        # Prevent non-super_admin from assigning super_admin role
+        if role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can assign the super admin role")
+        
+        # Prevent non-super_admin from modifying super_admin users
+        if user.role and user.role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can modify super admin users")
         
         old_role_id = user.role_id
         user.role_id = role_id

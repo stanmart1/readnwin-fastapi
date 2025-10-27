@@ -6,9 +6,15 @@ const AssignRoleModal = ({ user, onClose, onSuccess }) => {
   const { roles, fetchRoles } = useRoles();
   const [selectedRole, setSelectedRole] = useState(user?.role?.id || '');
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchRoles();
+    // Get current user info
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
   }, []);
 
   const handleSubmit = async (e) => {
@@ -52,11 +58,19 @@ const AssignRoleModal = ({ user, onClose, onSuccess }) => {
               required
             >
               <option value="">Choose a role...</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.display_name}
-                </option>
-              ))}
+              {roles
+                .filter(role => {
+                  // Hide super_admin role if current user is not super_admin
+                  if (role.name === 'super_admin') {
+                    return currentUser?.role?.name === 'super_admin';
+                  }
+                  return true;
+                })
+                .map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.display_name}
+                  </option>
+                ))}
             </select>
           </div>
 
