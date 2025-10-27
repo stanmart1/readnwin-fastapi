@@ -35,24 +35,41 @@ export default function Reading() {
       const book = libraryItem.book || libraryItem;
 
       console.log('Book data:', book);
-      console.log('Book format:', book.format);
+      console.log('Book format field:', book.format);
       console.log('Book file_path:', book.file_path);
+      console.log('Library item format:', libraryItem.format);
 
-      // Detect format from file_path or format field
+      // Detect format - prioritize file_path extension over format field
       let format = 'html'; // default
 
-      if (book.format) {
-        format = book.format.toLowerCase();
-      } else if (book.file_path) {
+      // Check file_path first (most reliable)
+      if (book.file_path) {
         const extension = book.file_path.split('.').pop().toLowerCase();
+        console.log('File extension:', extension);
         if (extension === 'epub') {
           format = 'epub';
         } else if (extension === 'html' || extension === 'htm') {
           format = 'html';
         }
+      } else if (libraryItem.format) {
+        // Fallback to libraryItem.format
+        const itemFormat = libraryItem.format.toLowerCase();
+        if (itemFormat === 'epub') {
+          format = 'epub';
+        } else if (itemFormat === 'html') {
+          format = 'html';
+        }
+      } else if (book.format) {
+        // Last fallback to book.format
+        const bookFormat = book.format.toLowerCase();
+        if (bookFormat === 'epub') {
+          format = 'epub';
+        } else if (bookFormat === 'html') {
+          format = 'html';
+        }
       }
 
-      console.log('Detected format:', format);
+      console.log('Final detected format:', format);
       setBookFormat(format);
     } catch (err) {
       console.error('Error detecting book format:', err);

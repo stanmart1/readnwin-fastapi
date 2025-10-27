@@ -67,6 +67,7 @@ async def get_user_library(
             "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else None,
             "description": item.book.description,
             "format": item.book.format or "ebook",
+            "file_path": item.book.file_path,
             "price": float(item.book.price) if item.book.price else 0,
             "rating": 0,
             "total_pages": total_pages,
