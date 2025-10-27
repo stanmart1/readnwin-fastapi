@@ -624,6 +624,13 @@ export default function EpubReader({ bookId, onClose }) {
 
           <div className="flex items-center space-x-2">
             <button
+              onClick={() => setShowTour(true)}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              title="Show Tour"
+            >
+              <i className="ri-question-line text-xl"></i>
+            </button>
+            <button
               data-tour="toc-button"
               onClick={() => setShowToc(!showToc)}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"

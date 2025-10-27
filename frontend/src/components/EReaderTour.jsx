@@ -59,13 +59,13 @@ export default function EReaderTour({ onComplete }) {
             const viewportHeight = window.innerHeight;
             const modalWidth = Math.min(384, viewportWidth - 32); // max-w-sm with padding
             const modalHeight = 250; // approximate height
-            
+
             let top, left;
 
             if (step.placement === 'bottom') {
                 top = rect.bottom + 20;
                 left = rect.left + rect.width / 2;
-                
+
                 // Check if modal would overflow bottom
                 if (top + modalHeight > viewportHeight) {
                     top = rect.top - modalHeight - 20;
@@ -73,7 +73,7 @@ export default function EReaderTour({ onComplete }) {
             } else if (step.placement === 'top') {
                 top = rect.top - modalHeight - 20;
                 left = rect.left + rect.width / 2;
-                
+
                 // Check if modal would overflow top
                 if (top < 0) {
                     top = rect.bottom + 20;
