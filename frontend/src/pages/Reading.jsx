@@ -31,14 +31,8 @@ export default function Reading() {
         return;
       }
 
-      const book = libraryItem.book;
-
-      // Check if book exists
-      if (!book) {
-        console.error('Library item:', libraryItem);
-        setError('Book data not available. Please contact support.');
-        return;
-      }
+      // Book data can be in libraryItem.book or directly on libraryItem
+      const book = libraryItem.book || libraryItem;
 
       console.log('Book data:', book);
       console.log('Book format:', book.format);
