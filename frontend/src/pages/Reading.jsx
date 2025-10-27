@@ -34,37 +34,33 @@ export default function Reading() {
       // Book data can be in libraryItem.book or directly on libraryItem
       const book = libraryItem.book || libraryItem;
 
+      // file_path can be at libraryItem level or book level
+      const filePath = libraryItem.file_path || book.file_path;
+      const bookFormat = libraryItem.format || book.format;
+
       console.log('Book data:', book);
-      console.log('Book format field:', book.format);
-      console.log('Book file_path:', book.file_path);
-      console.log('Library item format:', libraryItem.format);
+      console.log('Book format field:', bookFormat);
+      console.log('Book file_path:', filePath);
 
       // Detect format - prioritize file_path extension over format field
       let format = 'html'; // default
 
       // Check file_path first (most reliable)
-      if (book.file_path) {
-        const extension = book.file_path.split('.').pop().toLowerCase();
+      if (filePath) {
+        const extension = filePath.split('.').pop().toLowerCase();
         console.log('File extension:', extension);
         if (extension === 'epub') {
           format = 'epub';
         } else if (extension === 'html' || extension === 'htm') {
           format = 'html';
         }
-      } else if (libraryItem.format) {
-        // Fallback to libraryItem.format
-        const itemFormat = libraryItem.format.toLowerCase();
-        if (itemFormat === 'epub') {
+      } else if (bookFormat) {
+        // Fallback to format field - handle both 'epub' and 'ebook'
+        const formatLower = bookFormat.toLowerCase();
+        if (formatLower === 'epub' || formatLower === 'ebook') {
+          // If format is 'ebook', default to epub (most common)
           format = 'epub';
-        } else if (itemFormat === 'html') {
-          format = 'html';
-        }
-      } else if (book.format) {
-        // Last fallback to book.format
-        const bookFormat = book.format.toLowerCase();
-        if (bookFormat === 'epub') {
-          format = 'epub';
-        } else if (bookFormat === 'html') {
+        } else if (formatLower === 'html') {
           format = 'html';
         }
       }
