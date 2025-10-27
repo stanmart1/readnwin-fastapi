@@ -55,6 +55,10 @@ def get_all_users(
     try:
         query = db.query(User)
         
+        # Hide super_admin users from non-super_admin users
+        if current_user.role and current_user.role.name != 'super_admin':
+            query = query.join(Role).filter(Role.name != 'super_admin')
+        
         # Search filter
         if search:
             query = query.filter(
@@ -68,7 +72,9 @@ def get_all_users(
         
         # Role filter
         if role and role != 'all':
-            query = query.join(Role).filter(Role.name == role)
+            if not query._join_entities:
+                query = query.join(Role)
+            query = query.filter(Role.name == role)
         
         # Status filter
         if status and status != 'all':
@@ -122,6 +128,11 @@ def update_user_status(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        # Prevent non-super_admin from modifying super_admin users
+        if user.role and user.role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can modify super admin users")
+        
         user.is_active = is_active
         db.commit()
         
@@ -147,6 +158,11 @@ def update_user(
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        
+        # Prevent non-super_admin from modifying super_admin users
+        if user.role and user.role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can modify super admin users")
         
         # Update fields if provided
         if user_data.first_name is not None:
@@ -210,6 +226,11 @@ def delete_user(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        # Prevent non-super_admin from deleting super_admin users
+        if user.role and user.role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can delete super admin users")
+        
         db.delete(user)
         db.commit()
         
@@ -240,6 +261,11 @@ def reset_user_password(
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        
+        # Prevent non-super_admin from resetting super_admin passwords
+        if user.role and user.role.name == 'super_admin':
+            if not current_user.role or current_user.role.name != 'super_admin':
+                raise HTTPException(status_code=403, detail="Only super admins can reset super admin passwords")
         
         # Validate password strength (same as registration)
         pwd = password_data.new_password
