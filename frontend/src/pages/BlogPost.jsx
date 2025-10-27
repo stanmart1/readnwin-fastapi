@@ -19,11 +19,17 @@ export default function BlogPost() {
     try {
       setLoading(true);
       const response = await api.get(`/api/blog/posts/${slug}`);
-      setPost(response.data);
-      
+
+      // Backend returns { success: true, post: {...} }
+      const postData = response.data.post || response.data;
+      setPost(postData);
+
+      console.log('Fetched blog post:', postData);
+
       // Fetch related posts
       const related = await api.get('/api/blog/posts?limit=3');
-      setRelatedPosts(related.data?.filter(p => p.slug !== slug) || []);
+      const relatedData = Array.isArray(related.data) ? related.data : [];
+      setRelatedPosts(relatedData.filter(p => p.slug !== slug));
     } catch (error) {
       console.error('Error fetching post:', error);
     } finally {
@@ -43,13 +49,13 @@ export default function BlogPost() {
   const sharePost = (platform) => {
     const url = window.location.href;
     const text = post?.title;
-    
+
     const urls = {
       twitter: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
     };
-    
+
     window.open(urls[platform], '_blank', 'width=600,height=400');
   };
 
@@ -129,10 +135,15 @@ export default function BlogPost() {
 
           {/* Content */}
           <div className="prose prose-lg max-w-none mb-8">
-            <p className="text-xl text-gray-600 mb-6">{post.excerpt}</p>
-            <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {post.content}
-            </div>
+            {post.excerpt && (
+              <p className="text-xl text-gray-600 mb-6 italic border-l-4 border-blue-600 pl-4">
+                {post.excerpt}
+              </p>
+            )}
+            <div
+              className="text-gray-700 leading-relaxed prose-headings:text-gray-900 prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3 prose-p:mb-4 prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-4 prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-4 prose-li:mb-2 prose-strong:font-semibold prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-blue-600 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
           </div>
 
           {/* Share Buttons */}
