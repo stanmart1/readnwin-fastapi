@@ -80,6 +80,7 @@ async def get_user_library(
                 "price": float(item.book.price) if item.book.price else 0,
                 "format": item.book.format or "ebook",
                 "pages": total_pages,
+                "file_path": item.book.file_path,
                 "ebook_file_url": storage.get_url(item.book.file_path) if item.book.file_path else None,
                 "description": item.book.description,
                 "category_name": item.book.category.name if item.book.category else None

@@ -32,16 +32,21 @@ export default function Reading() {
       }
 
       const book = libraryItem.book;
-      
+
       // Check if book exists
       if (!book) {
-        setError('Book data not available');
+        console.error('Library item:', libraryItem);
+        setError('Book data not available. Please contact support.');
         return;
       }
-      
+
+      console.log('Book data:', book);
+      console.log('Book format:', book.format);
+      console.log('Book file_path:', book.file_path);
+
       // Detect format from file_path or format field
       let format = 'html'; // default
-      
+
       if (book.format) {
         format = book.format.toLowerCase();
       } else if (book.file_path) {
@@ -53,6 +58,7 @@ export default function Reading() {
         }
       }
 
+      console.log('Detected format:', format);
       setBookFormat(format);
     } catch (err) {
       console.error('Error detecting book format:', err);
