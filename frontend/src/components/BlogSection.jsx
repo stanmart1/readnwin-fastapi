@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useBlog } from '../hooks';
+import ProgressiveImage from './ProgressiveImage';
 
 export default function BlogSection() {
   const { posts, loading } = useBlog(6);
@@ -98,7 +99,7 @@ export default function BlogSection() {
                 >
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    <img
+                    <ProgressiveImage
                       src={post.cover_image || post.images?.[0] || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"

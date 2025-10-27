@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../lib/fileService';
 import { useWorks } from '../hooks';
+import ProgressiveImage from './ProgressiveImage';
 
 export default function WorksCarousel() {
   const { works, loading } = useWorks();
@@ -79,7 +80,7 @@ export default function WorksCarousel() {
                 >
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    <img
+                    <ProgressiveImage
                       src={getImageUrl(work.image_path)}
                       alt={work.alt_text || work.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -128,7 +129,7 @@ export default function WorksCarousel() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative h-64">
-                <img
+                <ProgressiveImage
                   src={getImageUrl(selectedWork.image_path)}
                   alt={selectedWork.title}
                   className="w-full h-full object-cover"

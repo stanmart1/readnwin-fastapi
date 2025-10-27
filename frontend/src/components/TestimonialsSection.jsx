@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
 import { getImageUrl } from '../lib/fileService';
+import ProgressiveImage from './ProgressiveImage';
 
 export default function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState([]);
@@ -156,13 +157,15 @@ export default function TestimonialsSection() {
                       {/* Book Info */}
                       <div className="flex items-center mb-4">
                         {testimonial.bookCover && (
-                          <img
-                            src={testimonial.bookCover}
-                            alt={testimonial.bookTitle}
-                            className="w-12 h-16 object-cover rounded-lg shadow-sm mr-3"
-                            loading="lazy"
-                            decoding="async"
-                          />
+                          <div className="w-12 h-16 mr-3 flex-shrink-0">
+                            <ProgressiveImage
+                              src={testimonial.bookCover}
+                              alt={testimonial.bookTitle}
+                              className="w-full h-full object-cover rounded-lg shadow-sm"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
                         )}
                         <div className="flex-1">
                           <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">

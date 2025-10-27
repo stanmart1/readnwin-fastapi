@@ -4,6 +4,7 @@ import { getImageUrl } from '../lib/fileService';
 import { Link } from 'react-router-dom';
 import { useBooks } from '../hooks';
 import { useCartContext } from '../context/CartContext';
+import ProgressiveImage from './ProgressiveImage';
 
 export default function FeaturedBooks() {
   const [selectedCategory, setSelectedCategory] = useState('featured');
@@ -175,7 +176,7 @@ export default function FeaturedBooks() {
                 >
                   {/* Book Image */}
                   <div className="relative overflow-hidden h-64">
-                    <img
+                    <ProgressiveImage
                       src={getBookImage(book)}
                       alt={book.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -295,7 +296,7 @@ export default function FeaturedBooks() {
                   >
                     {/* Book Image */}
                     <div className="relative overflow-hidden h-64">
-                      <img
+                      <ProgressiveImage
                         src={getBookImage(book)}
                         alt={book.title}
                         className="w-full h-full object-cover"

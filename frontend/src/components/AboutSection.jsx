@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAbout } from '../hooks';
 import { getFileUrl } from '../lib/fileService';
+import ProgressiveImage from './ProgressiveImage';
 
 export default function AboutSection() {
   const { content, loading } = useAbout();
@@ -59,7 +60,7 @@ export default function AboutSection() {
             className="relative"
           >
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img
+              <ProgressiveImage
                 src={getFileUrl(aboutContent.hero?.image_url) || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"}
                 alt="ReadnWin - Empowering minds through reading"
                 className="w-full h-auto object-cover"
