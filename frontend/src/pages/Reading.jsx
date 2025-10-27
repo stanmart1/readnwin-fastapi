@@ -31,9 +31,20 @@ export default function Reading() {
         return;
       }
 
-      // Use the format field from API which now includes proper detection
-      const format = libraryItem.format || 'epub';
-      setBookFormat(format);
+      // Use file_extension to determine reader type
+      const fileExt = libraryItem.file_extension?.toLowerCase();
+      let readerFormat = 'epub'; // default
+      
+      if (fileExt === 'epub') {
+        readerFormat = 'epub';
+      } else if (fileExt === 'html' || fileExt === 'htm') {
+        readerFormat = 'html';
+      } else if (libraryItem.format === 'ebook') {
+        // If no file extension but format is ebook, default to epub
+        readerFormat = 'epub';
+      }
+      
+      setBookFormat(readerFormat);
     } catch (err) {
       console.error('Error detecting book format:', err);
       setError(err.message || 'Failed to load book');

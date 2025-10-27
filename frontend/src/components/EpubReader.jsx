@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import ePub from 'epubjs';
 import api from '../lib/api';
 import { getCachedEpub, cacheEpub, cacheLocations } from '../lib/epubCache';
+import EReaderTour from './EReaderTour';
 
 export default function EpubReader({ bookId, onClose }) {
   const [book, setBook] = useState(null);
   const [rendition, setRendition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showTour, setShowTour] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [toc, setToc] = useState([]);
   const [showToc, setShowToc] = useState(false);
@@ -232,6 +234,12 @@ export default function EpubReader({ bookId, onClose }) {
 
       setBook(epubBook);
       setLoading(false);
+
+      // Check if user has completed tour
+      const tourCompleted = localStorage.getItem('ereader_tour_completed');
+      if (!tourCompleted) {
+        setTimeout(() => setShowTour(true), 1000);
+      }
 
     } catch (err) {
       console.error('Error loading EPUB:', err);
@@ -602,6 +610,7 @@ export default function EpubReader({ bookId, onClose }) {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
+              data-tour="close-button"
               onClick={onClose}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
             >
@@ -615,6 +624,7 @@ export default function EpubReader({ bookId, onClose }) {
 
           <div className="flex items-center space-x-2">
             <button
+              data-tour="toc-button"
               onClick={() => setShowToc(!showToc)}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               title="Table of Contents"
@@ -622,6 +632,7 @@ export default function EpubReader({ bookId, onClose }) {
               <i className="ri-list-unordered text-xl"></i>
             </button>
             <button
+              data-tour="annotations-button"
               onClick={() => setShowAnnotationsPanel(!showAnnotationsPanel)}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors relative"
               title="Notes & Highlights"
@@ -634,6 +645,7 @@ export default function EpubReader({ bookId, onClose }) {
               )}
             </button>
             <button
+              data-tour="settings-button"
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               title="Settings"
@@ -695,12 +707,14 @@ export default function EpubReader({ bookId, onClose }) {
 
         {/* Navigation Buttons */}
         <button
+          data-tour="prev-button"
           onClick={prevPage}
           className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all"
         >
           <i className="ri-arrow-left-s-line text-2xl"></i>
         </button>
         <button
+          data-tour="next-button"
           onClick={nextPage}
           className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all"
         >
@@ -1183,6 +1197,9 @@ export default function EpubReader({ bookId, onClose }) {
           </div>
         </div>
       )}
+
+      {/* Tour Guide */}
+      {showTour && <EReaderTour onComplete={() => setShowTour(false)} />}
     </div>
   );
 }

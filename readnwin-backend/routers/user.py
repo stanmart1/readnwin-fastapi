@@ -100,21 +100,14 @@ async def get_user_library(
                 elif item.book.author:
                     author_name = item.book.author
 
-                # Detect format from file_path
+                # Keep original format (ebook, physical, etc.)
                 book_format = getattr(item.book, 'format', 'ebook')
                 file_extension = None
                 file_path = getattr(item.book, 'file_path', None)
                 
+                # Extract file extension only
                 if file_path:
                     file_extension = file_path.split('.')[-1].lower()
-                    if file_extension == 'epub':
-                        book_format = 'epub'
-                    elif file_extension in ['html', 'htm']:
-                        book_format = 'html'
-                elif book_format.lower() in ['ebook', 'epub']:
-                    # Default ebook to epub
-                    book_format = 'epub'
-                    file_extension = 'epub'
                 
                 library_books.append({
                     "id": item.id,
