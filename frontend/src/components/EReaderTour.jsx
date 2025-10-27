@@ -46,6 +46,16 @@ export default function EReaderTour({ onComplete }) {
     useEffect(() => {
         if (currentStep < steps.length) {
             updatePosition();
+
+            // Update position on window resize or scroll
+            const handleUpdate = () => updatePosition();
+            window.addEventListener('resize', handleUpdate);
+            window.addEventListener('scroll', handleUpdate, true);
+
+            return () => {
+                window.removeEventListener('resize', handleUpdate);
+                window.removeEventListener('scroll', handleUpdate, true);
+            };
         }
     }, [currentStep]);
 
@@ -98,13 +108,12 @@ export default function EReaderTour({ onComplete }) {
             if (top < 16) {
                 top = 16;
             } else if (top + modalHeight > viewportHeight - 16) {
-                top = viewportHeight - modalHeight - 16;
+                top = Math.max(16, viewportHeight - modalHeight - 16);
             }
 
             setPosition({ top, left });
 
-            // Highlight the target element
-            element.style.position = 'relative';
+            // Highlight the target element (don't change position property)
             element.style.zIndex = '10001';
             element.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
             element.style.borderRadius = '8px';
@@ -116,7 +125,13 @@ export default function EReaderTour({ onComplete }) {
             const element = document.querySelector(step.target);
             if (element) {
                 element.style.boxShadow = '';
-                element.style.zIndex = '';
+                // Don't clear z-index, just reset to original if it had one
+                const originalClass = element.className;
+                if (originalClass.includes('z-10')) {
+                    element.style.zIndex = '10';
+                } else {
+                    element.style.zIndex = '';
+                }
             }
         });
     };
