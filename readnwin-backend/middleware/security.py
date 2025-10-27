@@ -54,10 +54,10 @@ class SecurityMiddleware:
             limit = 100
         elif path.startswith("/auth/"):
             # Auth endpoints: 20 requests per minute
-            limit = 20
+            limit = 40
         elif path.startswith("/upload/"):
             # Upload endpoints: 10 requests per minute
-            limit = 10
+            limit = 20
         else:
             # General endpoints: 200 requests per minute
             limit = 200
