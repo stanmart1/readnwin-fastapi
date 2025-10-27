@@ -625,10 +625,11 @@ export default function EpubReader({ bookId, onClose }) {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowTour(true)}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1"
               title="Show Tour"
             >
-              <i className="ri-question-line text-xl"></i>
+              <i className="ri-question-line text-lg"></i>
+              <span className="hidden sm:inline">Show Tour</span>
             </button>
             <button
               data-tour="toc-button"
@@ -716,14 +717,14 @@ export default function EpubReader({ bookId, onClose }) {
         <button
           data-tour="prev-button"
           onClick={prevPage}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all"
+          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
         >
           <i className="ri-arrow-left-s-line text-2xl"></i>
         </button>
         <button
           data-tour="next-button"
           onClick={nextPage}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all"
+          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
         >
           <i className="ri-arrow-right-s-line text-2xl"></i>
         </button>
