@@ -69,6 +69,7 @@ export default function EReaderTour({ onComplete }) {
             const viewportHeight = window.innerHeight;
             const modalWidth = Math.min(384, viewportWidth - 32); // max-w-sm with padding
             const modalHeight = 250; // approximate height
+            const padding = 16;
 
             let top, left;
 
@@ -81,19 +82,20 @@ export default function EReaderTour({ onComplete }) {
                     top = rect.top - modalHeight - 20;
                 }
             } else if (step.placement === 'top') {
-                top = rect.top - modalHeight - 20;
+                // For top placement, center the modal vertically relative to button
+                top = rect.top + rect.height / 2 - modalHeight / 2;
                 left = rect.left + rect.width / 2;
 
-                // Check if modal would overflow top
-                if (top < 0) {
-                    top = rect.bottom + 20;
+                // If it would overflow top, move it down
+                if (top < padding) {
+                    top = padding;
                 }
             } else if (step.placement === 'right') {
-                top = rect.top + rect.height / 2;
+                top = rect.top + rect.height / 2 - modalHeight / 2;
                 left = rect.right + 20;
             } else {
-                top = rect.top + rect.height / 2;
-                left = rect.left - 20;
+                top = rect.top + rect.height / 2 - modalHeight / 2;
+                left = rect.left - modalWidth - 20;
             }
 
             // Ensure modal doesn't overflow horizontally
