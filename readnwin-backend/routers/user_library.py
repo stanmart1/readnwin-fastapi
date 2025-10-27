@@ -58,6 +58,17 @@ async def get_user_library(
         # Ensure author name is available
         author_name = item.book.author or "Unknown Author"
         
+        # Detect file extension from file_path
+        file_extension = None
+        detected_format = item.book.format or "ebook"
+        if item.book.file_path:
+            file_extension = item.book.file_path.split('.')[-1].lower()
+            # Override format based on file extension
+            if file_extension == 'epub':
+                detected_format = 'epub'
+            elif file_extension in ['html', 'htm']:
+                detected_format = 'html'
+        
         enhanced_items.append({
             "id": item.id,
             "book_id": item.book_id,
@@ -66,8 +77,9 @@ async def get_user_library(
             "cover_image": item.book.cover_image,
             "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else None,
             "description": item.book.description,
-            "format": item.book.format or "ebook",
+            "format": detected_format,
             "file_path": item.book.file_path,
+            "file_extension": file_extension,
             "price": float(item.book.price) if item.book.price else 0,
             "rating": 0,
             "total_pages": total_pages,
@@ -79,9 +91,10 @@ async def get_user_library(
                 "cover_image": item.book.cover_image,
                 "cover_image_url": storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else None,
                 "price": float(item.book.price) if item.book.price else 0,
-                "format": item.book.format or "ebook",
+                "format": detected_format,
                 "pages": total_pages,
                 "file_path": item.book.file_path,
+                "file_extension": file_extension,
                 "ebook_file_url": storage.get_url(item.book.file_path) if item.book.file_path else None,
                 "description": item.book.description,
                 "category_name": item.book.category.name if item.book.category else None

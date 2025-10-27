@@ -31,41 +31,12 @@ export default function Reading() {
         return;
       }
 
-      // Book data can be in libraryItem.book or directly on libraryItem
-      const book = libraryItem.book || libraryItem;
+      // Use the format field from API which now includes proper detection
+      const format = libraryItem.format || 'epub';
 
-      // file_path can be at libraryItem level or book level
-      const filePath = libraryItem.file_path || book.file_path;
-      const bookFormat = libraryItem.format || book.format;
+      console.log('Book format from API:', format);
+      console.log('File extension:', libraryItem.file_extension);
 
-      console.log('Book data:', book);
-      console.log('Book format field:', bookFormat);
-      console.log('Book file_path:', filePath);
-
-      // Detect format - prioritize file_path extension over format field
-      let format = 'html'; // default
-
-      // Check file_path first (most reliable)
-      if (filePath) {
-        const extension = filePath.split('.').pop().toLowerCase();
-        console.log('File extension:', extension);
-        if (extension === 'epub') {
-          format = 'epub';
-        } else if (extension === 'html' || extension === 'htm') {
-          format = 'html';
-        }
-      } else if (bookFormat) {
-        // Fallback to format field - handle both 'epub' and 'ebook'
-        const formatLower = bookFormat.toLowerCase();
-        if (formatLower === 'epub' || formatLower === 'ebook') {
-          // If format is 'ebook', default to epub (most common)
-          format = 'epub';
-        } else if (formatLower === 'html') {
-          format = 'html';
-        }
-      }
-
-      console.log('Final detected format:', format);
       setBookFormat(format);
     } catch (err) {
       console.error('Error detecting book format:', err);
