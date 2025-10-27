@@ -33,10 +33,6 @@ export default function Reading() {
 
       // Use the format field from API which now includes proper detection
       const format = libraryItem.format || 'epub';
-
-      console.log('Book format from API:', format);
-      console.log('File extension:', libraryItem.file_extension);
-
       setBookFormat(format);
     } catch (err) {
       console.error('Error detecting book format:', err);

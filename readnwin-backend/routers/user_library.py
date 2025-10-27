@@ -58,16 +58,34 @@ async def get_user_library(
         # Ensure author name is available
         author_name = item.book.author or "Unknown Author"
         
-        # Detect file extension from file_path
+        # Detect file extension from file_path or ebook_file_url
         file_extension = None
         detected_format = item.book.format or "ebook"
-        if item.book.file_path:
-            file_extension = item.book.file_path.split('.')[-1].lower()
-            # Override format based on file extension
-            if file_extension == 'epub':
-                detected_format = 'epub'
-            elif file_extension in ['html', 'htm']:
-                detected_format = 'html'
+        
+        # Try to get file path from multiple sources
+        file_path = item.book.file_path
+        if not file_path and hasattr(item.book, 'ebook_file'):
+            file_path = item.book.ebook_file
+        
+        # Get ebook_file_url for extraction
+        ebook_url = storage.get_url(file_path) if file_path else None
+        
+        # Extract extension from file_path or URL
+        if file_path:
+            file_extension = file_path.split('.')[-1].lower()
+        elif ebook_url:
+            # Extract from URL
+            file_extension = ebook_url.split('.')[-1].split('?')[0].lower()
+        
+        # Override format based on file extension
+        if file_extension == 'epub':
+            detected_format = 'epub'
+        elif file_extension in ['html', 'htm']:
+            detected_format = 'html'
+        elif detected_format.lower() in ['epub', 'ebook']:
+            # Default ebook format to epub
+            detected_format = 'epub'
+            file_extension = 'epub'
         
         enhanced_items.append({
             "id": item.id,

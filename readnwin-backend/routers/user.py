@@ -100,6 +100,22 @@ async def get_user_library(
                 elif item.book.author:
                     author_name = item.book.author
 
+                # Detect format from file_path
+                book_format = getattr(item.book, 'format', 'ebook')
+                file_extension = None
+                file_path = getattr(item.book, 'file_path', None)
+                
+                if file_path:
+                    file_extension = file_path.split('.')[-1].lower()
+                    if file_extension == 'epub':
+                        book_format = 'epub'
+                    elif file_extension in ['html', 'htm']:
+                        book_format = 'html'
+                elif book_format.lower() in ['ebook', 'epub']:
+                    # Default ebook to epub
+                    book_format = 'epub'
+                    file_extension = 'epub'
+                
                 library_books.append({
                     "id": item.id,
                     "book_id": item.book_id,
@@ -111,7 +127,9 @@ async def get_user_library(
                     "last_read_location": item.last_read_location,
                     "last_read_at": last_read_at,
                     "purchase_date": item.created_at.isoformat() if item.created_at else None,
-                    "format": getattr(item.book, 'format', 'ebook'),
+                    "format": book_format,
+                    "file_extension": file_extension,
+                    "file_path": file_path,
                     "price": float(item.book.price) if item.book.price else 0,
                     "description": item.book.description,
                     "rating": getattr(item.book, 'rating', 0),
