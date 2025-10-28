@@ -10,7 +10,7 @@ import { useCartContext } from '../context/CartContext';
 export default function BookDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { refreshCart } = useCartContext();
+  const { addToCart } = useCartContext();
   const [book, setBook] = useState(null);
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,6 @@ export default function BookDetail() {
   };
 
   const handleAddToCart = async () => {
-    console.log('Add to cart clicked, book:', book);
     if (!book || !book.id) {
       alert('Book information not loaded');
       return;
@@ -48,14 +47,10 @@ export default function BookDetail() {
     
     try {
       setAddingToCart(true);
-      console.log('Sending request to /cart/add with book_id:', book.id);
-      const response = await api.post('/cart/add', { book_id: book.id, quantity: 1 });
-      console.log('Cart response:', response.data);
-      await refreshCart();
-      alert(response.data.message || 'Book added to cart!');
+      await addToCart(book, 1);
+      alert('Book added to cart!');
     } catch (error) {
       console.error('Add to cart error:', error);
-      console.error('Error response:', error.response);
       if (error.response?.status === 401) {
         alert('Please login to add items to cart');
         navigate('/login');
