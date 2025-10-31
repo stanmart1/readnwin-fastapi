@@ -121,16 +121,14 @@ export default function WorksCarousel() {
             </button>
 
             {/* Carousel Container */}
-            <div className="relative h-[400px] md:h-[450px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentIndex}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5 }}
-                  className="absolute inset-0 flex items-center justify-center gap-4 md:gap-6 px-4 md:px-12"
-                >
+            <div className="relative h-[400px] md:h-[450px] overflow-hidden">
+              <motion.div
+                key={currentIndex}
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="absolute inset-0 flex items-center justify-center gap-4 md:gap-6 px-4 md:px-12"
+              >
                   {/* Show 1 card on mobile, 3 on desktop */}
                   <div className="hidden md:flex gap-6 w-full justify-center">
                     {[0, 1, 2].map((offset) => {
@@ -163,7 +161,6 @@ export default function WorksCarousel() {
                     </motion.div>
                   </div>
                 </motion.div>
-              </AnimatePresence>
             </div>
 
             {/* Dots Indicator */}
