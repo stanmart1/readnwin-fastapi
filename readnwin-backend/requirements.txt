@@ -55,6 +55,7 @@ reportlab==4.0.7
 Pillow==10.0.1
 bleach==6.1.0
 python-magic==0.4.27
+werkzeug==3.0.0
 
 # Production utilities
 gunicorn>=21.2.0
