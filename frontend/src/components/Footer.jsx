@@ -98,9 +98,7 @@ export default function Footer() {
             />
             <span>by</span>
             <a
-              href="https://scaleitpro.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="tel:+2347062750516"
               className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
             >
               ScaleITPro
