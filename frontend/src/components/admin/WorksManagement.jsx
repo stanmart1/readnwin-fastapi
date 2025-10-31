@@ -144,13 +144,26 @@ const WorksManagement = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('is_active', (!currentStatus).toString());
 
-      const result = await updateWork(id, formDataToSend);
+      // Use the dedicated toggle endpoint
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/admin/works/${id}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+
+      const result = await response.json();
+      
       if (result.success) {
         fetchWorks();
         alert(`Work ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
       } else {
         setError(result.error || 'Failed to update status');
       }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      setError('Failed to update status');
     } finally {
       setIsTogglingStatus(false);
     }
