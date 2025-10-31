@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useMemo } from 'react';
-import { useCart, useAuth } from '../hooks';
+import { useAuth } from '../hooks';
+import { useCartContext } from '../context/CartContext';
 import { getImageUrl } from '../lib/fileService';
 import Header from '../components/Header';
 
@@ -23,7 +24,7 @@ export default function Cart() {
     getTotalSavings,
     getTotalItems,
     refreshCart
-  } = useCart();
+  } = useCartContext();
 
   useEffect(() => {
     if (isAuthenticated && !hasLoaded.current) {
