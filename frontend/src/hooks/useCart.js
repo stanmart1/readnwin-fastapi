@@ -49,11 +49,11 @@ export const useCart = () => {
 
   // Load authenticated user cart from API
   const loadAuthenticatedCart = useCallback(async () => {
-    if (!isAuthenticated) return;
-    
-    // Check if token exists
+    // Check if token exists first
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!isAuthenticated || !token) {
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -82,11 +82,15 @@ export const useCart = () => {
       
       setCartItems(transformedItems);
     } catch (err) {
-      console.error('Error loading cart:', err);
-      // Don't set error for 401 - just means not authenticated
-      if (err.response?.status !== 401) {
-        setError(err.message);
+      // Silently handle 401 errors (user not authenticated)
+      if (err.response?.status === 401) {
+        console.log('Cart requires authentication');
+        // Clear any stale cart data
+        setCartItems([]);
+        return;
       }
+      console.error('Error loading cart:', err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -150,21 +154,24 @@ export const useCart = () => {
 
   // Load cart on mount and when auth changes
   useEffect(() => {
-    if (!isAuthenticated) {
+    const token = localStorage.getItem('token');
+    
+    if (!isAuthenticated || !token) {
+      // Guest user - load from localStorage
       hasLoadedCart.current = false;
       try {
         const stored = localStorage.getItem(GUEST_CART_KEY);
         if (stored) {
           setCartItems(JSON.parse(stored));
+        } else {
+          setCartItems([]);
         }
       } catch (error) {
         console.error('Error loading guest cart:', error);
+        setCartItems([]);
       }
     } else {
-      // User just logged in - check if token exists
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      
+      // Authenticated user with valid token
       if (!hasLoadedCart.current) {
         hasLoadedCart.current = true;
         
