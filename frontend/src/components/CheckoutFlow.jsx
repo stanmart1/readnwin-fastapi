@@ -29,7 +29,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   });
 
-  const { shippingMethods, paymentGateways } = useCheckout(analytics?.isEbookOnly);
+  const { shippingMethods, paymentGateways, isLoading: isLoadingCheckoutData } = useCheckout(analytics?.isEbookOnly);
 
   const analyzeCart = useCallback(() => {
     if (!cartItems || cartItems.length === 0) return null;
@@ -234,6 +234,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
             updateFormData={updateFormData}
             shippingMethods={shippingMethods}
             analytics={analytics}
+            isLoading={isLoadingCheckoutData}
           />
         )}
         
@@ -426,37 +427,85 @@ function ShippingAddressStep({ formData, updateFormData }) {
   );
 }
 
-function ShippingMethodStep({ formData, updateFormData, shippingMethods, analytics }) {
+function ShippingMethodStep({ formData, updateFormData, shippingMethods, analytics, isLoading }) {
+  const activeShippingMethods = shippingMethods?.filter(method => method.is_active !== false) || [];
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Shipping Method</h3>
+        <div className="flex items-center justify-center p-8">
+          <i className="ri-loader-4-line animate-spin text-blue-600 text-2xl mr-2"></i>
+          <span className="text-gray-600">Loading shipping methods...</span>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Shipping Method</h3>
       
-      <div className="space-y-3">
-        {shippingMethods.filter(method => method.is_active !== false).map((method) => (
-          <div
-            key={method.id}
-            className={`border rounded-lg p-4 cursor-pointer transition-all ${
-              formData.shipping_method?.id === method.id 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-            onClick={() => updateFormData('shipping_method', method)}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium text-gray-900">{method.name}</h4>
-                <p className="text-sm text-gray-600">{method.description}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Delivery: {method.estimated_days_min}-{method.estimated_days_max} business days
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-gray-900">₦{method.base_cost.toLocaleString()}</p>
+      {!formData.shipping_method && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center">
+            <i className="ri-information-line text-yellow-600 mr-2"></i>
+            <span className="text-sm text-yellow-800">Please select a shipping method to continue</span>
+          </div>
+        </div>
+      )}
+      
+      {activeShippingMethods.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+          <i className="ri-truck-line text-gray-400 text-4xl mb-2"></i>
+          <p className="text-gray-600">No shipping methods available at the moment.</p>
+          <p className="text-sm text-gray-500 mt-1">Please contact support for assistance.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {activeShippingMethods.map((method) => (
+            <div
+              key={method.id}
+              className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                formData.shipping_method?.id === method.id 
+                  ? 'border-blue-500 bg-blue-50 shadow-md' 
+                  : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+              }`}
+              onClick={() => updateFormData('shipping_method', method)}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex items-start space-x-3">
+                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    formData.shipping_method?.id === method.id
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-300'
+                  }`}>
+                    {formData.shipping_method?.id === method.id && (
+                      <i className="ri-check-line text-white text-xs"></i>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{method.name}</h4>
+                    <p className="text-sm text-gray-600">{method.description || 'Standard delivery service'}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      <i className="ri-time-line mr-1"></i>
+                      Delivery: {method.estimated_days_min}-{method.estimated_days_max} business days
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-lg text-gray-900">₦{method.base_cost.toLocaleString()}</p>
+                  {method.free_shipping_threshold && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Free over ₦{method.free_shipping_threshold.toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
