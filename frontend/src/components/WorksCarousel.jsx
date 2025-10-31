@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../lib/fileService';
 import { useWorks } from '../hooks';
 import ProgressiveImage from './ProgressiveImage';
@@ -7,15 +7,59 @@ import ProgressiveImage from './ProgressiveImage';
 export default function WorksCarousel() {
   const { works, loading } = useWorks();
   const [selectedWork, setSelectedWork] = useState(null);
-  const carouselRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const autoPlayRef = useRef(null);
 
-  const scroll = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = 400;
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
+  // Duplicate works for infinite loop effect
+  const infiniteWorks = works.length > 0 ? [...works, ...works, ...works] : [];
+  const itemsPerView = 3;
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % works.length);
+  }, [works.length]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + works.length) % works.length);
+  }, [works.length]);
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+  };
+
+  // Auto-play every 5 seconds
+  useEffect(() => {
+    if (!isPaused && works.length > 0) {
+      autoPlayRef.current = setInterval(nextSlide, 5000);
+    }
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    };
+  }, [isPaused, nextSlide, works.length]);
+
+  // Touch gesture handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
     }
   };
 
@@ -46,128 +90,206 @@ export default function WorksCarousel() {
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
+        ) : works.length === 0 ? (
+          <div className="text-center py-20 text-gray-500">
+            <i className="ri-image-line text-6xl mb-4"></i>
+            <p>No works available</p>
+          </div>
         ) : (
-          <div className="relative">
-            {/* Navigation Buttons - Hidden on mobile */}
+          <div 
+            className="relative overflow-hidden"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Navigation Buttons */}
             <button
-              onClick={() => scroll('left')}
-              className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-3 hover:bg-gray-100 transition-all"
+              onClick={prevSlide}
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm shadow-lg rounded-full p-2 md:p-3 hover:bg-white transition-all"
+              aria-label="Previous slide"
             >
-              <i className="ri-arrow-left-line text-xl text-gray-700"></i>
+              <i className="ri-arrow-left-line text-lg md:text-xl text-gray-700"></i>
             </button>
             <button
-              onClick={() => scroll('right')}
-              className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-3 hover:bg-gray-100 transition-all"
+              onClick={nextSlide}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm shadow-lg rounded-full p-2 md:p-3 hover:bg-white transition-all"
+              aria-label="Next slide"
             >
-              <i className="ri-arrow-right-line text-xl text-gray-700"></i>
+              <i className="ri-arrow-right-line text-lg md:text-xl text-gray-700"></i>
             </button>
 
             {/* Carousel Container */}
-            <div
-              ref={carouselRef}
-              className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-2 md:px-12 snap-x snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {works.map((work, index) => (
+            <div className="relative h-[400px] md:h-[450px]">
+              <AnimatePresence mode="wait">
                 <motion.div
-                  key={work.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex-shrink-0 w-72 md:w-80 bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300 snap-center"
-                  onClick={() => setSelectedWork(work)}
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute inset-0 flex items-center justify-center gap-4 md:gap-6 px-4 md:px-12"
                 >
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <ProgressiveImage
-                      src={getImageUrl(work.image_path)}
-                      alt={work.alt_text || work.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <button className="w-full bg-white text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all">
-                          View Details
-                        </button>
-                      </div>
-                    </div>
-                    {work.category && (
-                      <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        {work.category}
-                      </div>
-                    )}
+                  {/* Show 1 card on mobile, 3 on desktop */}
+                  <div className="hidden md:flex gap-6 w-full justify-center">
+                    {[0, 1, 2].map((offset) => {
+                      const index = (currentIndex + offset) % works.length;
+                      const work = works[index];
+                      return (
+                        <motion.div
+                          key={`${work.id}-${offset}`}
+                          initial={{ scale: 0.9, opacity: 0.7 }}
+                          animate={{ 
+                            scale: offset === 1 ? 1.05 : 0.95,
+                            opacity: offset === 1 ? 1 : 0.7
+                          }}
+                          className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
+                          onClick={() => setSelectedWork(work)}
+                        >
+                          <WorkCard work={work} />
+                        </motion.div>
+                      );
+                    })}
                   </div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                      {work.title}
-                    </h3>
-                    <p className="text-gray-600 line-clamp-2">
-                      {work.description}
-                    </p>
+                  
+                  {/* Mobile: Single card */}
+                  <div className="md:hidden w-full max-w-sm mx-auto">
+                    <motion.div
+                      className="bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
+                      onClick={() => setSelectedWork(works[currentIndex])}
+                    >
+                      <WorkCard work={works[currentIndex]} />
+                    </motion.div>
                   </div>
                 </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Dots Indicator */}
+            <div className="flex justify-center gap-2 mt-6">
+              {works.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex 
+                      ? 'w-8 bg-blue-600' 
+                      : 'w-2 bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
               ))}
             </div>
           </div>
         )}
 
         {/* Modal */}
-        {selectedWork && (
-          <div
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedWork(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
+        {selectedWork && (() => {
+          const stripHtml = (html) => {
+            if (typeof window === 'undefined') return html;
+            const tmp = document.createElement('DIV');
+            tmp.innerHTML = html || '';
+            return tmp.textContent || tmp.innerText || '';
+          };
+          const plainDescription = stripHtml(selectedWork.description);
+          
+          return (
+            <div
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedWork(null)}
             >
-              <div className="relative h-64">
-                <ProgressiveImage
-                  src={getImageUrl(selectedWork.image_path)}
-                  alt={selectedWork.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <button
-                  onClick={() => setSelectedWork(null)}
-                  className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100"
-                >
-                  <i className="ri-close-line text-xl"></i>
-                </button>
-              </div>
-              <div className="p-8">
-                <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                  {selectedWork.title}
-                </h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
-                  {selectedWork.description}
-                </p>
-                {selectedWork.category && (
-                  <div className="mt-6">
-                    <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-                      {selectedWork.category}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="relative h-64">
+                  <ProgressiveImage
+                    src={getImageUrl(selectedWork.image_path)}
+                    alt={selectedWork.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <button
+                    onClick={() => setSelectedWork(null)}
+                    className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 shadow-lg"
+                  >
+                    <i className="ri-close-line text-xl"></i>
+                  </button>
+                </div>
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+                    {selectedWork.title}
+                  </h3>
+                  <p className="text-gray-600 text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                    {plainDescription}
+                  </p>
+                  {selectedWork.category && (
+                    <div className="mt-6">
+                      <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
+                        {selectedWork.category}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </div>
+
+    </section>
+  );
+}
+
+// WorkCard Component
+function WorkCard({ work }) {
+  // Strip HTML tags from description
+  const stripHtml = (html) => {
+    if (typeof window === 'undefined') return html;
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html || '';
+    return tmp.textContent || tmp.innerText || '';
+  };
+  const plainDescription = stripHtml(work.description);
+
+  return (
+    <>
+      {/* Image */}
+      <div className="relative h-48 overflow-hidden">
+        <ProgressiveImage
+          src={getImageUrl(work.image_path)}
+          alt={work.alt_text || work.title}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-4 left-4 right-4">
+            <button className="w-full bg-white text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all">
+              View Details
+            </button>
+          </div>
+        </div>
+        {work.category && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+            {work.category}
           </div>
         )}
       </div>
 
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-    </section>
+      {/* Content */}
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+          {work.title}
+        </h3>
+        <p className="text-gray-600 line-clamp-3">
+          {plainDescription}
+        </p>
+      </div>
+    </>
   );
 }
