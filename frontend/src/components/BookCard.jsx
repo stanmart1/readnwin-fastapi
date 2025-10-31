@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../hooks';
+import { useCartContext } from '../context/CartContext';
 import { getImageUrl } from '../lib/fileService';
 
 export default function BookCard({ book }) {
   const [isHovered, setIsHovered] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
 
   const displayAuthor = book.author_name || book.author || '';
   const displayCover = getImageUrl(book.cover_image_url || book.cover_image);

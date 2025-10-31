@@ -212,34 +212,37 @@ export const useCart = () => {
           book_id: book.id,
           quantity
         });
+        // Immediately reload cart to update UI
         await loadAuthenticatedCart();
       } else {
         // Guest user - use localStorage
-        const existingIndex = cartItems.findIndex(item => item.book_id === book.id);
-        let newCart;
-        
-        if (existingIndex >= 0) {
-          newCart = [...cartItems];
-          newCart[existingIndex].quantity += quantity;
-        } else {
-          newCart = [...cartItems, {
-            id: Date.now(),
-            book_id: book.id,
-            book: book,
-            quantity,
-            created_at: new Date().toISOString()
-          }];
-        }
-        
-        setCartItems(newCart);
-        saveGuestCart(newCart);
+        setCartItems(prevItems => {
+          const existingIndex = prevItems.findIndex(item => item.book_id === book.id);
+          let newCart;
+          
+          if (existingIndex >= 0) {
+            newCart = [...prevItems];
+            newCart[existingIndex].quantity += quantity;
+          } else {
+            newCart = [...prevItems, {
+              id: Date.now(),
+              book_id: book.id,
+              book: book,
+              quantity,
+              created_at: new Date().toISOString()
+            }];
+          }
+          
+          saveGuestCart(newCart);
+          return newCart;
+        });
       }
     } catch (err) {
       console.error('Error adding to cart:', err);
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [isAuthenticated, loadAuthenticatedCart, saveGuestCart]);
 
   // Update quantity
   const updateQuantity = useCallback(async (bookId, quantity) => {
@@ -256,14 +259,17 @@ export const useCart = () => {
           await api.delete(`/cart/${cartItem.id}`);
           // Add with new quantity
           await api.post('/cart/add', { book_id: bookId, quantity });
+          // Immediately reload cart to update UI
           await loadAuthenticatedCart();
         }
       } else {
-        const newCart = cartItems.map(item =>
-          item.book_id === bookId ? { ...item, quantity } : item
-        );
-        setCartItems(newCart);
-        saveGuestCart(newCart);
+        setCartItems(prevItems => {
+          const newCart = prevItems.map(item =>
+            item.book_id === bookId ? { ...item, quantity } : item
+          );
+          saveGuestCart(newCart);
+          return newCart;
+        });
       }
     } catch (err) {
       console.error('Error updating quantity:', err);
@@ -277,23 +283,23 @@ export const useCart = () => {
     try {
       setError(null);
       
-      // Optimistically update UI immediately
-      const newCart = cartItems.filter(item => item.book_id !== bookId);
-      setCartItems(newCart);
-      
       if (isAuthenticated) {
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
           await api.delete(`/cart/${cartItem.id}`);
+          // Immediately reload cart to update UI
+          await loadAuthenticatedCart();
         }
       } else {
-        saveGuestCart(newCart);
+        setCartItems(prevItems => {
+          const newCart = prevItems.filter(item => item.book_id !== bookId);
+          saveGuestCart(newCart);
+          return newCart;
+        });
       }
     } catch (err) {
       console.error('Error removing from cart:', err);
       setError(err.message);
-      // Revert on error
-      await loadAuthenticatedCart();
       throw err;
     }
   }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);

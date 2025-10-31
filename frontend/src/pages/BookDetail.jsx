@@ -55,7 +55,7 @@ export default function BookDetail() {
         alert('Please login to add items to cart');
         navigate('/login');
       } else {
-        alert(error.response?.data?.detail || 'Failed to add to cart');
+        alert('Failed to add to cart');
       }
     } finally {
       setAddingToCart(false);
