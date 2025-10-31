@@ -77,6 +77,10 @@ async def shutdown_event():
     except Exception:
         pass
 
+# Security middleware
+from middleware.xss_protection import XSSProtectionMiddleware
+app.add_middleware(XSSProtectionMiddleware)
+
 # CORS configuration
 import os
 allowed_origins = [

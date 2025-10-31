@@ -12,6 +12,7 @@ import mimetypes
 from datetime import datetime, timezone
 import html
 import json
+from core.path_validator import validate_path
 
 from core.database import get_db
 from core.security import get_current_user_from_token
@@ -641,25 +642,14 @@ async def get_book_content(
         if not book.file_path:
             raise HTTPException(status_code=404, detail="Book file not found")
         
-        # Handle different file path formats
-        backend_dir = os.path.dirname(os.path.abspath(__file__)).replace('/routers', '')
+        # Validate and get safe file path
         file_path_clean = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
+        safe_path = validate_path("./uploads/ebooks", file_path_clean)
         
-        possible_paths = [
-            os.path.join(backend_dir, book.file_path),
-            os.path.join(backend_dir, 'uploads', 'ebooks', file_path_clean),
-            os.path.join(backend_dir, 'uploads', file_path_clean),
-            book.file_path if os.path.isabs(book.file_path) else None
-        ]
-        
-        file_path = None
-        for path in possible_paths:
-            if path and os.path.exists(path):
-                file_path = path
-                break
-        
-        if not file_path:
+        if not safe_path or not safe_path.exists():
             raise HTTPException(status_code=404, detail="Book file not found on server")
+        
+        file_path = str(safe_path)
         
         file_ext = os.path.splitext(file_path)[1].lower()
         

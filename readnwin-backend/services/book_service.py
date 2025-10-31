@@ -6,11 +6,12 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile
 import os
-import hashlib
 from pathlib import Path
 
 from models.book import Book, Category
 from models.author import Author
+from core.secure_upload import get_file_hash
+from core.path_validator import sanitize_filename
 
 
 class BookService:
@@ -73,19 +74,26 @@ class BookService:
     @staticmethod
     def generate_secure_filename(content: bytes, original_filename: str) -> str:
         """Generate secure filename using hash"""
-        file_hash = hashlib.md5(content).hexdigest()[:16]
-        extension = Path(original_filename).suffix
-        return f"{file_hash}_{original_filename}{extension}"
+        file_hash = get_file_hash(content)[:16]
+        safe_name = sanitize_filename(original_filename)
+        extension = Path(safe_name).suffix
+        return f"{file_hash}_{safe_name}"
     
     @staticmethod
     def save_file(content: bytes, file_path: str) -> None:
-        """Save file to disk"""
+        """Save file to disk securely"""
+        from core.path_validator import validate_path
+        
+        # Validate path
+        safe_path = validate_path("./uploads", file_path.replace('./uploads/', ''))
+        if not safe_path:
+            raise HTTPException(status_code=400, detail="Invalid file path")
+        
         # Create directory if not exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        safe_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Write file
-        with open(file_path, "wb") as f:
-            f.write(content)
+        safe_path.write_bytes(content)
     
     @staticmethod
     def create_book(
