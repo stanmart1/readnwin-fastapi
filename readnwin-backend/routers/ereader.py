@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 from pathlib import Path
-import os
 from datetime import datetime, timezone
 import bleach
+from core.path_validator import validate_path
 
 from core.database import get_db
 from core.security import get_current_user_from_token
@@ -78,27 +78,17 @@ async def get_html_content(
     if not book.file_path:
         raise HTTPException(status_code=404, detail="Book file not found")
     
-    backend_dir = os.getcwd()
+    # Validate and get safe file path
     file_path = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
+    safe_path = validate_path("./uploads/ebooks", file_path)
     
-    possible_paths = [
-        os.path.join(backend_dir, 'uploads', 'ebooks', file_path),
-        os.path.join(backend_dir, 'uploads', file_path),
-        os.path.join(backend_dir, book.file_path)
-    ]
-    
-    html_content = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    html_content = f.read()
-                break
-            except Exception:
-                continue
-    
-    if not html_content:
+    if not safe_path or not safe_path.exists():
         raise HTTPException(status_code=404, detail="Book file not accessible")
+    
+    try:
+        html_content = safe_path.read_text(encoding='utf-8')
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to read book file")
     
     sanitized_content = sanitize_html_content(html_content)
     
@@ -393,15 +383,16 @@ async def get_book_file(
     if not book.file_path:
         raise HTTPException(status_code=404, detail="Book file not found")
     
-    # Get absolute file path
-    file_path = storage.get_absolute_path(book.file_path)
+    # Validate and get safe file path
+    file_path = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
+    safe_path = validate_path("./uploads/ebooks", file_path)
     
-    if not os.path.exists(file_path):
+    if not safe_path or not safe_path.exists():
         raise HTTPException(status_code=404, detail="Book file not accessible")
     
     # Serve the file
     return FileResponse(
-        path=file_path,
+        path=str(safe_path),
         media_type='application/epub+zip',
         filename=f"{book.title}.epub"
     )

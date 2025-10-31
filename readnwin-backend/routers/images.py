@@ -3,8 +3,8 @@ from fastapi.responses import Response
 import httpx
 from PIL import Image
 import io
-import os
 from typing import Optional
+from core.path_validator import validate_path
 
 router = APIRouter(prefix="/images", tags=["images"])
 
@@ -36,12 +36,12 @@ async def optimize_image(
             if file_path.startswith('uploads/covers/uploads/covers/'):
                 file_path = file_path.replace('uploads/covers/uploads/covers/', 'uploads/covers/')
             
-            full_path = f"./{file_path}"
-            if not os.path.exists(full_path):
-                raise HTTPException(status_code=404, detail=f"Image not found: {full_path}")
+            # Validate path to prevent traversal
+            safe_path = validate_path("./uploads", file_path)
+            if not safe_path or not safe_path.exists():
+                raise HTTPException(status_code=404, detail="Image not found")
             
-            with open(full_path, 'rb') as f:
-                image_data = f.read()
+            image_data = safe_path.read_bytes()
         else:
             # Handle external URLs
             async with httpx.AsyncClient() as client:
@@ -99,12 +99,12 @@ async def get_thumbnail(
 ):
     """Generate thumbnails for book covers"""
     try:
-        file_path = f"./uploads/covers/{path}"
-        if not os.path.exists(file_path):
+        # Validate path to prevent traversal
+        safe_path = validate_path("./uploads/covers", path)
+        if not safe_path or not safe_path.exists():
             raise HTTPException(status_code=404, detail="Image not found")
         
-        with open(file_path, 'rb') as f:
-            image_data = f.read()
+        image_data = safe_path.read_bytes()
         
         image = Image.open(io.BytesIO(image_data))
         
