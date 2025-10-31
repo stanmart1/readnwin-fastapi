@@ -54,9 +54,16 @@ class TemplateManager:
             if use_db and self.db_session:
                 html_content = self._get_template_from_db(template_name)
                 if html_content:
-                    # Render the database template content directly
-                    from jinja2 import Template as Jinja2Template
-                    template = Jinja2Template(html_content)
+                    # Render the database template content with sandboxed environment
+                    from jinja2 import Environment, BaseLoader
+                    from jinja2.sandbox import SandboxedEnvironment
+                    
+                    # Use sandboxed environment for security
+                    sandbox_env = SandboxedEnvironment(
+                        loader=BaseLoader(),
+                        autoescape=True
+                    )
+                    template = sandbox_env.from_string(html_content)
                     return template.render(context)
             
             # Fallback to filesystem template
@@ -80,6 +87,11 @@ class TemplateManager:
         """
         try:
             from models.email_templates import AdminEmailTemplate
+            
+            # Validate template name to prevent path traversal
+            if '..' in template_name or template_name.startswith('/'):
+                logger.warning(f"Invalid template name: {template_name}")
+                return None
             
             # Extract slug from template name (e.g., 'emails/welcome.html' -> 'welcome')
             slug = Path(template_name).stem
