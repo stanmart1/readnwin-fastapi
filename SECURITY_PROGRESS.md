@@ -21,10 +21,18 @@
 - [ ] Update .env with new secrets (MANUAL STEP REQUIRED)
 - [ ] Test application with changes
 
-### Phase 2: File Upload & Path Traversal (STARTING)
-- [ ] Apply secure_upload.py to all upload endpoints
-- [ ] Apply path_validator.py to all file access
-- [ ] Fix insecure hashing (MD5 → SHA256)
+### Phase 2: File Upload Security (COMPLETED ✅)
+- [x] Applied secure_upload.py to upload endpoints
+  - Fixed routers/upload.py
+  - Fixed routers/file_upload.py
+- [x] Fixed insecure hashing (MD5 → SHA256)
+- [x] Added content-based file validation
+
+### Phase 3: XSS & Path Traversal (COMPLETED ✅)
+- [x] Added XSS protection middleware to main.py
+- [x] Fixed path traversal in routers/images.py
+- [x] Fixed path traversal in routers/ereader.py
+- [x] Applied path_validator to file access operations
 
 **Commit**: `defe460` - Phase 1: Critical security fixes
 
