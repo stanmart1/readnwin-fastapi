@@ -18,16 +18,40 @@ export default function WorksCarousel() {
   const itemsPerView = 3;
 
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % works.length);
+    setCurrentIndex((prev) => {
+      const next = prev + 1;
+      // Reset to start of second set when reaching end of second set
+      if (next >= works.length * 2) {
+        setTimeout(() => setCurrentIndex(works.length), 0);
+        return works.length;
+      }
+      return next;
+    });
   }, [works.length]);
 
   const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + works.length) % works.length);
+    setCurrentIndex((prev) => {
+      const next = prev - 1;
+      // Reset to end of second set when going before first set
+      if (next < works.length) {
+        setTimeout(() => setCurrentIndex(works.length * 2 - 1), 0);
+        return works.length * 2 - 1;
+      }
+      return next;
+    });
   }, [works.length]);
 
   const goToSlide = (index) => {
-    setCurrentIndex(index);
+    // Offset by works.length to use middle set
+    setCurrentIndex(works.length + index);
   };
+
+  // Initialize to middle set for infinite scrolling
+  useEffect(() => {
+    if (works.length > 0 && currentIndex === 0) {
+      setCurrentIndex(works.length);
+    }
+  }, [works.length]);
 
   // Auto-play every 5 seconds
   useEffect(() => {
@@ -121,62 +145,43 @@ export default function WorksCarousel() {
             </button>
 
             {/* Carousel Container */}
-            <div className="relative h-[400px] md:h-[450px] overflow-hidden">
+            <div className="relative overflow-hidden px-4 md:px-12">
               <motion.div
-                key={currentIndex}
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
+                animate={{ x: `-${currentIndex * 336}px` }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="absolute inset-0 flex items-center justify-center gap-4 md:gap-6 px-4 md:px-12"
+                className="flex gap-6"
               >
-                  {/* Show 1 card on mobile, 3 on desktop */}
-                  <div className="hidden md:flex gap-6 w-full justify-center">
-                    {[0, 1, 2].map((offset) => {
-                      const index = (currentIndex + offset) % works.length;
-                      const work = works[index];
-                      return (
-                        <motion.div
-                          key={`${work.id}-${offset}`}
-                          initial={{ scale: 0.9, opacity: 0.7 }}
-                          animate={{ 
-                            scale: offset === 1 ? 1.05 : 0.95,
-                            opacity: offset === 1 ? 1 : 0.7
-                          }}
-                          className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
-                          onClick={() => setSelectedWork(work)}
-                        >
-                          <WorkCard work={work} />
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Mobile: Single card */}
-                  <div className="md:hidden w-full max-w-sm mx-auto">
-                    <motion.div
-                      className="bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
-                      onClick={() => setSelectedWork(works[currentIndex])}
-                    >
-                      <WorkCard work={works[currentIndex]} />
-                    </motion.div>
-                  </div>
-                </motion.div>
+                {/* Triple the works array for infinite effect */}
+                {[...works, ...works, ...works].map((work, index) => (
+                  <motion.div
+                    key={`${work.id}-${index}`}
+                    className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
+                    onClick={() => setSelectedWork(work)}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <WorkCard work={work} />
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
 
             {/* Dots Indicator */}
             <div className="flex justify-center gap-2 mt-6">
-              {works.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === currentIndex 
-                      ? 'w-8 bg-blue-600' 
-                      : 'w-2 bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
+              {works.map((_, index) => {
+                const activeIndex = currentIndex % works.length;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === activeIndex
+                        ? 'w-8 bg-blue-600' 
+                        : 'w-2 bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
