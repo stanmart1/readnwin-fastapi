@@ -2,17 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token
+from core.secure_upload import validate_file, secure_save_file
+from core.path_validator import sanitize_filename
 from models.user import User
-import os
-import uuid
 from pathlib import Path
-import shutil
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 UPLOAD_DIR = Path("uploads")
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".pdf"}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 @router.post("/")
 async def upload_file(
@@ -21,40 +18,32 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
 ):
-    """Upload file (proof of payment, etc.)"""
+    """Upload file with security validation"""
     try:
-        # Validate file extension
-        file_ext = Path(file.filename).suffix.lower()
-        if file_ext not in ALLOWED_EXTENSIONS:
-            raise HTTPException(
-                status_code=400, 
-                detail="Invalid file type. Only JPEG, PNG, GIF, and PDF files are allowed."
-            )
-
-        # Read file content to check size
+        # Sanitize type parameter to prevent path traversal
+        safe_type = sanitize_filename(type)
+        if not safe_type or safe_type != type:
+            raise HTTPException(status_code=400, detail="Invalid upload type")
+        
+        # Map type to file category
+        file_category = "proof" if safe_type == "proofs" else "image"
+        
+        # Read file content
         content = await file.read()
-        if len(content) > MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=400,
-                detail="File size too large. Maximum size is 5MB."
-            )
-
-        # Create upload directory if it doesn't exist
-        upload_path = UPLOAD_DIR / type
+        
+        # Validate file
+        is_valid, error_msg = validate_file(content, file.filename, file_category)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # Create upload directory
+        upload_path = UPLOAD_DIR / safe_type
         upload_path.mkdir(parents=True, exist_ok=True)
-
-        # Generate filename using old format: hash + original filename
-        import hashlib
-        file_hash = hashlib.md5(content).hexdigest()[:16]
-        unique_filename = f"{file_hash}_{file.filename}"
-        file_path = upload_path / unique_filename
-
-        # Save file
-        with open(file_path, "wb") as buffer:
-            buffer.write(content)
-
-        # Return file URL
-        file_url = f"/uploads/{type}/{unique_filename}"
+        
+        # Securely save file
+        file_path = secure_save_file(content, file.filename, str(upload_path))
+        filename = Path(file_path).name
+        file_url = f"/uploads/{safe_type}/{filename}"
         
         return {
             "success": True,
