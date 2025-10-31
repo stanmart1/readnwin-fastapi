@@ -297,17 +297,29 @@ const WorksManagement = () => {
         </div>
 
         {/* Works Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {works.map((work) => (
-            <div key={work.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {works.map((work) => {
+            // Strip HTML tags from description
+            const stripHtml = (html) => {
+              const tmp = document.createElement('DIV');
+              tmp.innerHTML = html;
+              return tmp.textContent || tmp.innerText || '';
+            };
+            const plainDescription = stripHtml(work.description || '');
+            
+            return (
+            <div key={work.id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+              <div className="relative flex-shrink-0">
                 <img
                   src={getImageUrl(work.image_path)}
                   alt={work.alt_text}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-40 sm:h-48 object-cover"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                  }}
                 />
                 <div className="absolute top-2 right-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium shadow-sm ${
                     work.is_active 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
@@ -317,43 +329,48 @@ const WorksManagement = () => {
                 </div>
               </div>
               
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{work.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{work.description}</p>
+              <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 break-words">
+                  {work.title}
+                </h3>
+                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 break-words flex-1">
+                  {plainDescription}
+                </p>
                 
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>Order: {work.order_index}</span>
-                  <span>ID: {work.id}</span>
+                <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4 gap-2">
+                  <span className="truncate">Order: {work.order_index}</span>
+                  <span className="truncate">ID: {work.id}</span>
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => handleEditClick(work)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1"
                   >
-                    <i className="ri-edit-line mr-1"></i>
-                    Edit
+                    <i className="ri-edit-line"></i>
+                    <span>Edit</span>
                   </button>
                   <button
                     onClick={() => toggleActive(work.id, work.is_active)}
                     disabled={isTogglingStatus}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 ${
                       work.is_active
                         ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
                     {isTogglingStatus ? (
-                      <i className="ri-loader-4-line animate-spin mr-1"></i>
+                      <i className="ri-loader-4-line animate-spin"></i>
                     ) : (
-                      <i className={`mr-1 ${work.is_active ? 'ri-eye-off-line' : 'ri-eye-line'}`}></i>
+                      <i className={work.is_active ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
                     )}
-                    {work.is_active ? 'Deactivate' : 'Activate'}
+                    <span className="hidden xs:inline">{work.is_active ? 'Hide' : 'Show'}</span>
                   </button>
                   <button
                     onClick={() => handleDelete(work.id)}
                     disabled={isDeleting}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    title="Delete"
                   >
                     {isDeleting ? (
                       <i className="ri-loader-4-line animate-spin"></i>
@@ -364,7 +381,8 @@ const WorksManagement = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {works.length === 0 && (
