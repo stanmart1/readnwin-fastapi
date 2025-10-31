@@ -383,6 +383,10 @@ async def get_book_file(
     if not book.file_path:
         raise HTTPException(status_code=404, detail="Book file not found")
     
+    # Check if file is EPUB format
+    if not book.file_path.lower().endswith('.epub'):
+        raise HTTPException(status_code=400, detail="Only EPUB format books can be read in the e-reader")
+    
     # Validate and get safe file path
     file_path = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
     safe_path = validate_path("./uploads/ebooks", file_path)

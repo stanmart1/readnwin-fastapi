@@ -346,7 +346,7 @@ const WorksManagement = () => {
                 <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 break-words">
                   {work.title}
                 </h3>
-                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 break-words flex-1">
+                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 break-words min-h-[3rem] sm:min-h-[3.6rem]">
                   {plainDescription}
                 </p>
                 

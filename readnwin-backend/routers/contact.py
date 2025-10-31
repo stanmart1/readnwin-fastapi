@@ -162,51 +162,44 @@ def save_admin_contact_data(
     try:
         sanitized_data = sanitize_html_content(contact_data)
         
-        # Update contact methods
-        for method_data in sanitized_data.get('contactMethods', []):
-            method = db.query(ContactMethod).filter(ContactMethod.id == method_data['id']).first()
-            if method:
-                method.title = method_data['title']
-                method.description = method_data['description']
-                method.contact = method_data['contact']
-                method.action = method_data['action']
-                method.is_active = method_data['isActive']
-            else:
-                new_method = ContactMethod(
-                    id=method_data['id'],
-                    icon=method_data['icon'],
-                    title=method_data['title'],
-                    description=method_data['description'],
-                    contact=method_data['contact'],
-                    action=method_data['action'],
-                    is_active=method_data['isActive']
-                )
-                db.add(new_method)
+        # Delete all existing contact methods and recreate
+        db.query(ContactMethod).delete()
+        for idx, method_data in enumerate(sanitized_data.get('contactMethods', [])):
+            new_method = ContactMethod(
+                id=f"method_{idx}",
+                icon=method_data.get('icon', 'ri-mail-line'),
+                title=method_data.get('title', ''),
+                description=method_data.get('description', ''),
+                contact=method_data.get('contact', ''),
+                action=method_data.get('action', method_data.get('contact', '')),
+                is_active=method_data.get('isActive', True)
+            )
+            db.add(new_method)
         
         # Update office info
         office_data = sanitized_data.get('officeInfo', {})
         office_info = db.query(OfficeInfo).first()
         if office_info:
-            office_info.address = office_data['address']
-            office_info.hours = office_data['hours']
-            office_info.parking = office_data['parking']
-            office_info.is_active = office_data['isActive']
+            office_info.address = office_data.get('address', '')
+            office_info.hours = office_data.get('hours', '')
+            office_info.parking = office_data.get('parking', '')
+            office_info.is_active = office_data.get('isActive', True)
         else:
             new_office = OfficeInfo(
-                address=office_data['address'],
-                hours=office_data['hours'],
-                parking=office_data['parking'],
-                is_active=office_data['isActive']
+                address=office_data.get('address', ''),
+                hours=office_data.get('hours', ''),
+                parking=office_data.get('parking', ''),
+                is_active=office_data.get('isActive', True)
             )
             db.add(new_office)
         
-        # Update subjects
+        # Update subjects - delete and recreate
         db.query(ContactSubject).delete()
-        for subject_data in sanitized_data.get('contactSubjects', []):
+        for idx, subject_data in enumerate(sanitized_data.get('contactSubjects', [])):
             new_subject = ContactSubject(
-                name=subject_data['name'],
-                is_active=subject_data['isActive'],
-                order_index=subject_data['order']
+                name=subject_data.get('name', ''),
+                is_active=subject_data.get('isActive', True),
+                order_index=subject_data.get('order', idx + 1)
             )
             db.add(new_subject)
         

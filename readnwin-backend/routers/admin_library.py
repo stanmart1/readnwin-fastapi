@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from pydantic import BaseModel
 from core.database import get_db
-from routers.rbac import require_permission
+from core.security import get_current_user_from_token, check_admin_access
 from models.user_library import UserLibrary
 from models.user import User
 from models.book import Book
@@ -19,9 +19,10 @@ class AssignBookRequest(BaseModel):
 async def assign_book_to_user(
     request: AssignBookRequest,
     db: Session = Depends(get_db),
-    current_user = Depends(require_permission("manage_library"))
+    current_user: User = Depends(get_current_user_from_token)
 ):
     """Assign a book to a user's library"""
+    check_admin_access(current_user)
     
     # Check if user exists
     user = db.query(User).filter(User.id == request.user_id).first()
@@ -68,9 +69,10 @@ async def get_library_assignments(
     search: Optional[str] = None,
     user_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(require_permission("manage_library"))
+    current_user: User = Depends(get_current_user_from_token)
 ):
     """Get all user library assignments with filters"""
+    check_admin_access(current_user)
     
     query = db.query(UserLibrary).options(
         joinedload(UserLibrary.user),
@@ -128,9 +130,10 @@ async def get_library_assignments(
 async def remove_library_assignment(
     assignment_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_permission("manage_library"))
+    current_user: User = Depends(get_current_user_from_token)
 ):
     """Remove a library assignment"""
+    check_admin_access(current_user)
     
     assignment = db.query(UserLibrary).filter(UserLibrary.id == assignment_id).first()
     

@@ -115,10 +115,13 @@ export default function EpubReader({ bookId, onClose }) {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch EPUB file');
+          const errorText = await response.text();
+          console.error('EPUB fetch failed:', response.status, errorText);
+          throw new Error(`Failed to fetch EPUB file: ${response.status} - ${errorText}`);
         }
 
         blob = await response.blob();
+        console.log('EPUB blob received:', blob.size, 'bytes, type:', blob.type);
 
         // Cache the EPUB for next time (don't await, do in background)
         cacheEpub(bookId, blob).catch(err => {
@@ -248,7 +251,8 @@ export default function EpubReader({ bookId, onClose }) {
 
     } catch (err) {
       console.error('Error loading EPUB:', err);
-      setError(err.message || 'Failed to load book');
+      console.error('Error stack:', err.stack);
+      setError(err.message || 'Failed to load EPUB file');
       setLoading(false);
     }
   };
@@ -598,8 +602,20 @@ export default function EpubReader({ bookId, onClose }) {
           <div className="bg-white rounded-xl p-8 max-w-md mx-4">
             <div className="text-center">
               <i className="ri-error-warning-line text-5xl text-red-500 mb-4"></i>
-              <h3 className="text-xl font-bold mb-2">Error Loading Book</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
+              <h3 className="text-xl font-bold mb-2">Unable to Load Book</h3>
+              <p className="text-gray-600 mb-2">{error}</p>
+              {error.includes('400') && (
+                <p className="text-sm text-gray-500 mb-6">This book may not be in EPUB format or the file is missing.</p>
+              )}
+              {error.includes('404') && (
+                <p className="text-sm text-gray-500 mb-6">The book file could not be found on the server.</p>
+              )}
+              {error.includes('403') && (
+                <p className="text-sm text-gray-500 mb-6">You don't have access to this book.</p>
+              )}
+              {!error.includes('400') && !error.includes('404') && !error.includes('403') && (
+                <p className="text-sm text-gray-500 mb-6">Please try again or contact support if the problem persists.</p>
+              )}
               <button
                 onClick={onClose}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

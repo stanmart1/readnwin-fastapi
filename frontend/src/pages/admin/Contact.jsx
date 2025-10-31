@@ -16,8 +16,7 @@ const AdminContact = () => {
 
   const tabs = [
     { id: 'methods', label: 'Contact Methods', icon: 'ri-contacts-line' },
-    { id: 'office', label: 'Office Info', icon: 'ri-building-line' },
-    { id: 'subjects', label: 'Subjects', icon: 'ri-list-check' }
+    { id: 'office', label: 'Office Info', icon: 'ri-building-line' }
   ];
 
   if (loading) {
@@ -149,7 +148,7 @@ const AdminContact = () => {
                       </div>
                     ))}
                     <button
-                      onClick={() => setContactMethods([...contactMethods, { icon: 'ri-mail-line', title: '', description: '', contact: '', isActive: true }])}
+                      onClick={() => setContactMethods([...contactMethods, { icon: 'ri-mail-line', title: '', description: '', contact: '', action: '', isActive: true }])}
                       className="border-2 border-dashed rounded-lg p-8 text-gray-500"
                     >
                       Add Method
@@ -190,38 +189,7 @@ const AdminContact = () => {
                   </div>
                 )}
 
-                {/* Contact Subjects */}
-                {activeTab === 'subjects' && (
-                  <div className="space-y-4">
-                    {contactSubjects.map((subject, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Subject name"
-                          value={subject.name || ''}
-                          onChange={(e) => {
-                            const updated = [...contactSubjects];
-                            updated[idx] = { ...subject, name: e.target.value };
-                            setContactSubjects(updated);
-                          }}
-                          className="flex-1 px-3 py-2 border rounded-lg"
-                        />
-                        <button
-                          onClick={() => setContactSubjects(contactSubjects.filter((_, i) => i !== idx))}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <i className="ri-delete-bin-line"></i>
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setContactSubjects([...contactSubjects, { name: '', isActive: true, order: contactSubjects.length + 1 }])}
-                      className="w-full border-2 border-dashed rounded-lg p-4 text-gray-500"
-                    >
-                      Add Subject
-                    </button>
-                  </div>
-                )}
+
               </motion.div>
             </AnimatePresence>
           </div>
