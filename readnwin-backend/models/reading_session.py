@@ -7,8 +7,8 @@ class ReadingSession(Base):
     __tablename__ = "reading_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    book_id = Column(Integer, ForeignKey("books.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    book_id = Column(Integer, ForeignKey("books.id"), index=True)
     duration = Column(Float, default=0.0)  # in minutes
     pages_read = Column(Integer, default=0)
     progress = Column(Float, default=0.0)  # percentage of book completed
