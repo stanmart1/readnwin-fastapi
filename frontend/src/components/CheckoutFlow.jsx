@@ -29,7 +29,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   });
 
-  const { shippingMethods, paymentGateways } = useCheckout();
+  const { shippingMethods, paymentGateways } = useCheckout(analytics?.isEbookOnly);
 
   const analyzeCart = useCallback(() => {
     if (!cartItems || cartItems.length === 0) return null;

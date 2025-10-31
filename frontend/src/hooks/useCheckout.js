@@ -11,15 +11,36 @@ export function useCheckout(isEbookOnly) {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         
+        // Only fetch shipping methods if not ebook-only
         if (!isEbookOnly) {
-          const shippingRes = await api.get('/shipping/methods');
-          setShippingMethods(shippingRes.data.methods || []);
+          try {
+            const shippingRes = await api.get('/shipping/methods');
+            setShippingMethods(shippingRes.data.methods || []);
+          } catch (shippingErr) {
+            console.error('Failed to load shipping methods:', shippingErr);
+            // Don't fail the entire checkout if shipping fails
+            setShippingMethods([]);
+          }
+        } else {
+          setShippingMethods([]);
         }
 
-        const paymentRes = await api.get('/payment-gateways');
-        setPaymentGateways(paymentRes.data.gateways || []);
+        // Always fetch payment gateways
+        try {
+          const paymentRes = await api.get('/payment-gateways');
+          setPaymentGateways(paymentRes.data.gateways || []);
+        } catch (paymentErr) {
+          console.error('Failed to load payment gateways:', paymentErr);
+          // Provide fallback payment options
+          setPaymentGateways([
+            { id: 'flutterwave', name: 'Flutterwave', description: 'Pay with card or bank transfer', enabled: true },
+            { id: 'bank_transfer', name: 'Bank Transfer', description: 'Direct bank transfer', enabled: true }
+          ]);
+        }
       } catch (err) {
+        console.error('Checkout data loading error:', err);
         setError(err.message);
       } finally {
         setIsLoading(false);
