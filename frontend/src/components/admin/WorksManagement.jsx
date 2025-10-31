@@ -321,12 +321,13 @@ const WorksManagement = () => {
             const plainDescription = stripHtml(work.description || '');
             
             return (
-            <div key={work.id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+            <div key={work.id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+              {/* Image - Fixed Height */}
               <div className="relative flex-shrink-0">
                 <img
                   src={getImageUrl(work.image_path)}
                   alt={work.alt_text}
-                  className="w-full h-40 sm:h-48 object-cover"
+                  className="w-full h-48 object-cover"
                   onError={(e) => {
                     e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
                   }}
@@ -342,47 +343,53 @@ const WorksManagement = () => {
                 </div>
               </div>
               
-              <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 break-words">
+              {/* Content - Flexible with Fixed Elements */}
+              <div className="p-4 flex flex-col flex-1">
+                {/* Title - Fixed 2 Lines */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 break-words h-14">
                   {work.title}
                 </h3>
-                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 break-words min-h-[3rem] sm:min-h-[3.6rem]">
+                
+                {/* Description - Fixed 3 Lines */}
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3 break-words h-16">
                   {plainDescription}
                 </p>
                 
-                <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4 gap-2">
+                {/* Metadata - Fixed Height */}
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-4 gap-2 h-5">
                   <span className="truncate">Order: {work.order_index}</span>
                   <span className="truncate">ID: {work.id}</span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
+                {/* Buttons - Fixed at Bottom */}
+                <div className="mt-auto grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleEditClick(work)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                    title="Edit work"
                   >
                     <i className="ri-edit-line"></i>
-                    <span>Edit</span>
                   </button>
                   <button
                     onClick={() => toggleActive(work.id, work.is_active)}
                     disabled={isTogglingStatus}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 ${
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 ${
                       work.is_active
-                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
+                    title={work.is_active ? 'Deactivate' : 'Activate'}
                   >
                     {isTogglingStatus ? (
                       <i className="ri-loader-4-line animate-spin"></i>
                     ) : (
                       <i className={work.is_active ? 'ri-eye-off-line' : 'ri-eye-line'}></i>
                     )}
-                    <span className="hidden xs:inline">{work.is_active ? 'Hide' : 'Show'}</span>
                   </button>
                   <button
                     onClick={() => handleDelete(work.id)}
                     disabled={isDeleting}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     title="Delete"
                   >
                     {isDeleting ? (

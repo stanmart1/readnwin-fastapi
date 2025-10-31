@@ -22,7 +22,7 @@ export default function Header() {
       <motion.header 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50"
+        className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -132,7 +132,7 @@ export default function Header() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setIsMenuOpen(false)}
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[60] md:hidden"
         />
       )}
 
@@ -141,7 +141,7 @@ export default function Header() {
         initial={{ x: '100%' }}
         animate={{ x: isMenuOpen ? '0%' : '100%' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed right-0 top-0 h-full w-64 bg-white z-40 md:hidden shadow-lg overflow-y-auto overflow-x-hidden"
+        className="fixed right-0 top-0 h-full w-64 bg-white z-[70] md:hidden shadow-lg overflow-y-auto overflow-x-hidden"
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

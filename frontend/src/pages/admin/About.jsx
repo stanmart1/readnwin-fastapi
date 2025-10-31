@@ -23,6 +23,7 @@ const defaultContent = {
     { icon: 'ri-heart-line', title: 'Community', description: 'Building a global reader community.' },
     { icon: 'ri-shield-check-line', title: 'Quality', description: 'Highest standards in content.' }
   ],
+  team: [],
   cta: { title: 'Join the Reading Revolution', description: 'Start your journey with ReadnWin.', primaryButton: 'Get Started', secondaryButton: 'Learn More' }
 };
 
@@ -84,6 +85,7 @@ const AdminAbout = () => {
     { id: 'mission', label: 'Mission', icon: 'ri-target-line' },
     { id: 'stats', label: 'Statistics', icon: 'ri-bar-chart-line' },
     { id: 'values', label: 'Values', icon: 'ri-heart-line' },
+    { id: 'team', label: 'Team Members', icon: 'ri-team-line' },
     { id: 'cta', label: 'Call to Action', icon: 'ri-megaphone-line' }
   ];
 
@@ -374,6 +376,103 @@ const AdminAbout = () => {
                           className="border-2 border-dashed rounded-lg p-8 text-gray-500"
                         >
                           Add Value
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Team Section */}
+                  {activeSection === 'team' && (
+                    <>
+                      <h2 className="text-2xl font-bold">Team Members</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(content.team || []).map((member, idx) => (
+                          <div key={idx} className="border rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between">
+                              <h3 className="font-medium">Member {idx + 1}</h3>
+                              <button
+                                onClick={() => updateContent('team', content.team.filter((_, i) => i !== idx))}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <i className="ri-delete-bin-line"></i>
+                              </button>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const formData = new FormData();
+                                    formData.append('image', file);
+                                    try {
+                                      const token = localStorage.getItem('token');
+                                      const response = await axios.post(`${API_BASE_URL}/api/about/upload-image`, formData, {
+                                        headers: { Authorization: `Bearer ${token}` }
+                                      });
+                                      const newTeam = [...content.team];
+                                      newTeam[idx] = { ...member, image: response.data.url };
+                                      updateContent('team', newTeam);
+                                    } catch (error) {
+                                      console.error('Upload error:', error);
+                                      alert('Failed to upload image');
+                                    }
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                              />
+                              {member.image && (
+                                <img src={getFileUrl(member.image)} alt={member.name} className="mt-2 w-full h-48 object-cover rounded-lg border border-gray-200" />
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Name"
+                              value={member.name || ''}
+                              onChange={(e) => {
+                                const newTeam = [...content.team];
+                                newTeam[idx] = { ...member, name: e.target.value };
+                                updateContent('team', newTeam);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Role/Position"
+                              value={member.role || ''}
+                              onChange={(e) => {
+                                const newTeam = [...content.team];
+                                newTeam[idx] = { ...member, role: e.target.value };
+                                updateContent('team', newTeam);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                              <ReactQuill
+                                theme="snow"
+                                value={member.bio || ''}
+                                onChange={(val) => {
+                                  const newTeam = [...content.team];
+                                  newTeam[idx] = { ...member, bio: val };
+                                  updateContent('team', newTeam);
+                                }}
+                                className="bg-white rounded-lg"
+                                placeholder="Enter bio..."
+                                modules={{ toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'bullet' }], ['clean']] }}
+                                style={{ height: '120px', marginBottom: '50px' }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => updateContent('team', [...(content.team || []), { name: '', role: '', bio: '', image: '' }])}
+                          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <i className="ri-add-line text-2xl mb-2"></i>
+                          <div>Add Team Member</div>
                         </button>
                       </div>
                     </>
