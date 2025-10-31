@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from models.email_templates import AdminEmailTemplate
+from core.path_validator import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +25,22 @@ class TemplateSyncService:
     
     @staticmethod
     def get_template_filename(slug: str) -> str:
-        """Convert slug to filename"""
-        return f"{slug}.html"
+        """Convert slug to filename with sanitization"""
+        safe_slug = sanitize_filename(slug)
+        return f"{safe_slug}.html"
     
     @staticmethod
     def get_template_filepath(slug: str) -> Path:
-        """Get full filepath for a template"""
-        return TemplateSyncService.TEMPLATES_DIR / TemplateSyncService.get_template_filename(slug)
+        """Get full filepath for a template with validation"""
+        from core.path_validator import validate_path
+        
+        filename = TemplateSyncService.get_template_filename(slug)
+        safe_path = validate_path(str(TemplateSyncService.TEMPLATES_DIR), filename)
+        
+        if not safe_path:
+            raise ValueError(f"Invalid template path for slug: {slug}")
+        
+        return safe_path
     
     @staticmethod
     def save_to_filesystem(slug: str, html_content: str) -> bool:
