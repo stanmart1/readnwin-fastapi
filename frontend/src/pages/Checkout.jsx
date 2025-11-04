@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart, useAuth } from '../hooks';
 import { getImageUrl } from '../lib/fileService';
 import Header from '../components/Header';
@@ -7,10 +7,43 @@ import CheckoutFlow from '../components/CheckoutFlow';
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const { cartItems, isLoading: cartLoading, error: cartError, refreshCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+
+  // Check for payment status from URL
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const message = searchParams.get('message');
+    
+    if (status === 'cancelled') {
+      setPaymentStatus({
+        type: 'warning',
+        title: 'Payment Cancelled',
+        message: 'Your payment was cancelled. You can try again or choose a different payment method.'
+      });
+    } else if (status === 'failed') {
+      setPaymentStatus({
+        type: 'error',
+        title: 'Payment Failed',
+        message: message || 'Payment verification failed. Please try again.'
+      });
+    } else if (status === 'error') {
+      setPaymentStatus({
+        type: 'error',
+        title: 'Payment Error',
+        message: message || 'An error occurred during payment processing.'
+      });
+    }
+    
+    // Clear URL params after showing message
+    if (status) {
+      window.history.replaceState({}, '', '/checkout');
+    }
+  }, [searchParams]);
 
   // Refresh cart on mount
   useEffect(() => {
@@ -107,6 +140,44 @@ export default function Checkout() {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        {paymentStatus && (
+          <div className={`mb-6 rounded-lg p-4 ${
+            paymentStatus.type === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+            paymentStatus.type === 'error' ? 'bg-red-50 border border-red-200' :
+            'bg-blue-50 border border-blue-200'
+          }`}>
+            <div className="flex items-start">
+              <i className={`text-xl mr-3 ${
+                paymentStatus.type === 'warning' ? 'ri-alert-line text-yellow-600' :
+                paymentStatus.type === 'error' ? 'ri-close-circle-line text-red-600' :
+                'ri-information-line text-blue-600'
+              }`}></i>
+              <div className="flex-1">
+                <h4 className={`font-medium ${
+                  paymentStatus.type === 'warning' ? 'text-yellow-800' :
+                  paymentStatus.type === 'error' ? 'text-red-800' :
+                  'text-blue-800'
+                }`}>{paymentStatus.title}</h4>
+                <p className={`text-sm mt-1 ${
+                  paymentStatus.type === 'warning' ? 'text-yellow-700' :
+                  paymentStatus.type === 'error' ? 'text-red-700' :
+                  'text-blue-700'
+                }`}>{paymentStatus.message}</p>
+              </div>
+              <button
+                onClick={() => setPaymentStatus(null)}
+                className={`transition-colors ${
+                  paymentStatus.type === 'warning' ? 'text-yellow-600 hover:text-yellow-800' :
+                  paymentStatus.type === 'error' ? 'text-red-600 hover:text-red-800' :
+                  'text-blue-600 hover:text-blue-800'
+                }`}
+              >
+                <i className="ri-close-line text-xl"></i>
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center">

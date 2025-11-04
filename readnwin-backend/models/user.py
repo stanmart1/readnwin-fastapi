@@ -45,20 +45,33 @@ class User(Base):
     @property
     def permissions(self):
         """Get user permissions from role"""
-        if not self.role or not self.role.permissions:
+        try:
+            if not self.role:
+                return []
+            if not hasattr(self.role, 'permissions') or not self.role.permissions:
+                return []
+            return [rp.permission.name for rp in self.role.permissions if rp.permission]
+        except:
             return []
-        return [rp.permission.name for rp in self.role.permissions]
 
     @property
     def has_admin_access(self):
         """Check if user has admin access"""
-        if not self.role:
+        try:
+            if not self.role:
+                return False
+            # Check role name first (doesn't require permissions to be loaded)
+            if self.role.name in ['super_admin', 'admin']:
+                return True
+            # Only check permissions if they're loaded
+            try:
+                perms = self.permissions
+                return 'super_admin' in perms or 'admin_access' in perms
+            except:
+                # If permissions can't be loaded, rely on role name only
+                return False
+        except:
             return False
-        return (
-            self.role.name in ['super_admin', 'admin'] or
-            'super_admin' in self.permissions or
-            'admin_access' in self.permissions
-        )
     
     @property
     def is_admin(self):

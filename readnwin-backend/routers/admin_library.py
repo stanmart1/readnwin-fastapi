@@ -73,62 +73,77 @@ def get_library_assignments(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Get all user library assignments with filters"""
-    check_admin_access(current_user)
+    try:
+        check_admin_access(current_user)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Admin access check failed: {str(e)}")
     
-    query = db.query(UserLibrary).options(
-        joinedload(UserLibrary.user),
-        joinedload(UserLibrary.book)
-    )
-    
-    # Apply filters
-    if user_id:
-        query = query.filter(UserLibrary.user_id == user_id)
-    
-    if status:
-        query = query.filter(UserLibrary.status == status)
-    
-    if search:
-        query = query.join(User).join(Book).filter(
-            (User.first_name.ilike(f"%{search}%")) |
-            (User.last_name.ilike(f"%{search}%")) |
-            (User.email.ilike(f"%{search}%")) |
-            (Book.title.ilike(f"%{search}%"))
+    try:
+        query = db.query(UserLibrary).options(
+            joinedload(UserLibrary.user),
+            joinedload(UserLibrary.book)
         )
-    
-    # Get total count
-    total = query.count()
-    
-    # Get paginated results
-    assignments = query.offset(skip).limit(limit).all()
-    
-    # Format response
-    result = []
-    for assignment in assignments:
-        result.append({
-            "id": assignment.id,
-            "user_id": assignment.user_id,
-            "user_name": f"{assignment.user.first_name} {assignment.user.last_name}",
-            "user_email": assignment.user.email,
-            "book_id": assignment.book_id,
-            "book_title": assignment.book.title,
-            "book_author": assignment.book.author_name,
-            "format": assignment.format,
-            "progress": assignment.progress or 0,
-            "status": assignment.status or "unread",
-            "assigned_at": assignment.created_at.isoformat() if assignment.created_at else None,
-            "last_read": assignment.last_read_at.isoformat() if assignment.last_read_at else None
-        })
-    
-    return {
-        "assignments": result,
-        "total": total,
-        "pagination": {
+        
+        # Apply filters
+        if user_id:
+            query = query.filter(UserLibrary.user_id == user_id)
+        
+        if status:
+            query = query.filter(UserLibrary.status == status)
+        
+        if search:
+            query = query.join(User).join(Book).filter(
+                (User.first_name.ilike(f"%{search}%")) |
+                (User.last_name.ilike(f"%{search}%")) |
+                (User.email.ilike(f"%{search}%")) |
+                (Book.title.ilike(f"%{search}%"))
+            )
+        
+        # Get total count
+        total = query.count()
+        
+        # Get paginated results
+        assignments = query.offset(skip).limit(limit).all()
+        
+        # Format response
+        result = []
+        for assignment in assignments:
+            try:
+                result.append({
+                    "id": assignment.id,
+                    "user_id": assignment.user_id,
+                    "user_name": f"{assignment.user.first_name or ''} {assignment.user.last_name or ''}".strip(),
+                    "user_email": assignment.user.email if assignment.user else "N/A",
+                    "book_id": assignment.book_id,
+                    "book_title": assignment.book.title if assignment.book else "Unknown",
+                    "book_author": assignment.book.author_name if assignment.book else "Unknown",
+                    "format": assignment.format or "ebook",
+                    "progress": assignment.progress or 0,
+                    "status": assignment.status or "unread",
+                    "assigned_at": assignment.created_at.isoformat() if assignment.created_at else None,
+                    "last_read": assignment.last_read_at.isoformat() if assignment.last_read_at else None
+                })
+            except Exception as e:
+                # Skip problematic assignments but log the error
+                print(f"Error formatting assignment {assignment.id}: {str(e)}")
+                continue
+        
+        return {
+            "assignments": result,
             "total": total,
-            "pages": (total + limit - 1) // limit,
-            "page": (skip // limit) + 1,
-            "limit": limit
+            "pagination": {
+                "total": total,
+                "pages": (total + limit - 1) // limit if limit > 0 else 0,
+                "page": (skip // limit) + 1 if limit > 0 else 1,
+                "limit": limit
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch library assignments: {str(e)}")
 
 @router.delete("/library-assignment/{assignment_id}")
 def remove_library_assignment(
