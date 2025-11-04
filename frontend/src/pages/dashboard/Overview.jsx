@@ -64,7 +64,14 @@ export default function Overview() {
           transition={{ delay: 0.4 }}
           className="bg-white rounded-xl shadow-md p-6 mb-8"
         >
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Currently Reading</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Currently Reading</h2>
+            {currentlyReading.length > 3 && (
+              <a href="/dashboard/library" className="text-blue-600 hover:text-purple-600 text-sm font-medium flex items-center gap-1">
+                View All <i className="ri-arrow-right-line"></i>
+              </a>
+            )}
+          </div>
           
           {loading ? (
             <div className="space-y-4">
@@ -81,50 +88,46 @@ export default function Overview() {
             </div>
           ) : currentlyReading.length > 0 ? (
             <div className="space-y-4">
-              {currentlyReading.map((book) => (
-                <div key={book.id} className="flex items-center gap-4">
-                  {/* Book Cover with Progress Overlay */}
+              {currentlyReading.slice(0, 3).map((book) => (
+                <div key={book.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  {/* Book Cover */}
                   <div className="relative w-16 h-20 flex-shrink-0">
                     <img
                       src={getImageUrl(book.cover_image)}
                       alt={book.title}
                       className="w-full h-full object-cover rounded-lg shadow-md"
                     />
-                    {/* Progress Overlay */}
-                    {book.progress_percentage > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-                        <div className="flex items-center space-x-1">
-                          <div className="flex-1 bg-white/20 rounded-full h-1">
-                            <div 
-                              className="bg-white h-1 rounded-full transition-all duration-300"
-                              style={{ width: `${book.progress_percentage}%` }}
-                            />
-                          </div>
-                          <span className="text-white text-xs font-medium leading-none">{Math.round(book.progress_percentage)}%</span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                   {/* Book Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 line-clamp-2">{book.title}</h3>
+                    <h3 className="font-semibold text-gray-900 line-clamp-1 mb-1">{book.title}</h3>
                     <p className="text-sm text-gray-600 mb-2 line-clamp-1">{book.author}</p>
                     {/* Progress Bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
                       <div
                         className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${book.progress_percentage || 0}%` }}
+                        style={{ width: `${book.progress || 0}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">{book.progress_percentage || 0}% complete</p>
+                    <p className="text-xs text-gray-500">{Math.round(book.progress || 0)}% complete</p>
                   </div>
+                  {/* Continue Reading Button */}
+                  <a
+                    href={`/reading/${book.book_id}`}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-md transition-all font-medium text-sm whitespace-nowrap"
+                  >
+                    Continue
+                  </a>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
               <i className="ri-book-line text-4xl text-gray-300 mb-2"></i>
-              <p className="text-gray-600">No books in progress</p>
+              <p className="text-gray-600 mb-4">No books in progress</p>
+              <a href="/dashboard/library" className="text-blue-600 hover:text-purple-600 font-medium">
+                Browse Your Library
+              </a>
             </div>
           )}
         </motion.div>
