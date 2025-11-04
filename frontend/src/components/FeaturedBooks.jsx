@@ -23,6 +23,9 @@ export default function FeaturedBooks() {
   };
 
   const { books, loading } = useBooks(params);
+  
+  // Create infinite loop array by tripling the books
+  const infiniteBooks = books.length > 0 ? [...books, ...books, ...books] : [];
 
   const handleAddToCart = (book, e) => {
     e.preventDefault();
@@ -65,29 +68,51 @@ export default function FeaturedBooks() {
     }
   };
 
-  // Auto-scroll effect for mobile carousel
+  // Initialize scroll position to middle section
+  useEffect(() => {
+    if (carouselRef.current && books.length > 0) {
+      const cardWidth = 296; // 280px width + 16px gap
+      carouselRef.current.scrollLeft = cardWidth * books.length;
+    }
+  }, [books.length]);
+
+  // Auto-scroll effect with infinite loop
   useEffect(() => {
     if (!isAutoScrolling || !carouselRef.current || books.length === 0) return;
 
     const interval = setInterval(() => {
       if (carouselRef.current) {
-        const scrollAmount = 300; // Scroll by card width + gap
-        carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-
-        // Check if we've reached the end, then reset to start
-        setTimeout(() => {
-          if (carouselRef.current) {
-            const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-            if (scrollLeft + clientWidth >= scrollWidth - 10) {
-              carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-            }
-          }
-        }, 500);
+        const cardWidth = 296;
+        carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
       }
-    }, 3000); // Scroll every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [isAutoScrolling, books.length]);
+
+  // Handle infinite scroll reset
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel || books.length === 0) return;
+
+    const handleScroll = () => {
+      const cardWidth = 296;
+      const { scrollLeft, scrollWidth, clientWidth } = carousel;
+      const sectionWidth = cardWidth * books.length;
+
+      // If scrolled past second section, jump to first section
+      if (scrollLeft >= sectionWidth * 2) {
+        carousel.scrollLeft = sectionWidth;
+      }
+      // If scrolled before first section, jump to second section
+      else if (scrollLeft <= 0) {
+        carousel.scrollLeft = sectionWidth;
+      }
+    };
+
+    carousel.addEventListener('scroll', handleScroll);
+    return () => carousel.removeEventListener('scroll', handleScroll);
+  }, [books.length]);
 
   // Pause auto-scroll on user interaction
   const handleTouchStart = () => {
@@ -285,13 +310,13 @@ export default function FeaturedBooks() {
                 className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2 snap-x snap-mandatory"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {books.map((book, index) => (
+                {infiniteBooks.map((book, index) => (
                   <motion.div
-                    key={book.id}
+                    key={`${book.id}-${index}`}
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{ delay: (index % books.length) * 0.1 }}
                     className="flex-shrink-0 w-[280px] bg-white rounded-xl shadow-md overflow-hidden snap-center"
                   >
                     {/* Book Image */}

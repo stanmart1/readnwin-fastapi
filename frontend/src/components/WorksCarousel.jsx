@@ -13,33 +13,13 @@ export default function WorksCarousel() {
   const touchEndX = useRef(0);
   const autoPlayRef = useRef(null);
 
-  // Duplicate works for infinite loop effect
-  const infiniteWorks = works.length > 0 ? [...works, ...works, ...works] : [];
-  const itemsPerView = 3;
-
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = prev + 1;
-      // Reset to start of second set when reaching end of second set
-      if (next >= works.length * 2) {
-        setTimeout(() => setCurrentIndex(works.length), 0);
-        return works.length;
-      }
-      return next;
-    });
-  }, [works.length]);
+    setCurrentIndex((prev) => prev + 1);
+  }, []);
 
   const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = prev - 1;
-      // Reset to end of second set when going before first set
-      if (next < works.length) {
-        setTimeout(() => setCurrentIndex(works.length * 2 - 1), 0);
-        return works.length * 2 - 1;
-      }
-      return next;
-    });
-  }, [works.length]);
+    setCurrentIndex((prev) => prev - 1);
+  }, []);
 
   const goToSlide = (index) => {
     // Offset by works.length to use middle set
@@ -48,10 +28,22 @@ export default function WorksCarousel() {
 
   // Initialize to middle set for infinite scrolling
   useEffect(() => {
-    if (works.length > 0 && currentIndex === 0) {
+    if (works.length > 0) {
       setCurrentIndex(works.length);
     }
   }, [works.length]);
+
+  // Handle infinite loop reset
+  useEffect(() => {
+    if (works.length === 0) return;
+
+    // Reset to middle section when reaching boundaries
+    if (currentIndex >= works.length * 2) {
+      setTimeout(() => setCurrentIndex(works.length), 300);
+    } else if (currentIndex < works.length) {
+      setTimeout(() => setCurrentIndex(works.length * 2 - 1), 300);
+    }
+  }, [currentIndex, works.length]);
 
   // Auto-play every 5 seconds
   useEffect(() => {
@@ -148,10 +140,14 @@ export default function WorksCarousel() {
             <div className="relative overflow-hidden px-4 md:px-12">
               <motion.div
                 animate={{ x: `-${currentIndex * 336}px` }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={{ 
+                  type: 'spring', 
+                  stiffness: 300, 
+                  damping: 30,
+                  duration: currentIndex >= works.length * 2 || currentIndex < works.length ? 0 : undefined
+                }}
                 className="flex gap-6"
               >
-                {/* Triple the works array for infinite effect */}
                 {[...works, ...works, ...works].map((work, index) => (
                   <motion.div
                     key={`${work.id}-${index}`}

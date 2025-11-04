@@ -15,8 +15,7 @@ export default function AboutSection() {
       subtitle: 'Empowering The Mind Through Reading'
     },
     mission: {
-      description: "Our mission is to make quality literature accessible to everyone, everywhere. We're building the world's most comprehensive digital reading platform, combining cutting-edge technology with timeless storytelling to create an experience that inspires, educates, and entertains.",
-      features: ['Unlimited Access', 'AI-Powered Recommendations', 'Global Community']
+      description: "Our mission is to make quality literature accessible to everyone, everywhere. We're building the world's most comprehensive digital reading platform, combining cutting-edge technology with timeless storytelling to create an experience that inspires, educates, and entertains."
     },
     values: [
       {
@@ -33,7 +32,6 @@ export default function AboutSection() {
   };
 
   const aboutContent = content || defaultContent;
-  const features = aboutContent.mission?.features || defaultContent.mission.features;
   const values = aboutContent.values || defaultContent.values;
 
   if (loading) {
@@ -96,33 +94,6 @@ export default function AboutSection() {
             <div className="text-base md:text-lg text-gray-600 mb-8"
                  {...createHTMLProps(aboutContent.mission?.description || defaultContent.mission.description)}
             />
-
-            {/* Key Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
-              {features.slice(0, 3).map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-3"
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    index === 0 ? 'bg-blue-100' :
-                    index === 1 ? 'bg-purple-100' :
-                    'bg-cyan-100'
-                  }`}>
-                    <i className={`ri-check-line ${
-                      index === 0 ? 'text-blue-600' :
-                      index === 1 ? 'text-purple-600' :
-                      'text-cyan-600'
-                    }`}></i>
-                  </div>
-                  <span className="font-medium text-gray-900">{feature}</span>
-                </motion.div>
-              ))}
-            </div>
 
             {/* Values Preview */}
             <div className="grid grid-cols-2 gap-4 mb-8">

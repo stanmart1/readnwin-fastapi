@@ -11,31 +11,7 @@ export default function About() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const defaultContent = {
-    hero: {
-      title: 'About ReadnWin',
-      subtitle: 'Empowering The Mind Through Reading'
-    },
-    mission: {
-      description: '<p>At ReadnWin, we believe that reading is the gateway to knowledge, imagination, and personal growth. Our mission is to make quality literature accessible to everyone, everywhere, breaking down barriers between readers and the books they love.</p><p>We combine cutting-edge technology with a passion for literature to create an immersive reading experience that adapts to your lifestyle. Whether you prefer physical books or digital formats, we\'re here to support your reading journey every step of the way.</p>',
-      features: [
-        'Unlimited Access to Thousands of Titles',
-        'AI-Powered Personalized Recommendations',
-        'Vibrant Global Reading Community',
-        'Seamless Cross-Platform Experience',
-        'Support for Authors and Publishers'
-      ]
-    },
-    values: [
-      { icon: 'ri-book-open-line', title: 'Accessibility', description: 'We believe everyone deserves access to quality literature, regardless of location or economic status. Our platform breaks down barriers to make reading accessible to all.' },
-      { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'We leverage cutting-edge technology to enhance the reading experience, from AI recommendations to seamless digital delivery, while preserving the joy of traditional reading.' },
-      { icon: 'ri-heart-line', title: 'Community', description: 'Reading is better together. We foster a vibrant community where readers can connect, share insights, and discover new perspectives through literature.' },
-      { icon: 'ri-shield-check-line', title: 'Quality', description: 'We maintain the highest standards in content curation, user experience, and customer service, ensuring every interaction with ReadnWin exceeds expectations.' }
-    ]
-  };
-
-  // Only use default content if loading is complete and no content from API
-  const aboutData = (!loading && content && Object.keys(content).length > 0) ? content : defaultContent;
+  const aboutData = content || {};
 
   // Auto-rotate carousel every 5 seconds
   useEffect(() => {
@@ -65,17 +41,22 @@ export default function About() {
             transition={{ duration: 0.3 }}
             className="text-center"
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              {aboutData.hero?.title || 'About ReadnWin'}
-            </h1>
-            <div className="text-xl md:text-2xl text-purple-100"
-                 {...createHTMLProps(aboutData.hero?.subtitle || 'Empowering The Mind Through Reading')}
-            />
+            {aboutData.hero?.title && (
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                {aboutData.hero.title}
+              </h1>
+            )}
+            {aboutData.hero?.subtitle && (
+              <div className="text-xl md:text-2xl text-purple-100"
+                   {...createHTMLProps(aboutData.hero.subtitle)}
+              />
+            )}
           </motion.div>
         </div>
       </section>
 
       {/* Mission Section */}
+      {aboutData.mission && (
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -85,20 +66,26 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Our Mission
-              </h2>
-              <div className="text-lg text-gray-600 mb-6"
-                   {...createHTMLProps(aboutData.mission?.description || defaultContent.mission.description)}
-              />
-              <div className="space-y-3">
-                {(aboutData.mission?.features || defaultContent.mission.features).map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <i className="ri-check-line text-2xl text-green-600"></i>
-                    <span className="text-gray-700">{feature}</span>
-                  </div>
-                ))}
-              </div>
+              {aboutData.mission?.title && (
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                  {aboutData.mission.title}
+                </h2>
+              )}
+              {aboutData.mission?.description && (
+                <div className="text-lg text-gray-600 mb-6"
+                     {...createHTMLProps(aboutData.mission.description)}
+                />
+              )}
+              {aboutData.mission?.features && aboutData.mission.features.length > 0 && (
+                <div className="space-y-3">
+                  {aboutData.mission.features.map((feature, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <i className="ri-check-line text-2xl text-green-600"></i>
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             <motion.div
@@ -107,15 +94,18 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.3 }}
             >
-              <img
-                src={aboutData.mission?.image_url ? getFileUrl(aboutData.mission.image_url) : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
-                alt="Our Mission"
-                className="rounded-2xl shadow-2xl"
-              />
+              {aboutData.mission?.image_url && (
+                <img
+                  src={getFileUrl(aboutData.mission.image_url)}
+                  alt="Our Mission"
+                  className="rounded-2xl shadow-2xl"
+                />
+              )}
             </motion.div>
           </div>
         </div>
       </section>
+      )}
 
       {/* Stats Section */}
       {aboutData.stats && aboutData.stats.length > 0 && (
@@ -145,6 +135,7 @@ export default function About() {
       )}
 
       {/* Values Section */}
+      {aboutData.values && aboutData.values.length > 0 && (
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -163,7 +154,7 @@ export default function About() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {(aboutData.values || defaultContent.values).map((value, index) => (
+            {aboutData.values && aboutData.values.map((value, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0 }}
@@ -186,6 +177,7 @@ export default function About() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Team Section */}
       {aboutData.team && aboutData.team.length > 0 && (
@@ -321,6 +313,7 @@ export default function About() {
       )}
 
       {/* CTA Section */}
+      {aboutData.cta && (
       <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -329,21 +322,28 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.3 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {aboutData.cta?.title || 'Join the Reading Revolution'}
-            </h2>
-            <div className="text-xl mb-8 text-purple-100"
-                 {...createHTMLProps(aboutData.cta?.description || 'Start your journey with ReadnWin today')}
-            />
-            <a
-              href="/signup"
-              className="inline-block bg-white text-purple-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors text-lg"
-            >
-              {aboutData.cta?.primaryButton || 'Get Started Free'}
-            </a>
+            {aboutData.cta?.title && (
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                {aboutData.cta.title}
+              </h2>
+            )}
+            {aboutData.cta?.description && (
+              <div className="text-xl mb-8 text-purple-100"
+                   {...createHTMLProps(aboutData.cta.description)}
+              />
+            )}
+            {aboutData.cta?.primaryButton && (
+              <a
+                href="/signup"
+                className="inline-block bg-white text-purple-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors text-lg"
+              >
+                {aboutData.cta.primaryButton}
+              </a>
+            )}
           </motion.div>
         </div>
       </section>
+      )}
 
       <Footer />
     </div>

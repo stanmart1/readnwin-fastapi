@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { CartProvider } from './context/CartContext';
 import SessionTimeoutWarning from './components/SessionTimeoutWarning';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
@@ -13,58 +13,64 @@ function ScrollToTop() {
   return null;
 }
 
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 import { AdminRoute } from './components/ProtectedRoute';
-import Home from './pages/Home';
-import Books from './pages/Books';
-import BookDetail from './pages/BookDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import BankTransferProof from './pages/BankTransferProof';
-import OrderConfirmation from './pages/OrderConfirmation';
-import PaymentFailed from './pages/PaymentFailed';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import FAQ from './pages/FAQ';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import NotFound from './pages/NotFound';
+
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const Books = lazy(() => import('./pages/Books'));
+const BookDetail = lazy(() => import('./pages/BookDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const BankTransferProof = lazy(() => import('./pages/BankTransferProof'));
+const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
+const PaymentFailed = lazy(() => import('./pages/PaymentFailed'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Dashboard Pages
-import DashboardOverview from './pages/dashboard/Overview';
-import DashboardLibrary from './pages/dashboard/Library';
-import DashboardAnalytics from './pages/dashboard/Analytics';
-import DashboardActivity from './pages/dashboard/Activity';
-import DashboardOrders from './pages/dashboard/Orders';
-import DashboardSettings from './pages/dashboard/Settings';
-import Reading from './pages/Reading';
+const DashboardOverview = lazy(() => import('./pages/dashboard/Overview'));
+const DashboardLibrary = lazy(() => import('./pages/dashboard/Library'));
+const DashboardAnalytics = lazy(() => import('./pages/dashboard/Analytics'));
+const DashboardActivity = lazy(() => import('./pages/dashboard/Activity'));
+const DashboardOrders = lazy(() => import('./pages/dashboard/Orders'));
+const DashboardSettings = lazy(() => import('./pages/dashboard/Settings'));
+const Reading = lazy(() => import('./pages/Reading'));
 
 // Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminUsers from './pages/admin/Users';
-import Roles from './pages/admin/Roles';
-import AdminRoles from './pages/admin/Roles';
-import AdminAudit from './pages/admin/Audit';
-import AdminBooks from './pages/admin/Books';
-import AdminLibrary from './pages/admin/Library';
-import AdminReviews from './pages/admin/Reviews';
-import AdminOrders from './pages/admin/Orders';
-import AdminShipping from './pages/admin/Shipping';
-import AdminReading from './pages/admin/Reading';
-import AdminReports from './pages/admin/Reports';
-import AdminEmailTemplates from './pages/admin/EmailTemplates';
-import AdminBlog from './pages/admin/Blog';
-import AdminWorks from './pages/admin/Works';
-import AdminAbout from './pages/admin/About';
-import AdminContact from './pages/admin/Contact';
-import AdminFAQ from './pages/admin/FAQ';
-import AdminSettings from './pages/admin/Settings';
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const Roles = lazy(() => import('./pages/admin/Roles'));
+const AdminAudit = lazy(() => import('./pages/admin/Audit'));
+const AdminBooks = lazy(() => import('./pages/admin/Books'));
+const AdminLibrary = lazy(() => import('./pages/admin/Library'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
+const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+const AdminShipping = lazy(() => import('./pages/admin/Shipping'));
+const AdminReading = lazy(() => import('./pages/admin/Reading'));
+const AdminReports = lazy(() => import('./pages/admin/Reports'));
+const AdminEmailTemplates = lazy(() => import('./pages/admin/EmailTemplates'));
+const AdminBlog = lazy(() => import('./pages/admin/Blog'));
+const AdminWorks = lazy(() => import('./pages/admin/Works'));
+const AdminAbout = lazy(() => import('./pages/admin/About'));
+const AdminContact = lazy(() => import('./pages/admin/Contact'));
+const AdminFAQ = lazy(() => import('./pages/admin/FAQ'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
 import './styles/index.css';
 
@@ -81,6 +87,7 @@ function App() {
           onExtend={extendSession}
           onLogout={handleLogout}
         />
+        <Suspense fallback={<LoadingFallback />}>
         <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -136,6 +143,7 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </Router>
     </CartProvider>
   );
