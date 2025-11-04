@@ -21,7 +21,8 @@ def redis_status(current_user: User = Depends(get_current_user_from_token)):
         return {
             "enabled": False,
             "connected": False,
-            "message": "Redis is disabled via system settings"
+            "message": "Redis is disabled via system settings",
+            "help": "Enable Redis in System Settings to use caching and rate limiting features"
         }
     
     try:
@@ -30,7 +31,13 @@ def redis_status(current_user: User = Depends(get_current_user_from_token)):
             return {
                 "enabled": True,
                 "connected": False, 
-                "error": "Redis client not initialized or connection failed"
+                "message": "Redis is not available",
+                "help": "Redis is optional. Install and start Redis server, or disable it in System Settings. The application works fully without Redis.",
+                "instructions": {
+                    "install": "brew install redis (macOS) or apt-get install redis (Linux)",
+                    "start": "brew services start redis (macOS) or systemctl start redis (Linux)",
+                    "disable": "Go to Admin Settings and disable Redis"
+                }
             }
         
         info = client.info()
@@ -45,8 +52,10 @@ def redis_status(current_user: User = Depends(get_current_user_from_token)):
     except Exception as e:
         return {
             "enabled": True,
-            "connected": False, 
-            "error": str(e)
+            "connected": False,
+            "message": "Redis connection failed",
+            "error": str(e),
+            "help": "Check if Redis server is running or disable Redis in System Settings"
         }
 
 @router.post("/clear-rate-limit")

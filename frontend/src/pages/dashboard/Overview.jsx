@@ -134,7 +134,7 @@ export default function Overview() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
         >
           <a
             href="/books"
@@ -159,6 +159,14 @@ export default function Overview() {
             <i className="ri-shopping-bag-line text-3xl text-purple-600 mb-2"></i>
             <h3 className="font-semibold text-gray-900 mb-1">Order History</h3>
             <p className="text-sm text-gray-600">Track your purchases</p>
+          </a>
+          <a
+            href="/dashboard/settings"
+            className="bg-white rounded-xl p-6 hover:shadow-lg transition-shadow border-2 border-gray-200"
+          >
+            <i className="ri-settings-line text-3xl text-green-600 mb-2"></i>
+            <h3 className="font-semibold text-gray-900 mb-1">Settings</h3>
+            <p className="text-sm text-gray-600">Manage your account</p>
           </a>
         </motion.div>
       </div>

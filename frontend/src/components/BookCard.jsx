@@ -43,12 +43,12 @@ export default function BookCard({ book }) {
 
   return (
     <div 
-      className="group cursor-pointer"
+      className="group cursor-pointer h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <img 
             src={displayCover || ''} 
             alt={book.title}
@@ -99,26 +99,32 @@ export default function BookCard({ book }) {
         </div>
         
         <div className="p-6 flex-1 flex flex-col">
-          <Link to={`/books/${book.id}`} className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
+          <Link to={`/books/${book.id}`}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 h-14">
               {book.title}
             </h3>
           </Link>
-          <p className="text-gray-600 mb-4">by {displayAuthor}</p>
+          <p className="text-gray-600 mb-4 h-6">
+            by {displayAuthor || 'Unknown Author'}
+          </p>
           
-          {/* Rating */}
-          {displayRating > 0 && (
-            <div className="flex items-center space-x-1 mb-4">
-              <div className="flex space-x-1">
-                {renderStars(displayRating)}
-              </div>
-              <span className="text-sm text-gray-500">({displayReviewCount})</span>
-            </div>
-          )}
+          {/* Rating - Fixed Height */}
+          <div className="flex items-center space-x-1 mb-4 h-5">
+            {displayRating > 0 ? (
+              <>
+                <div className="flex space-x-1">
+                  {renderStars(displayRating)}
+                </div>
+                <span className="text-sm text-gray-500">({displayReviewCount})</span>
+              </>
+            ) : (
+              <span className="text-sm text-gray-400">No ratings yet</span>
+            )}
+          </div>
 
-          {/* Price and Actions */}
+          {/* Price and Actions - Fixed at Bottom */}
           <div className="mt-auto">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 h-8">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl font-bold text-blue-600">₦{(book.price || 0).toLocaleString()}</span>
                 {displayOriginalPrice && displayOriginalPrice > book.price && (
