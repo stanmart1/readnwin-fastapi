@@ -69,14 +69,14 @@ const AdminLayout = ({ children }) => {
       {/* Header */}
       <Header />
       
-      {/* Mobile Menu Button below Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+      {/* Mobile Menu Button - Fixed position */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 p-3 z-30 shadow-sm">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <i className={`ri-${mobileOpen ? 'close' : 'menu'}-line text-xl`}></i>
-          <span className="text-sm font-medium">Menu</span>
+          <span className="text-sm font-medium">Admin Menu</span>
         </button>
       </div>
 
@@ -97,7 +97,7 @@ const AdminLayout = ({ children }) => {
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 80 : 288 }}
-        className={`fixed left-0 bg-white shadow-lg z-40 transform transition-all duration-300 ${
+        className={`fixed left-0 bg-white shadow-lg z-50 transform transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 overflow-y-auto overflow-x-hidden border-r border-gray-200`}
         style={{ top: '64px', height: 'calc(100vh - 64px)' }}
@@ -185,7 +185,7 @@ const AdminLayout = ({ children }) => {
       </motion.main>
 
       {/* Mobile Main Content */}
-      <div className="lg:hidden" style={{ marginTop: '64px' }}>
+      <div className="lg:hidden" style={{ marginTop: '116px' }}>
         <div className="p-4 sm:p-6">
           {children}
         </div>

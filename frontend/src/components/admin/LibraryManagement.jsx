@@ -57,7 +57,8 @@ const LibraryManagement = () => {
         skip: (pagination.page - 1) * pagination.limit,
         limit: pagination.limit,
         ...(filters.search && { search: filters.search }),
-        ...(filters.user_id && { user_id: filters.user_id })
+        ...(filters.user_id && { user_id: filters.user_id }),
+        ...(filters.status && { status: filters.status })
       };
 
       const response = await api.get('/admin/library-assignments', { params });
@@ -142,9 +143,9 @@ const LibraryManagement = () => {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Status</option>
-            <option value="active">Active</option>
+            <option value="unread">Unread</option>
+            <option value="reading">Reading</option>
             <option value="completed">Completed</option>
-            <option value="paused">Paused</option>
           </select>
           <select
             value={filters.user_id || ''}
@@ -244,9 +245,9 @@ const LibraryManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        library.status === 'active' ? 'bg-green-100 text-green-800' :
+                        library.status === 'reading' ? 'bg-green-100 text-green-800' :
                         library.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
+                        'bg-gray-100 text-gray-800'
                       }`}>
                         {library.status}
                       </span>

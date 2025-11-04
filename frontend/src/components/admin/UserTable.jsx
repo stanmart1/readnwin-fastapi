@@ -127,10 +127,10 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                     </button>
                     <button
                       onClick={() => onAssignBooks(user)}
-                      className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors text-sm"
+                      className="p-1.5 text-teal-600 hover:bg-teal-50 rounded transition-colors text-sm"
                       title="Assign Books"
                     >
-                      <i className="ri-book-add-line text-base"></i>
+                      <i className="ri-book-2-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onEdit(user)}

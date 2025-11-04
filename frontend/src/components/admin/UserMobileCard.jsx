@@ -87,9 +87,9 @@ const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onAs
         </button>
         <button
           onClick={() => onAssignBooks(user)}
-          className="text-green-600 hover:text-green-800 flex items-center text-sm"
+          className="text-teal-600 hover:text-teal-800 flex items-center text-sm"
         >
-          <i className="ri-book-add-line mr-1"></i>
+          <i className="ri-book-2-line mr-1"></i>
           Books
         </button>
         <button

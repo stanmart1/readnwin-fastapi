@@ -68,6 +68,7 @@ def get_library_assignments(
     limit: int = 20,
     search: Optional[str] = None,
     user_id: Optional[int] = None,
+    status: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
 ):
@@ -82,6 +83,9 @@ def get_library_assignments(
     # Apply filters
     if user_id:
         query = query.filter(UserLibrary.user_id == user_id)
+    
+    if status:
+        query = query.filter(UserLibrary.status == status)
     
     if search:
         query = query.join(User).join(Book).filter(
@@ -110,9 +114,9 @@ def get_library_assignments(
             "book_author": assignment.book.author_name,
             "format": assignment.format,
             "progress": assignment.progress or 0,
-            "status": "active",  # Default status
+            "status": assignment.status or "unread",
             "assigned_at": assignment.created_at.isoformat() if assignment.created_at else None,
-            "last_read": assignment.updated_at.isoformat() if assignment.updated_at else None
+            "last_read": assignment.last_read_at.isoformat() if assignment.last_read_at else None
         })
     
     return {

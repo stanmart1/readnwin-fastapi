@@ -194,6 +194,7 @@ async def approve_bank_transfer(
     from core.security import check_admin_access
     from models.user_library import UserLibrary
     from models.book import Book
+    from models.cart import Cart
     from datetime import datetime
     
     check_admin_access(current_user)
@@ -217,6 +218,9 @@ async def approve_bank_transfer(
         payment.updated_at = datetime.utcnow()
         order.status = "completed"
         order.updated_at = datetime.utcnow()
+        
+        # Clear user's cart
+        db.query(Cart).filter(Cart.user_id == order.user_id).delete()
         
         ebook_items = db.query(OrderItem).join(Book).filter(
             OrderItem.order_id == order_id,

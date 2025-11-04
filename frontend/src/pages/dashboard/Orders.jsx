@@ -78,7 +78,7 @@ export default function Orders() {
                     <div key={idx} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 p-2 sm:p-0">
                       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                         <img 
-                          src={getImageUrl(item.book_cover || item.cover_image)}
+                          src={getImageUrl(item.cover_image_url || item.book_cover || item.cover_image)}
                           alt={item.book_title}
                           className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded flex-shrink-0"
                         />
@@ -172,7 +172,7 @@ export default function Orders() {
                     <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-4">
                         <img 
-                          src={getImageUrl(item.book_cover || item.cover_image)} 
+                          src={getImageUrl(item.cover_image_url || item.book_cover || item.cover_image)} 
                           alt={item.book_title} 
                           className="w-12 h-16 object-cover rounded" 
                         />

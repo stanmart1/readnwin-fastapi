@@ -5,16 +5,16 @@ import api from '../lib/api';
 import { validateCheckoutData, formatCheckoutRequest, validateCartItems } from '../utils/checkoutValidation';
 
 export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
-  const { user } = useAuth();
+  const { user, getUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
   const [formData, setFormData] = useState({
     shipping: {
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
+      first_name: '',
+      last_name: '',
+      email: '',
       phone: '',
       address: '',
       city: '',
@@ -29,6 +29,28 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       method: 'flutterwave'
     }
   });
+
+  // Autofill user details when component mounts or user changes
+  useEffect(() => {
+    const currentUser = getUser();
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        shipping: {
+          ...prev.shipping,
+          first_name: currentUser.first_name || '',
+          last_name: currentUser.last_name || '',
+          email: currentUser.email || '',
+          phone: currentUser.phone || '',
+          address: currentUser.address || '',
+          city: currentUser.city || '',
+          state: currentUser.state || '',
+          zip_code: currentUser.zip_code || '',
+          country: currentUser.country || 'Nigeria'
+        }
+      }));
+    }
+  }, [getUser]);
 
   // Analyze cart first to determine if ebook-only
   const analyzeCart = useCallback(() => {
