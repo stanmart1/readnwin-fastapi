@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAbout } from '../hooks';
 import { getFileUrl } from '../lib/fileService';
+import { createHTMLProps } from '../utils/htmlUtils';
 
 export default function About() {
   const { content, loading } = useAbout();
@@ -59,9 +60,9 @@ export default function About() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               {aboutData.hero?.title || 'About ReadnWin'}
             </h1>
-            <p className="text-xl md:text-2xl text-purple-100">
-              {aboutData.hero?.subtitle || 'Empowering The Mind Through Reading'}
-            </p>
+            <div className="text-xl md:text-2xl text-purple-100"
+                 {...createHTMLProps(aboutData.hero?.subtitle || 'Empowering The Mind Through Reading')}
+            />
           </motion.div>
         </div>
       </section>
@@ -78,9 +79,9 @@ export default function About() {
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                 Our Mission
               </h2>
-              <p className="text-lg text-gray-600 mb-6">
-                {aboutData.mission?.description || defaultContent.mission.description}
-              </p>
+              <div className="text-lg text-gray-600 mb-6"
+                   {...createHTMLProps(aboutData.mission?.description || defaultContent.mission.description)}
+              />
               <div className="space-y-3">
                 {(aboutData.mission?.features || defaultContent.mission.features).map((feature, index) => (
                   <div key={index} className="flex items-center space-x-3">
@@ -139,9 +140,9 @@ export default function About() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {value.title}
                 </h3>
-                <p className="text-gray-600">
-                  {value.description}
-                </p>
+                <div className="text-gray-600"
+                     {...createHTMLProps(value.description)}
+                />
               </motion.div>
             ))}
           </div>

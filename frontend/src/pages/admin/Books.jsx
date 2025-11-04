@@ -52,7 +52,7 @@ const AdminBooks = () => {
   
   // Consolidated state management
   const [data, setData] = useState({ categories: [], authors: [], users: [] });
-  const [selection, setSelection] = useState({ books: [], user: null, bookForAction: null });
+  const [selection, setSelection] = useState({ books: [], users: [], bookForAction: null });
   const [modals, setModals] = useState({ 
     deleteConfirm: false, 
     assign: false, 
@@ -60,12 +60,13 @@ const AdminBooks = () => {
     edit: false, 
     details: false, 
     batchUpdate: false, 
-    bookAssign: false 
+    bookAssign: false,
+    assignConfirm: false 
   });
   const [loadingStates, setLoadingStates] = useState({ delete: false, assign: false, editLoading: false });
   const [forms, setForms] = useState({ 
     userSearch: '', 
-    selectedFormat: 'both',
+    selectedFormat: 'ebook',
     bookToDelete: null,
     batchUpdate: { 
       status: '', 
@@ -73,6 +74,8 @@ const AdminBooks = () => {
       price_adjustment: { value: '', type: 'percentage' } 
     }
   });
+  const [errors, setErrors] = useState({});
+  const [assignmentResult, setAssignmentResult] = useState(null);
 
   // Load authors and categories on mount
   useEffect(() => {
@@ -203,8 +206,11 @@ const AdminBooks = () => {
         handleDeleteBook(book.id);
         break;
       case 'assign':
-        setSelection(prev => ({ ...prev, bookForAction: book }));
+        setSelection(prev => ({ ...prev, bookForAction: book, users: [] }));
         setModals(prev => ({ ...prev, bookAssign: true }));
+        setErrors({});
+        setAssignmentResult(null);
+        setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
         break;
     }
   };
@@ -632,12 +638,17 @@ const AdminBooks = () => {
           {/* Book Assign Modal */}
           {modals.bookAssign && selection.bookForAction && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Assign Book to User</h3>
+                    <h3 className="text-xl font-bold text-gray-900">Assign Book to Users</h3>
                     <button
-                      onClick={() => setModals(prev => ({ ...prev, bookAssign: false }))}
+                      onClick={() => {
+                        setModals(prev => ({ ...prev, bookAssign: false }));
+                        setSelection(prev => ({ ...prev, users: [] }));
+                        setErrors({});
+                        setForms(prev => ({ ...prev, selectedFormat: 'ebook' }));
+                      }}
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <i className="ri-close-line text-2xl"></i>
@@ -646,58 +657,185 @@ const AdminBooks = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Search User</label>
-                      <input
-                        type="text"
-                        value={forms.userSearch}
-                        onChange={(e) => setForms(prev => ({ ...prev, userSearch: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search by name or email..."
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Select Users *</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={forms.userSearch}
+                          onChange={(e) => setForms(prev => ({ ...prev, userSearch: e.target.value }))}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors.users ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Search and select users..."
+                        />
+                        {forms.userSearch && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {data.users
+                              .filter(u => 
+                                (u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
+                                u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
+                                !selection.users.find(su => su.id === u.id)
+                              )
+                              .map(user => (
+                                <button
+                                  key={user.id}
+                                  onClick={() => {
+                                    setSelection(prev => ({ 
+                                      ...prev, 
+                                      users: [...prev.users, user] 
+                                    }));
+                                    setForms(prev => ({ ...prev, userSearch: '' }));
+                                    setErrors(prev => ({ ...prev, users: '' }));
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900">{user.name}</div>
+                                  <div className="text-sm text-gray-500">{user.email}</div>
+                                </button>
+                              ))
+                            }
+                          </div>
+                        )}
+                      </div>
+                      {errors.users && <p className="text-red-500 text-sm mt-1">{errors.users}</p>}
+                      
+                      {/* Selected Users */}
+                      {selection.users.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Selected Users ({selection.users.length}):</p>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {selection.users.map(user => (
+                              <div key={user.id} className="flex items-center justify-between bg-blue-50 px-3 py-2 rounded-lg">
+                                <div>
+                                  <span className="font-medium text-gray-900">{user.name}</span>
+                                  <span className="text-sm text-gray-500 ml-2">({user.email})</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setSelection(prev => ({ 
+                                      ...prev, 
+                                      users: prev.users.filter(u => u.id !== user.id) 
+                                    }));
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <i className="ri-close-line"></i>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
-                      <select
-                        value={selection.user?.id || ''}
-                        onChange={(e) => {
-                          const user = data.users.find(u => u.id === parseInt(e.target.value));
-                          setSelection(prev => ({ ...prev, user }));
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Select a user</option>
-                        {data.users
-                          .filter(u => 
-                            !forms.userSearch || 
-                            u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
-                            u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())
-                          )
-                          .map(user => (
-                            <option key={user.id} value={user.id}>
-                              {user.name} ({user.email})
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Format *</label>
                       <select
                         value={forms.selectedFormat}
-                        onChange={(e) => setForms(prev => ({ ...prev, selectedFormat: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => {
+                          setForms(prev => ({ ...prev, selectedFormat: e.target.value }));
+                          setErrors(prev => ({ ...prev, format: '' }));
+                        }}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                          errors.format ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       >
-                        <option value="both">Both (Ebook & Physical)</option>
                         <option value="ebook">Ebook Only</option>
                         <option value="physical">Physical Only</option>
                       </select>
+                      {errors.format && <p className="text-red-500 text-sm mt-1">{errors.format}</p>}
                     </div>
+
+                    {/* Assignment Summary */}
+                    {selection.users.length > 0 && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Assignment Summary</h4>
+                        <p className="text-sm text-gray-600">
+                          Book: <span className="font-medium">{selection.bookForAction.title}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Format: <span className="font-medium capitalize">{forms.selectedFormat}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Users: <span className="font-medium">{selection.users.length} selected</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Error Display */}
+                    {errors.general && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-red-700 text-sm">{errors.general}</p>
+                      </div>
+                    )}
+
+                    {/* Success Display */}
+                    {assignmentResult && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <p className="text-green-700 text-sm">{assignmentResult}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-3 mt-6">
                     <button
-                      onClick={() => setModals(prev => ({ ...prev, bookAssign: false }))}
+                      onClick={() => {
+                        setModals(prev => ({ ...prev, bookAssign: false }));
+                        setSelection(prev => ({ ...prev, users: [] }));
+                        setErrors({});
+                        setAssignmentResult(null);
+                        setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
+                      }}
+                      disabled={loadingStates.assign}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Validation
+                        const newErrors = {};
+                        if (selection.users.length === 0) {
+                          newErrors.users = 'Please select at least one user';
+                        }
+                        if (!forms.selectedFormat) {
+                          newErrors.format = 'Please select a format';
+                        }
+                        
+                        if (Object.keys(newErrors).length > 0) {
+                          setErrors(newErrors);
+                          return;
+                        }
+                        
+                        setModals(prev => ({ ...prev, assignConfirm: true }));
+                      }}
+                      disabled={selection.users.length === 0 || loadingStates.assign}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <i className="ri-user-add-line"></i>
+                      Assign to {selection.users.length} User{selection.users.length !== 1 ? 's' : ''}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Assignment Confirmation Modal */}
+          {modals.assignConfirm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div className="p-6">
+                  <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 rounded-full mb-4">
+                    <i className="ri-question-line text-2xl text-blue-600"></i>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Confirm Assignment</h3>
+                  <p className="text-gray-600 text-center mb-6">
+                    Are you sure you want to assign "{selection.bookForAction?.title}" ({forms.selectedFormat}) to {selection.users.length} user{selection.users.length !== 1 ? 's' : ''}?
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setModals(prev => ({ ...prev, assignConfirm: false }))}
                       disabled={loadingStates.assign}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -705,40 +843,58 @@ const AdminBooks = () => {
                     </button>
                     <button
                       onClick={async () => {
-                        if (!selection.user || !selection.bookForAction) return;
-                        
                         setLoadingStates(prev => ({ ...prev, assign: true }));
+                        setErrors({});
+                        setAssignmentResult(null);
                         
-                        const formats = forms.selectedFormat === 'both' 
-                          ? ['ebook', 'physical'] 
-                          : [forms.selectedFormat];
-                        
-                        let successCount = 0;
-                        for (const format of formats) {
-                          const result = await assignBookToUser(
-                            selection.user.id,
-                            selection.bookForAction.id,
-                            format
-                          );
-                          if (result.success) successCount++;
-                        }
-                        
-                        setLoadingStates(prev => ({ ...prev, assign: false }));
-                        
-                        if (successCount > 0) {
-                          alert(`Book assigned successfully (${successCount} format${successCount > 1 ? 's' : ''})`);
-                          setModals(prev => ({ ...prev, bookAssign: false }));
-                          setSelection(prev => ({ ...prev, user: null, bookForAction: null }));
-                          setForms(prev => ({ ...prev, userSearch: '', selectedFormat: 'both' }));
-                        } else {
-                          alert('Failed to assign book');
+                        try {
+                          let successCount = 0;
+                          let failedUsers = [];
+                          
+                          for (const user of selection.users) {
+                            try {
+                              const result = await assignBookToUser(
+                                user.id,
+                                selection.bookForAction.id,
+                                forms.selectedFormat
+                              );
+                              if (result.success) {
+                                successCount++;
+                              } else {
+                                failedUsers.push(user.name);
+                              }
+                            } catch (error) {
+                              failedUsers.push(user.name);
+                            }
+                          }
+                          
+                          setModals(prev => ({ ...prev, assignConfirm: false }));
+                          
+                          if (successCount === selection.users.length) {
+                            setAssignmentResult(`Successfully assigned book to all ${successCount} users!`);
+                            setTimeout(() => {
+                              setModals(prev => ({ ...prev, bookAssign: false }));
+                              setSelection(prev => ({ ...prev, users: [], bookForAction: null }));
+                              setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
+                              setAssignmentResult(null);
+                            }, 2000);
+                          } else if (successCount > 0) {
+                            setAssignmentResult(`Assigned to ${successCount} users. Failed for: ${failedUsers.join(', ')}`);
+                          } else {
+                            setErrors({ general: `Failed to assign book to any users. Please try again.` });
+                          }
+                        } catch (error) {
+                          setErrors({ general: 'An unexpected error occurred. Please try again.' });
+                          setModals(prev => ({ ...prev, assignConfirm: false }));
+                        } finally {
+                          setLoadingStates(prev => ({ ...prev, assign: false }));
                         }
                       }}
-                      disabled={!selection.user || loadingStates.assign}
+                      disabled={loadingStates.assign}
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loadingStates.assign && <i className="ri-loader-4-line animate-spin"></i>}
-                      {loadingStates.assign ? 'Assigning...' : 'Assign'}
+                      {loadingStates.assign ? 'Assigning...' : 'Confirm Assignment'}
                     </button>
                   </div>
                 </div>

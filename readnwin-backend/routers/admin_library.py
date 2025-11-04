@@ -16,7 +16,7 @@ class AssignBookRequest(BaseModel):
     format: str
 
 @router.post("/user-library")
-async def assign_book_to_user(
+def assign_book_to_user(
     request: AssignBookRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
@@ -63,7 +63,7 @@ async def assign_book_to_user(
     }
 
 @router.get("/library-assignments")
-async def get_library_assignments(
+def get_library_assignments(
     skip: int = 0,
     limit: int = 20,
     search: Optional[str] = None,
@@ -127,7 +127,7 @@ async def get_library_assignments(
     }
 
 @router.delete("/library-assignment/{assignment_id}")
-async def remove_library_assignment(
+def remove_library_assignment(
     assignment_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token)
