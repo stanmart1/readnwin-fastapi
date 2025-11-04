@@ -3,16 +3,15 @@ import axios from 'axios';
 // Get API base URL from environment variable or default to localhost
 let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+// Remove trailing slash to prevent double slashes
+API_BASE_URL = API_BASE_URL.replace(/\/$/, '');
+
 // Force HTTPS in production to prevent mixed content errors
 if (window.location.protocol === 'https:') {
+  // Always use HTTPS when site is accessed over HTTPS
   if (API_BASE_URL.startsWith('http://')) {
     API_BASE_URL = API_BASE_URL.replace('http://', 'https://');
   }
-  // Also handle production domain specifically
-  if (API_BASE_URL.includes('localhost')) {
-    API_BASE_URL = 'https://backend.readnwin.com';
-  }
-  console.warn('Production mode - API URL:', API_BASE_URL);
 }
 
 // Create axios instance with base configuration

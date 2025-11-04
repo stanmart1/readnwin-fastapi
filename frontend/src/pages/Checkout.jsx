@@ -63,7 +63,7 @@ export default function Checkout() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <div className="max-w-7xl mx-auto px-4 py-16 pt-24 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading checkout...</p>
         </div>
@@ -75,7 +75,7 @@ export default function Checkout() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <div className="max-w-7xl mx-auto px-4 py-16 pt-24 text-center">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
             <p className="text-red-800">{cartError}</p>
           </div>
@@ -88,7 +88,7 @@ export default function Checkout() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <div className="max-w-7xl mx-auto px-4 py-16 pt-24 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Cart is Empty</h2>
           <p className="text-gray-600 mb-8">Add some books before checking out</p>
           <button
@@ -106,7 +106,7 @@ export default function Checkout() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center">

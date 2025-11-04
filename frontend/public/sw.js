@@ -1,4 +1,4 @@
-const CACHE_NAME = 'readnwin-v3';
+const CACHE_NAME = 'readnwin-v4';
 const urlsToCache = [
   '/manifest.json'
 ];
@@ -12,32 +12,24 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Don't cache JS files or HTML to prevent stale file issues
-  if (event.request.url.includes('.js') || 
-      event.request.url.includes('.html') ||
-      event.request.url.includes('/assets/')) {
-    event.respondWith(fetch(event.request));
+  // Force HTTPS for backend API requests
+  let requestUrl = event.request.url;
+  if (requestUrl.includes('backend.readnwin.com') && requestUrl.startsWith('http://')) {
+    requestUrl = requestUrl.replace('http://', 'https://');
+  }
+  
+  // Don't cache JS files, HTML, or API requests
+  if (requestUrl.includes('.js') || 
+      requestUrl.includes('.html') ||
+      requestUrl.includes('/assets/') ||
+      requestUrl.includes('/api/')) {
+    event.respondWith(fetch(requestUrl));
     return;
   }
   
-  // Force HTTPS for API requests to prevent mixed content errors
-  let request = event.request;
-  if (request.url.includes('backend.readnwin.com') && request.url.startsWith('http://')) {
-    request = new Request(request.url.replace('http://', 'https://'), {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-      mode: request.mode,
-      credentials: request.credentials,
-      cache: request.cache,
-      redirect: request.redirect,
-      referrer: request.referrer
-    });
-  }
-  
   event.respondWith(
-    caches.match(request)
-      .then((response) => response || fetch(request))
+    caches.match(requestUrl)
+      .then((response) => response || fetch(requestUrl))
   );
 });
 
