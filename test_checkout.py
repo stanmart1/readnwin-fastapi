@@ -5,7 +5,7 @@ Quick test script to verify checkout endpoints are working
 import requests
 import json
 
-BASE_URL = "http://localhost:9000"
+BASE_URL = "http://localhost:8000"
 
 def test_shipping_methods():
     """Test shipping methods endpoint"""
