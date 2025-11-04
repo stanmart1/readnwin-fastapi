@@ -54,8 +54,8 @@ export default function SystemSettings() {
         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Site Name</label>
         <input
           type="text"
-          value={settings.siteName || ''}
-          onChange={(e) => handleSettingChange('siteName', e.target.value)}
+          value={settings.site_name || ''}
+          onChange={(e) => handleSettingChange('site_name', e.target.value)}
           className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -63,8 +63,8 @@ export default function SystemSettings() {
       <div>
         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Site Description</label>
         <textarea
-          value={settings.siteDescription || ''}
-          onChange={(e) => handleSettingChange('siteDescription', e.target.value)}
+          value={settings.site_description || ''}
+          onChange={(e) => handleSettingChange('site_description', e.target.value)}
           rows={3}
           className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -79,8 +79,8 @@ export default function SystemSettings() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.maintenanceMode || false}
-              onChange={(e) => handleSettingChange('maintenanceMode', e.target.checked)}
+              checked={settings.maintenance_mode || false}
+              onChange={(e) => handleSettingChange('maintenance_mode', e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -95,8 +95,8 @@ export default function SystemSettings() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.userRegistration || false}
-              onChange={(e) => handleSettingChange('userRegistration', e.target.checked)}
+              checked={settings.user_registration || false}
+              onChange={(e) => handleSettingChange('user_registration', e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -111,8 +111,8 @@ export default function SystemSettings() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.emailNotifications || false}
-              onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
+              checked={settings.email_notifications || false}
+              onChange={(e) => handleSettingChange('email_notifications', e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -127,8 +127,8 @@ export default function SystemSettings() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.doubleOptIn || false}
-              onChange={(e) => handleSettingChange('doubleOptIn', e.target.checked)}
+              checked={settings.double_opt_in || false}
+              onChange={(e) => handleSettingChange('double_opt_in', e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -143,8 +143,8 @@ export default function SystemSettings() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.reviewModeration || false}
-              onChange={(e) => handleSettingChange('reviewModeration', e.target.checked)}
+              checked={settings.review_moderation || false}
+              onChange={(e) => handleSettingChange('review_moderation', e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -178,8 +178,8 @@ export default function SystemSettings() {
           type="number"
           min="5"
           max="1440"
-          value={settings.sessionTimeoutMinutes || 40}
-          onChange={(e) => handleSettingChange('sessionTimeoutMinutes', parseInt(e.target.value))}
+          value={settings.session_timeout_minutes || settings.sessionTimeoutMinutes || 40}
+          onChange={(e) => handleSettingChange('session_timeout_minutes', parseInt(e.target.value))}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-500 mt-1">Users will be warned 5 minutes before timeout (5-1440 minutes)</p>
@@ -193,8 +193,8 @@ export default function SystemSettings() {
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
-            checked={settings.autoBackup || false}
-            onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
+            checked={settings.auto_backup || false}
+            onChange={(e) => handleSettingChange('auto_backup', e.target.checked)}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -204,8 +204,8 @@ export default function SystemSettings() {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Backup Frequency</label>
         <select
-          value={settings.backupFrequency || 'daily'}
-          onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
+          value={settings.backup_frequency || 'daily'}
+          onChange={(e) => handleSettingChange('backup_frequency', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="hourly">Hourly</option>
@@ -219,8 +219,8 @@ export default function SystemSettings() {
         <label className="block text-sm font-medium text-gray-700 mb-2">Max File Size (MB)</label>
         <input
           type="number"
-          value={settings.maxFileSize || 10}
-          onChange={(e) => handleSettingChange('maxFileSize', parseInt(e.target.value))}
+          value={settings.max_file_size_mb || 10}
+          onChange={(e) => handleSettingChange('max_file_size_mb', parseInt(e.target.value))}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -232,12 +232,12 @@ export default function SystemSettings() {
             <label key={type} className="flex items-center">
               <input
                 type="checkbox"
-                checked={(settings.allowedFileTypes || []).includes(type)}
+                checked={(settings.allowed_file_types || []).includes(type)}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    handleSettingChange('allowedFileTypes', [...(settings.allowedFileTypes || []), type]);
+                    handleSettingChange('allowed_file_types', [...(settings.allowed_file_types || []), type]);
                   } else {
-                    handleSettingChange('allowedFileTypes', (settings.allowedFileTypes || []).filter(t => t !== type));
+                    handleSettingChange('allowed_file_types', (settings.allowed_file_types || []).filter(t => t !== type));
                   }
                 }}
                 className="mr-2"

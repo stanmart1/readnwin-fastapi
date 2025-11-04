@@ -15,11 +15,19 @@ export const useSettingsManagement = () => {
       // Extract values from the settings objects
       const settingsData = response.data.settings || {};
       const extractedSettings = {};
+      
+      // Store both snake_case and camelCase versions for compatibility
       Object.keys(settingsData).forEach(key => {
-        // Convert snake_case to camelCase for frontend
+        // Keep original snake_case key
+        extractedSettings[key] = settingsData[key].value;
+        
+        // Also add camelCase version for UI compatibility
         const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-        extractedSettings[camelKey] = settingsData[key].value;
+        if (camelKey !== key) {
+          extractedSettings[camelKey] = settingsData[key].value;
+        }
       });
+      
       setSettings(extractedSettings);
     } catch (err) {
       setError(err.message);
@@ -36,8 +44,18 @@ export const useSettingsManagement = () => {
       // Save each setting individually
       for (const [key, value] of Object.entries(settings)) {
         // Convert camelCase back to snake_case for backend
-        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        await api.put(`/admin/system-settings/${snakeKey}`, { value });
+        // Handle special cases like sessionTimeoutMinutes -> session_timeout_minutes
+        const snakeKey = key
+          .replace(/([A-Z])/g, '_$1')
+          .toLowerCase()
+          .replace(/^_/, ''); // Remove leading underscore if any
+        
+        try {
+          await api.put(`/admin/system-settings/${snakeKey}`, { value });
+        } catch (err) {
+          console.error(`Error saving ${snakeKey}:`, err);
+          // Continue with other settings even if one fails
+        }
       }
       return { success: true };
     } catch (err) {

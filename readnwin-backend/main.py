@@ -44,6 +44,13 @@ async def startup_event():
         except Exception as e:
             print(f"⚠️  Achievement initialization skipped: {e}")
         
+        # Initialize system settings
+        try:
+            from init_system_settings import init_system_settings
+            init_system_settings()
+        except Exception as e:
+            print(f"⚠️  System settings initialization skipped: {e}")
+        
         # Start background scheduler for token cleanup (optional)
         try:
             from services.scheduler import start_scheduler

@@ -6,6 +6,7 @@ export default function RedisManagement() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [flushing, setFlushing] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const fetchRedisStatus = async () => {
     try {
@@ -29,6 +30,20 @@ export default function RedisManagement() {
       console.error('Error refreshing Redis settings:', error);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const toggleRedis = async (enabled) => {
+    try {
+      setToggling(true);
+      await api.put('/admin/system-settings/redis_enabled', { value: enabled });
+      await refreshRedisSettings();
+      alert(`Redis ${enabled ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error('Error toggling Redis:', error);
+      alert(`Error toggling Redis: ${error.message}`);
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -68,6 +83,26 @@ export default function RedisManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Redis Enable/Disable Toggle */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-medium text-gray-900 mb-1">Redis Caching</h4>
+            <p className="text-sm text-gray-600">Enable or disable Redis for caching and rate limiting</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={redisStatus?.enabled || false}
+              onChange={(e) => toggleRedis(e.target.checked)}
+              disabled={toggling}
+              className="sr-only peer"
+            />
+            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+      </div>
+
       {/* Redis Status */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h4 className="font-medium text-gray-900 mb-3">Redis Status</h4>

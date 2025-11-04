@@ -68,6 +68,7 @@ const LibraryManagement = () => {
       const response = await api.get('/admin/library-assignments', { params });
       const result = response.data;
 
+      console.log('Library assignments response:', result);
       setLibraries(result.assignments || []);
       setPagination(prev => ({
         ...prev,
@@ -76,7 +77,12 @@ const LibraryManagement = () => {
       }));
     } catch (error) {
       console.error('Failed to load libraries:', error);
-      alert('Failed to load library assignments');
+      console.error('Error details:', error.response?.data);
+      if (error.response?.status === 403) {
+        alert('Access denied. Admin privileges required.');
+      } else {
+        alert(`Failed to load library assignments: ${error.response?.data?.detail || error.message}`);
+      }
     } finally {
       setLoading(false);
     }
