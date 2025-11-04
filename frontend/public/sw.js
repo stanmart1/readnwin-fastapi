@@ -1,11 +1,10 @@
-const CACHE_NAME = 'readnwin-v2';
+const CACHE_NAME = 'readnwin-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
@@ -13,6 +12,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Don't cache JS files or HTML to prevent stale file issues
+  if (event.request.url.includes('.js') || 
+      event.request.url.includes('.html') ||
+      event.request.url.includes('/assets/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => response || fetch(event.request))
@@ -31,4 +38,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });
