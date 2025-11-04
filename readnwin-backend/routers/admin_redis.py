@@ -4,7 +4,7 @@ Admin Redis Management Endpoints
 from fastapi import APIRouter, Depends, HTTPException
 from core.security import get_current_user_from_token
 from models.user import User
-from services.redis_service import get_redis_client, clear_rate_limit
+from services.redis_service import get_redis_client, clear_rate_limit, is_redis_enabled, reset_redis_setting_cache
 from typing import Optional
 
 router = APIRouter(prefix="/admin/redis", tags=["admin-redis"])
@@ -15,13 +15,27 @@ def redis_status(current_user: User = Depends(get_current_user_from_token)):
     if not current_user.has_admin_access:
         raise HTTPException(status_code=403, detail="Admin access required")
     
+    enabled = is_redis_enabled()
+    
+    if not enabled:
+        return {
+            "enabled": False,
+            "connected": False,
+            "message": "Redis is disabled via system settings"
+        }
+    
     try:
         client = get_redis_client()
         if not client:
-            return {"connected": False, "error": "Redis client not initialized"}
+            return {
+                "enabled": True,
+                "connected": False, 
+                "error": "Redis client not initialized or connection failed"
+            }
         
         info = client.info()
         return {
+            "enabled": True,
             "connected": True,
             "version": info.get("redis_version"),
             "used_memory": info.get("used_memory_human"),
@@ -29,7 +43,11 @@ def redis_status(current_user: User = Depends(get_current_user_from_token)):
             "uptime_days": info.get("uptime_in_days")
         }
     except Exception as e:
-        return {"connected": False, "error": str(e)}
+        return {
+            "enabled": True,
+            "connected": False, 
+            "error": str(e)
+        }
 
 @router.post("/clear-rate-limit")
 def clear_rate_limit_endpoint(
@@ -62,6 +80,17 @@ def list_keys(
     except Exception as e:
         return {"keys": [], "error": str(e)}
 
+@router.post("/refresh-setting")
+def refresh_redis_setting(
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Refresh Redis setting cache (Admin only)"""
+    if not current_user.has_admin_access:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    reset_redis_setting_cache()
+    return {"success": True, "message": "Redis setting cache refreshed"}
+
 @router.delete("/flush")
 def flush_redis(
     confirm: bool = False,
@@ -77,7 +106,7 @@ def flush_redis(
     try:
         client = get_redis_client()
         if not client:
-            return {"success": False, "error": "Redis not connected"}
+            return {"success": False, "error": "Redis not connected or disabled"}
         
         client.flushdb()
         return {"success": True, "message": "Redis flushed"}

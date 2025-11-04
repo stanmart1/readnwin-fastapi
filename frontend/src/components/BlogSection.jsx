@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useBlog } from '../hooks';
 import ProgressiveImage from './ProgressiveImage';
+import { stripHTML } from '../utils/htmlUtils';
 
 export default function BlogSection() {
   const { posts, loading } = useBlog(6);
@@ -128,7 +129,7 @@ export default function BlogSection() {
                     </h3>
 
                     <p className="text-gray-600 mb-4 line-clamp-3">
-                      {post.excerpt || post.content?.substring(0, 150) + '...'}
+                      {stripHTML(post.excerpt || post.content)?.substring(0, 150) + '...'}
                     </p>
 
                     <div className="flex items-center justify-between">

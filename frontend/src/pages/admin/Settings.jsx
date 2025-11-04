@@ -5,6 +5,7 @@ import { useSettingsManagement } from '../../hooks/useSettingsManagement';
 import EmailGatewayManagement from './settings-components/EmailGatewayManagement';
 import PaymentGatewayManagement from './settings-components/PaymentGatewayManagement';
 import ImageCacheManager from './settings-components/ImageCacheManager';
+import RedisManagement from './settings-components/RedisManagement';
 import ImageOptimization from '../../components/admin/ImageOptimization';
 
 export default function SystemSettings() {
@@ -149,6 +150,22 @@ export default function SystemSettings() {
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
         </div>
+        
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div>
+            <label className="text-xs sm:text-sm font-medium text-gray-700">Redis Caching</label>
+            <p className="text-xs text-gray-500">Enable Redis for caching and rate limiting</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.redis_enabled !== false}
+              onChange={(e) => handleSettingChange('redis_enabled', e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
       </div>
     </div>
   );
@@ -244,6 +261,7 @@ export default function SystemSettings() {
   const tabs = [
     { id: 'general', label: 'General', icon: 'ri-settings-line' },
     { id: 'security', label: 'Security', icon: 'ri-shield-check-line' },
+    { id: 'redis', label: 'Redis', icon: 'ri-database-line' },
     { id: 'images', label: 'Images', icon: 'ri-image-line' },
     { id: 'payment', label: 'Payment', icon: 'ri-money-dollar-circle-line' },
     { id: 'email', label: 'Email Gateway', icon: 'ri-mail-line' }
@@ -283,6 +301,7 @@ export default function SystemSettings() {
           <div>
             {activeTab === 'general' && renderGeneralSettings()}
             {activeTab === 'security' && renderSecuritySettings()}
+            {activeTab === 'redis' && <RedisManagement />}
             {activeTab === 'images' && <ImageOptimization />}
             {activeTab === 'payment' && renderPaymentSettings()}
             {activeTab === 'email' && <EmailGatewayManagement />}

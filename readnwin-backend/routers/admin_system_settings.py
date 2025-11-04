@@ -78,6 +78,14 @@ def update_system_setting(
     
     db.commit()
     
+    # Refresh Redis setting cache if Redis setting was updated
+    if key == "redis_enabled":
+        try:
+            from services.redis_service import reset_redis_setting_cache
+            reset_redis_setting_cache()
+        except ImportError:
+            pass  # Redis service not available
+    
     return {"message": "Setting updated successfully"}
 
 @router.post("/initialize")
@@ -138,6 +146,9 @@ def initialize_default_settings(
         {"key": "flutterwave_secret_key", "value": "", "data_type": "string", "category": "payment", "description": "Flutterwave secret key"},
         {"key": "flutterwave_hash", "value": "", "data_type": "string", "category": "payment", "description": "Flutterwave hash"},
         {"key": "payment_test_mode", "value": "true", "data_type": "boolean", "category": "payment", "description": "Enable payment test mode"},
+        
+        # Redis Settings
+        {"key": "redis_enabled", "value": "true", "data_type": "boolean", "category": "cache", "description": "Enable Redis caching and rate limiting"},
         
         # Content Settings
         {"key": "books_per_page", "value": "20", "data_type": "integer", "category": "content", "description": "Books displayed per page", "is_public": True},

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAbout } from '../hooks';
 import { getFileUrl } from '../lib/fileService';
 import ProgressiveImage from './ProgressiveImage';
+import { createHTMLProps } from '../utils/htmlUtils';
 
 export default function AboutSection() {
   const { content, loading } = useAbout();
@@ -88,13 +89,13 @@ export default function AboutSection() {
               {aboutContent.hero?.title || 'About ReadnWin'}
             </h2>
             
-            <p className="text-lg md:text-xl text-gray-600 mb-6">
-              {aboutContent.hero?.subtitle || 'Empowering The Mind Through Reading'}
-            </p>
+            <div className="text-lg md:text-xl text-gray-600 mb-6"
+                 {...createHTMLProps(aboutContent.hero?.subtitle || 'Empowering The Mind Through Reading')}
+            />
             
-            <p className="text-base md:text-lg text-gray-600 mb-8">
-              {aboutContent.mission?.description || defaultContent.mission.description}
-            </p>
+            <div className="text-base md:text-lg text-gray-600 mb-8"
+                 {...createHTMLProps(aboutContent.mission?.description || defaultContent.mission.description)}
+            />
 
             {/* Key Features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">

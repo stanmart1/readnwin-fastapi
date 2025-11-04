@@ -7,19 +7,38 @@ const GUEST_CART_KEY = 'readnwin_guest_cart';
 
 export const useCart = () => {
   const { isAuthenticated: isAuthenticatedFn, getUser } = useAuth();
-  const isAuthenticated = isAuthenticatedFn();
-  const user = getUser();
   const hasLoadedCart = useRef(false);
+  
+  // Safely get authentication status
+  const isAuthenticated = useMemo(() => {
+    try {
+      return isAuthenticatedFn();
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      return false;
+    }
+  }, [isAuthenticatedFn]);
+  
+  const user = useMemo(() => {
+    try {
+      return getUser();
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return null;
+    }
+  }, [getUser]);
   
   const [cartItems, setCartItems] = useState(() => {
     // Initialize from localStorage for guest users
-    if (typeof window !== 'undefined' && !isAuthenticatedFn()) {
+    if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(GUEST_CART_KEY);
-        return stored ? JSON.parse(stored) : [];
+        const token = localStorage.getItem('token');
+        if (!token) {
+          const stored = localStorage.getItem(GUEST_CART_KEY);
+          return stored ? JSON.parse(stored) : [];
+        }
       } catch (error) {
         console.error('Error loading cart:', error);
-        return [];
       }
     }
     return [];
@@ -51,7 +70,7 @@ export const useCart = () => {
   const loadAuthenticatedCart = useCallback(async () => {
     // Check if token exists first
     const token = localStorage.getItem('token');
-    if (!isAuthenticatedFn() || !token) {
+    if (!isAuthenticated || !token) {
       return;
     }
     
@@ -96,11 +115,11 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Transfer guest cart to authenticated user
   const transferGuestCart = useCallback(async () => {
-    if (!isAuthenticatedFn()) return;
+    if (!isAuthenticated) return;
     
     try {
       const guestCart = localStorage.getItem(GUEST_CART_KEY);
@@ -152,7 +171,7 @@ export const useCart = () => {
       // Still load authenticated cart even if transfer fails
       await loadAuthenticatedCart();
     }
-  }, [loadAuthenticatedCart]);
+  }, [isAuthenticated, loadAuthenticatedCart]);
 
   // Load cart on mount and when auth changes
   useEffect(() => {
@@ -232,7 +251,7 @@ export const useCart = () => {
     try {
       setError(null);
       
-      if (isAuthenticatedFn()) {
+      if (isAuthenticated) {
         // Authenticated user - use API
         await api.post('/cart/add', {
           book_id: book.id,
@@ -268,7 +287,7 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [loadAuthenticatedCart, saveGuestCart]);
+  }, [isAuthenticated, loadAuthenticatedCart, saveGuestCart]);
 
   // Update quantity
   const updateQuantity = useCallback(async (bookId, quantity) => {
@@ -277,7 +296,7 @@ export const useCart = () => {
     try {
       setError(null);
       
-      if (isAuthenticatedFn()) {
+      if (isAuthenticated) {
         // Find the cart item id
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
@@ -302,14 +321,14 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
 
   // Remove from cart
   const removeFromCart = useCallback(async (bookId) => {
     try {
       setError(null);
       
-      if (isAuthenticatedFn()) {
+      if (isAuthenticated) {
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
           await api.delete(`/cart/${cartItem.id}`);
@@ -328,14 +347,14 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
 
   // Clear cart
   const clearCart = useCallback(async () => {
     try {
       setError(null);
       
-      if (isAuthenticatedFn()) {
+      if (isAuthenticated) {
         await api.delete('/cart/clear');
         setCartItems([]);
       } else {
@@ -347,7 +366,7 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Helper functions
   const getSubtotal = useCallback(() => {

@@ -15,10 +15,44 @@ REDIS_URL = settings.redis_url
 # Global Redis client
 _redis_client: Optional[redis.Redis] = None
 _redis_available = None  # Track if Redis is available
+_redis_enabled_setting = None  # Cache the setting
+
+def is_redis_enabled() -> bool:
+    """Check if Redis is enabled via system settings"""
+    global _redis_enabled_setting
+    
+    # Cache the setting to avoid database queries on every call
+    if _redis_enabled_setting is None:
+        try:
+            from sqlalchemy.orm import sessionmaker
+            from core.database import engine
+            from models.system_settings import SystemSetting
+            
+            SessionLocal = sessionmaker(bind=engine)
+            db = SessionLocal()
+            try:
+                setting = db.query(SystemSetting).filter(SystemSetting.key == "redis_enabled").first()
+                _redis_enabled_setting = setting.value.lower() == "true" if setting and setting.value else True
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Could not check Redis setting, defaulting to enabled: {e}")
+            _redis_enabled_setting = True
+    
+    return _redis_enabled_setting
+
+def reset_redis_setting_cache():
+    """Reset the cached Redis setting (call when setting is updated)"""
+    global _redis_enabled_setting
+    _redis_enabled_setting = None
 
 def get_redis_client() -> Optional[redis.Redis]:
-    """Get or create Redis client - returns None if unavailable"""
+    """Get or create Redis client - returns None if unavailable or disabled"""
     global _redis_client, _redis_available
+    
+    # Check if Redis is disabled via system settings
+    if not is_redis_enabled():
+        return None
     
     # If we already know Redis is unavailable, don't retry
     if _redis_available is False:
