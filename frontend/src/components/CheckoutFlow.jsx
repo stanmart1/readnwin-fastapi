@@ -469,7 +469,7 @@ function ShippingAddressStep({ formData, updateFormData }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.zip_code}
             onChange={(e) => updateFormData('shipping', { zip_code: e.target.value })}
-            placeholder="100001"
+            placeholder="Optional"
           />
         </div>
         

@@ -34,10 +34,6 @@ export const validateCheckoutData = (formData, analytics) => {
       errors.push('State is required');
     }
     
-    if (!formData.shipping.zip_code?.trim()) {
-      errors.push('ZIP/Postal code is required');
-    }
-    
     if (!formData.shipping_method) {
       errors.push('Shipping method is required');
     }

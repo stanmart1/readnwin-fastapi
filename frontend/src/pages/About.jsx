@@ -114,6 +114,33 @@ export default function About() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      {aboutData.stats && aboutData.stats.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {aboutData.stats.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="text-4xl md:text-5xl font-bold text-purple-600 mb-2">
+                    {stat.number}
+                  </div>
+                  <div className="text-gray-600 font-medium">
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Values Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -297,16 +324,16 @@ export default function About() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Join the Reading Revolution
+              {aboutData.cta?.title || 'Join the Reading Revolution'}
             </h2>
-            <p className="text-xl mb-8 text-purple-100">
-              Start your journey with ReadnWin today
-            </p>
+            <div className="text-xl mb-8 text-purple-100"
+                 {...createHTMLProps(aboutData.cta?.description || 'Start your journey with ReadnWin today')}
+            />
             <a
               href="/signup"
               className="inline-block bg-white text-purple-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors text-lg"
             >
-              Get Started Free
+              {aboutData.cta?.primaryButton || 'Get Started Free'}
             </a>
           </motion.div>
         </div>

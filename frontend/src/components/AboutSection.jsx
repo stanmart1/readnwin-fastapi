@@ -22,12 +22,12 @@ export default function AboutSection() {
       {
         icon: 'ri-book-open-line',
         title: 'Accessibility',
-        description: 'Making reading accessible to everyone'
+        description: '<p>Making reading accessible to everyone</p>'
       },
       {
         icon: 'ri-lightbulb-line',
         title: 'Innovation',
-        description: 'Cutting-edge technology'
+        description: '<p>Cutting-edge technology</p>'
       }
     ]
   };
@@ -140,7 +140,7 @@ export default function AboutSection() {
                   }`}></i>
                   <div>
                     <h4 className="font-semibold text-gray-900">{value.title}</h4>
-                    <div className="text-sm text-gray-600" {...createHTMLProps(value.description)} />
+                    <p className="text-sm text-gray-600" {...createHTMLProps(value.description)} />
                   </div>
                 </motion.div>
               ))}
