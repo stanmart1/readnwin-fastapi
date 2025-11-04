@@ -7,6 +7,10 @@ const LibraryManagement = () => {
   const [libraries, setLibraries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [assignmentDetails, setAssignmentDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState('ebook');
@@ -105,6 +109,23 @@ const LibraryManagement = () => {
     }
   };
 
+  const handleViewDetails = async (libraryId) => {
+    setSelectedAssignment(libraryId);
+    setShowDetailsModal(true);
+    setDetailsLoading(true);
+    
+    try {
+      const response = await api.get(`/admin/library-assignment/${libraryId}/details`);
+      setAssignmentDetails(response.data);
+    } catch (error) {
+      console.error('Failed to load details:', error);
+      alert('Failed to load reading details');
+      setShowDetailsModal(false);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   const handleRemoveAssignment = async (libraryId) => {
     if (!confirm('Are you sure you want to remove this book assignment?')) return;
 
@@ -163,7 +184,7 @@ const LibraryManagement = () => {
         <div className="flex justify-end">
           <button
             onClick={() => setShowAssignModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2"
           >
             <i className="ri-add-line"></i>
             Assign Book
@@ -240,7 +261,7 @@ const LibraryManagement = () => {
                             style={{ width: `${library.progress || 0}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-600">{library.progress || 0}%</span>
+                        <span className="text-sm text-gray-600">{(library.progress || 0).toFixed(2)}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -256,12 +277,22 @@ const LibraryManagement = () => {
                       {new Date(library.assigned_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleRemoveAssignment(library.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <i className="ri-delete-bin-line"></i>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewDetails(library.id)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="View Details"
+                        >
+                          <i className="ri-eye-line"></i>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveAssignment(library.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Remove Assignment"
+                        >
+                          <i className="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -516,6 +547,140 @@ const LibraryManagement = () => {
                   <span>Assign Book</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reading Details Modal */}
+      {showDetailsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                    <i className="ri-book-open-line text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Reading Details</h3>
+                    <p className="text-sm text-gray-600">Notes, highlights, and progress</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setAssignmentDetails(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
+                >
+                  <i className="ri-close-line text-2xl"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {detailsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : assignmentDetails ? (
+                <div className="space-y-6">
+                  {/* Assignment Info */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">User</p>
+                        <p className="font-semibold text-gray-900">{assignmentDetails.assignment.user_name}</p>
+                        <p className="text-sm text-gray-500">{assignmentDetails.assignment.user_email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Book</p>
+                        <p className="font-semibold text-gray-900">{assignmentDetails.assignment.book_title}</p>
+                        <p className="text-sm text-gray-500">{assignmentDetails.assignment.book_author}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Progress</p>
+                        <p className="font-semibold text-gray-900">{assignmentDetails.assignment.progress.toFixed(2)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Status</p>
+                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                          assignmentDetails.assignment.status === 'reading' ? 'bg-green-100 text-green-800' :
+                          assignmentDetails.assignment.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {assignmentDetails.assignment.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Highlights Section */}
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <i className="ri-mark-pen-line text-yellow-600"></i>
+                      Highlights ({assignmentDetails.highlights.length})
+                    </h4>
+                    {assignmentDetails.highlights.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl">
+                        <i className="ri-mark-pen-line text-4xl text-gray-300 mb-2"></i>
+                        <p className="text-gray-500">No highlights yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {assignmentDetails.highlights.map((highlight) => (
+                          <div key={highlight.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                            <p className="text-gray-800 italic mb-2">"{highlight.text}"</p>
+                            {highlight.context && (
+                              <p className="text-sm text-gray-600 mb-2">Context: {highlight.context}</p>
+                            )}
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <div className={`w-3 h-3 rounded-full bg-${highlight.color}-400`}></div>
+                                {highlight.color}
+                              </span>
+                              <span>{new Date(highlight.created_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notes Section */}
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <i className="ri-sticky-note-line text-blue-600"></i>
+                      Notes ({assignmentDetails.notes.length})
+                    </h4>
+                    {assignmentDetails.notes.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl">
+                        <i className="ri-sticky-note-line text-4xl text-gray-300 mb-2"></i>
+                        <p className="text-gray-500">No notes yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {assignmentDetails.notes.map((note) => (
+                          <div key={note.id} className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                            <p className="text-gray-800 mb-2">{note.content}</p>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{note.highlight_id ? 'Attached to highlight' : 'Standalone note'}</span>
+                              <span>{new Date(note.created_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">Failed to load details</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -81,7 +81,7 @@ def get_library_assignments(
         raise HTTPException(status_code=500, detail=f"Admin access check failed: {str(e)}")
     
     try:
-        query = db.query(UserLibrary).options(
+        query = db.query(UserLibrary).join(User).join(Book).options(
             joinedload(UserLibrary.user),
             joinedload(UserLibrary.book)
         )
@@ -94,7 +94,7 @@ def get_library_assignments(
             query = query.filter(UserLibrary.status == status)
         
         if search:
-            query = query.join(User).join(Book).filter(
+            query = query.filter(
                 (User.first_name.ilike(f"%{search}%")) |
                 (User.last_name.ilike(f"%{search}%")) |
                 (User.email.ilike(f"%{search}%")) |
@@ -144,6 +144,70 @@ def get_library_assignments(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch library assignments: {str(e)}")
+
+@router.get("/library-assignment/{assignment_id}/details")
+def get_library_assignment_details(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get detailed reading information including notes and highlights"""
+    check_admin_access(current_user)
+    
+    from models.reading import Highlight, Note
+    
+    assignment = db.query(UserLibrary).options(
+        joinedload(UserLibrary.user),
+        joinedload(UserLibrary.book)
+    ).filter(UserLibrary.id == assignment_id).first()
+    
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    # Get highlights
+    highlights = db.query(Highlight).filter(
+        Highlight.user_id == assignment.user_id,
+        Highlight.book_id == assignment.book_id
+    ).order_by(Highlight.created_at.desc()).all()
+    
+    # Get notes
+    notes = db.query(Note).filter(
+        Note.user_id == assignment.user_id,
+        Note.book_id == assignment.book_id
+    ).order_by(Note.created_at.desc()).all()
+    
+    return {
+        "assignment": {
+            "id": assignment.id,
+            "user_name": f"{assignment.user.first_name or ''} {assignment.user.last_name or ''}".strip(),
+            "user_email": assignment.user.email,
+            "book_title": assignment.book.title if assignment.book else "Unknown",
+            "book_author": assignment.book.author_name if assignment.book else "Unknown",
+            "format": assignment.format,
+            "progress": assignment.progress or 0,
+            "status": assignment.status,
+            "last_read_at": assignment.last_read_at.isoformat() if assignment.last_read_at else None,
+            "assigned_at": assignment.created_at.isoformat() if assignment.created_at else None
+        },
+        "highlights": [
+            {
+                "id": h.id,
+                "text": h.text,
+                "color": h.color,
+                "context": h.context,
+                "created_at": h.created_at.isoformat() if h.created_at else None
+            } for h in highlights
+        ],
+        "notes": [
+            {
+                "id": n.id,
+                "content": n.content,
+                "highlight_id": n.highlight_id,
+                "created_at": n.created_at.isoformat() if n.created_at else None,
+                "updated_at": n.updated_at.isoformat() if n.updated_at else None
+            } for n in notes
+        ]
+    }
 
 @router.delete("/library-assignment/{assignment_id}")
 def remove_library_assignment(
