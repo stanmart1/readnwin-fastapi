@@ -6,28 +6,34 @@ import { validateCheckoutData, formatCheckoutRequest, validateCartItems } from '
 
 export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   const { user, getUser } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = sessionStorage.getItem('checkoutStep');
+    return saved ? parseInt(saved) : 1;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  const [formData, setFormData] = useState({
-    shipping: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: 'Nigeria'
-    },
-    billing: {
-      sameAsShipping: true
-    },
-    payment: {
-      method: 'flutterwave'
-    }
+  const [formData, setFormData] = useState(() => {
+    const saved = sessionStorage.getItem('checkoutFormData');
+    return saved ? JSON.parse(saved) : {
+      shipping: {
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        country: 'Nigeria'
+      },
+      billing: {
+        sameAsShipping: true
+      },
+      payment: {
+        method: 'flutterwave'
+      }
+    };
   });
 
   // Autofill user details only once when component mounts
@@ -105,10 +111,14 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   }, [analytics?.isEbookOnly, currentStep]);
 
   const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], ...data }
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [section]: { ...prev[section], ...data }
+      };
+      sessionStorage.setItem('checkoutFormData', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const validateStep = (step) => {
@@ -129,13 +139,17 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   const nextStep = () => {
     const steps = generateSteps();
     if (validateStep(currentStep) && currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+      const newStep = currentStep + 1;
+      setCurrentStep(newStep);
+      sessionStorage.setItem('checkoutStep', newStep.toString());
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      const newStep = currentStep - 1;
+      setCurrentStep(newStep);
+      sessionStorage.setItem('checkoutStep', newStep.toString());
     }
   };
 
@@ -161,6 +175,8 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       const response = await api.post('/checkout', checkoutData);
 
       if (response.data.success) {
+        sessionStorage.removeItem('checkoutStep');
+        sessionStorage.removeItem('checkoutFormData');
         onComplete(response.data);
       } else {
         throw new Error(response.data.error || 'Checkout failed');

@@ -48,15 +48,35 @@ export const validateCheckoutData = (formData, analytics) => {
 };
 
 export const formatCheckoutRequest = (formData, analytics) => {
-  return {
+  const request = {
     formData: {
-      shipping: formData.shipping,
-      billing: formData.billing,
-      payment: formData.payment,
-      shippingMethod: formData.shipping_method
+      shipping: {
+        first_name: formData.shipping.first_name || '',
+        last_name: formData.shipping.last_name || '',
+        email: formData.shipping.email || '',
+        phone: formData.shipping.phone || '',
+        address: formData.shipping.address || '',
+        city: formData.shipping.city || '',
+        state: formData.shipping.state || '',
+        zip_code: formData.shipping.zip_code || null,
+        country: formData.shipping.country || 'Nigeria'
+      },
+      billing: {
+        sameAsShipping: formData.billing?.sameAsShipping !== false
+      },
+      payment: {
+        method: formData.payment.method || 'flutterwave'
+      }
     },
     total: analytics.total
   };
+  
+  // Only add shippingMethod if it exists (for physical books)
+  if (formData.shipping_method) {
+    request.formData.shippingMethod = formData.shipping_method;
+  }
+  
+  return request;
 };
 
 export const validateCartItems = (cartItems) => {
