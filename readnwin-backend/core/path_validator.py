@@ -53,3 +53,19 @@ def is_safe_filename(filename: str) -> bool:
         return False
     
     return True
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize filename by removing dangerous characters
+    """
+    if not filename:
+        return ""
+    
+    # Remove path separators and dangerous characters
+    sanitized = filename.replace('..', '').replace('/', '').replace('\\', '')
+    sanitized = sanitized.replace('\x00', '')
+    
+    # Remove control characters
+    sanitized = ''.join(c for c in sanitized if ord(c) >= 32)
+    
+    return sanitized.strip()
