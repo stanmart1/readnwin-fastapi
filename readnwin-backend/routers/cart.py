@@ -35,6 +35,7 @@ class CartResponse(BaseModel):
 
 
 @router.get("/", response_model=List[CartResponse])
+@router.get("", response_model=List[CartResponse])
 def get_cart(current_user: User = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     try:
         cart_items = db.query(Cart).join(Book).outerjoin(Category).filter(Cart.user_id == current_user.id).all()

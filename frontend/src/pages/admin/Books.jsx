@@ -46,7 +46,8 @@ const AdminBooks = () => {
     updateBook,
     deleteBooks,
     batchUpdateBooks,
-    setError
+    setError,
+    loadBooks
   } = bookManagement;
   
   // Consolidated state management
@@ -610,6 +611,7 @@ const AdminBooks = () => {
             categories={data.categories}
             authors={data.authors}
             onSuccess={() => {
+              loadBooks();
               setModals(prev => ({ ...prev, edit: false }));
               setSelection(prev => ({ ...prev, bookForAction: null }));
             }}
@@ -622,6 +624,7 @@ const AdminBooks = () => {
             categories={data.categories}
             authors={data.authors}
             onSuccess={() => {
+              loadBooks();
               setShowAddModal(false);
             }}
           />

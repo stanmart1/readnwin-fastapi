@@ -177,17 +177,14 @@ const BookEditModal = ({ isOpen, onClose, book, categories, authors, onSuccess }
         submitData.append('ebook_file', formData.ebook_file);
       }
       
-      setUploadProgress(25);
-      
       const response = await api.put(`/admin/books/${book.id}`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(Math.min(progress, 95));
+          setUploadProgress(progress);
         }
       });
       
-      setUploadProgress(100);
       const bookTitle = response.data.book?.title || formData.title;
       alert(`Book "${bookTitle}" updated successfully!`);
       
