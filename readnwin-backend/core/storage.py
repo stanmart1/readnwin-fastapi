@@ -89,20 +89,20 @@ class StorageManager:
             file.file.close()
     
     async def save_cover(self, file: UploadFile) -> str:
-        """Save book cover"""
+        """Save book cover with automatic WebP optimization"""
         self._validate_image(file)
         
         filename = self._generate_unique_filename(file.filename)
         file_path = self.covers_dir / filename
         await self._save_file(file, file_path)
         
-        # Optimize and convert to WebP
+        # Always optimize and convert to WebP
         try:
             from core.image_optimizer import image_optimizer
             optimized_path = image_optimizer.optimize_cover(file_path)
             return f"covers/{optimized_path.name}"
-        except ImportError:
-            # Fallback if image optimizer not available
+        except Exception as e:
+            print(f"Image optimization failed: {e}")
             return f"covers/{filename}"
     
     async def save_book(self, file: UploadFile) -> str:

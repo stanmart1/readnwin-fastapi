@@ -5,6 +5,7 @@ import { useSettingsManagement } from '../../hooks/useSettingsManagement';
 import EmailGatewayManagement from './settings-components/EmailGatewayManagement';
 import PaymentGatewayManagement from './settings-components/PaymentGatewayManagement';
 import ImageCacheManager from './settings-components/ImageCacheManager';
+import ImageOptimization from '../../components/admin/ImageOptimization';
 
 export default function SystemSettings() {
   const { settings, setSettings, loading, saving, error, saveSettings } = useSettingsManagement();
@@ -243,6 +244,7 @@ export default function SystemSettings() {
   const tabs = [
     { id: 'general', label: 'General', icon: 'ri-settings-line' },
     { id: 'security', label: 'Security', icon: 'ri-shield-check-line' },
+    { id: 'images', label: 'Images', icon: 'ri-image-line' },
     { id: 'payment', label: 'Payment', icon: 'ri-money-dollar-circle-line' },
     { id: 'email', label: 'Email Gateway', icon: 'ri-mail-line' }
   ];
@@ -281,6 +283,7 @@ export default function SystemSettings() {
           <div>
             {activeTab === 'general' && renderGeneralSettings()}
             {activeTab === 'security' && renderSecuritySettings()}
+            {activeTab === 'images' && <ImageOptimization />}
             {activeTab === 'payment' && renderPaymentSettings()}
             {activeTab === 'email' && <EmailGatewayManagement />}
           </div>

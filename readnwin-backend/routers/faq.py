@@ -22,7 +22,16 @@ class FAQResponse(BaseModel):
 @router.get("/")
 def get_faqs(db: Session = Depends(get_db)):
     try:
+        # First check all FAQs to debug
+        all_faqs = db.query(FAQ).all()
+        print(f"Total FAQs in database: {len(all_faqs)}")
+        for faq in all_faqs:
+            print(f"FAQ {faq.id}: is_active={faq.is_active}, question='{faq.question[:50]}...'")
+        
+        # Get active FAQs
         faqs = db.query(FAQ).filter(FAQ.is_active == True).order_by(FAQ.priority.desc(), FAQ.order_index).all()
+        print(f"Active FAQs found: {len(faqs)}")
+        
         return {
             "success": True,
             "data": {
@@ -98,7 +107,8 @@ def create_faq(
             category=faq_data.get('category', 'general'),
             priority=faq_data.get('priority', 0),
             is_active=faq_data.get('is_active', True),
-            is_featured=faq_data.get('is_featured', False)
+            is_featured=faq_data.get('is_featured', False),
+            order_index=faq_data.get('order_index', 0)
         )
         db.add(new_faq)
         db.commit()
@@ -344,3 +354,20 @@ def save_admin_faqs(
         db.rollback()
         print(f"Error saving admin FAQs: {e}")
         raise HTTPException(status_code=500, detail="Failed to save FAQs")
+
+@router.post("/activate-all")
+def activate_all_faqs(
+    current_user: User = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
+    """Activate all FAQs - useful for fixing inactive FAQs"""
+    check_admin_access(current_user)
+    
+    try:
+        updated_count = db.query(FAQ).update({FAQ.is_active: True})
+        db.commit()
+        return {"success": True, "message": f"Activated {updated_count} FAQs"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error activating FAQs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to activate FAQs")

@@ -51,7 +51,7 @@ export const useCart = () => {
   const loadAuthenticatedCart = useCallback(async () => {
     // Check if token exists first
     const token = localStorage.getItem('token');
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticatedFn() || !token) {
       return;
     }
     
@@ -96,11 +96,11 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, []);
 
   // Transfer guest cart to authenticated user
   const transferGuestCart = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticatedFn()) return;
     
     try {
       const guestCart = localStorage.getItem(GUEST_CART_KEY);
@@ -152,7 +152,7 @@ export const useCart = () => {
       // Still load authenticated cart even if transfer fails
       await loadAuthenticatedCart();
     }
-  }, [isAuthenticated, loadAuthenticatedCart]);
+  }, [loadAuthenticatedCart]);
 
   // Load cart on mount and when auth changes
   useEffect(() => {
@@ -185,7 +185,7 @@ export const useCart = () => {
         }
       }
     }
-  }, [isAuthenticated, transferGuestCart, loadAuthenticatedCart]);
+  }, [isAuthenticated]);
 
   // Listen for storage events to sync cart across tabs
   useEffect(() => {
@@ -232,7 +232,7 @@ export const useCart = () => {
     try {
       setError(null);
       
-      if (isAuthenticated) {
+      if (isAuthenticatedFn()) {
         // Authenticated user - use API
         await api.post('/cart/add', {
           book_id: book.id,
@@ -268,7 +268,7 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated, loadAuthenticatedCart, saveGuestCart]);
+  }, [loadAuthenticatedCart, saveGuestCart]);
 
   // Update quantity
   const updateQuantity = useCallback(async (bookId, quantity) => {
@@ -277,7 +277,7 @@ export const useCart = () => {
     try {
       setError(null);
       
-      if (isAuthenticated) {
+      if (isAuthenticatedFn()) {
         // Find the cart item id
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
@@ -302,14 +302,14 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [cartItems, loadAuthenticatedCart, saveGuestCart]);
 
   // Remove from cart
   const removeFromCart = useCallback(async (bookId) => {
     try {
       setError(null);
       
-      if (isAuthenticated) {
+      if (isAuthenticatedFn()) {
         const cartItem = cartItems.find(item => item.book_id === bookId);
         if (cartItem) {
           await api.delete(`/cart/${cartItem.id}`);
@@ -328,14 +328,14 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated, cartItems, loadAuthenticatedCart, saveGuestCart]);
+  }, [cartItems, loadAuthenticatedCart, saveGuestCart]);
 
   // Clear cart
   const clearCart = useCallback(async () => {
     try {
       setError(null);
       
-      if (isAuthenticated) {
+      if (isAuthenticatedFn()) {
         await api.delete('/cart/clear');
         setCartItems([]);
       } else {
@@ -347,7 +347,7 @@ export const useCart = () => {
       setError(err.message);
       throw err;
     }
-  }, [isAuthenticated]);
+  }, []);
 
   // Helper functions
   const getSubtotal = useCallback(() => {
