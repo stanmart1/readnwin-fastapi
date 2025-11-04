@@ -24,7 +24,7 @@ class StorageManager:
         
         if self.env == "production":
             self.base_dir = Path("/app/storage")
-            self.url_prefix = "/storage"
+            self.url_prefix = "/app/storage"
         else:
             self.base_dir = Path("uploads")
             self.url_prefix = "/uploads"
