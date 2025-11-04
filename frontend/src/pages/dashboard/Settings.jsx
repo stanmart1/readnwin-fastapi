@@ -237,26 +237,13 @@ export default function Settings() {
                         Phone Number
                       </label>
                       <input
-                        type="tel"
+                        type="text"
+                        inputMode="tel"
                         name="phone_number"
                         value={formData.phone_number}
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="+234 123 456 7890"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2">
-                        School Name
-                      </label>
-                      <input
-                        type="text"
-                        name="school_name"
-                        value={formData.school_name}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="University of Lagos"
                       />
                     </div>
 
@@ -275,6 +262,20 @@ export default function Settings() {
                         <option value="Secondary">Secondary</option>
                         <option value="Tertiary">Tertiary</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">
+                        School Name
+                      </label>
+                      <input
+                        type="text"
+                        name="school_name"
+                        value={formData.school_name}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="University of Lagos"
+                      />
                     </div>
 
                     {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (

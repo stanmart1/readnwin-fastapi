@@ -99,8 +99,9 @@ export default function BookDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Book Cover */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
               <img
                 src={getImageUrl(book.cover_image_url || book.cover_image, 'https://via.placeholder.com/400x600?text=No+Cover')}
@@ -111,8 +112,9 @@ export default function BookDetail() {
 
             {/* Book Info */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
               <h1 className="text-4xl font-bold text-gray-900 mb-4">{book.title}</h1>
               <p className="text-xl text-gray-600 mb-6">by {book.author_name || book.author || 'Unknown Author'}</p>

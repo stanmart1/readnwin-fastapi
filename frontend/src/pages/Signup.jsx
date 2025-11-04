@@ -50,7 +50,6 @@ export default function Signup() {
     const errors = {};
     if (!formData.first_name.trim()) errors.first_name = 'First name is required';
     if (!formData.last_name.trim()) errors.last_name = 'Last name is required';
-    if (!formData.username.trim()) errors.username = 'Username is required';
     if (!formData.email.trim()) errors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Email is invalid';
     
@@ -59,6 +58,14 @@ export default function Signup() {
   };
 
   const validateStep2 = () => {
+    const errors = {};
+    if (!formData.username.trim()) errors.username = 'Username is required';
+    
+    setStepErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStep3 = () => {
     const errors = {};
     if (!formData.password) errors.password = 'Password is required';
     else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
@@ -71,20 +78,22 @@ export default function Signup() {
   };
 
   const nextStep = () => {
-    if (validateStep1()) {
+    if (currentStep === 1 && validateStep1()) {
       setCurrentStep(2);
+    } else if (currentStep === 2 && validateStep2()) {
+      setCurrentStep(3);
     }
   };
 
   const prevStep = () => {
-    setCurrentStep(1);
+    setCurrentStep(prev => prev - 1);
     setStepErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateStep2()) return;
+    if (!validateStep3()) return;
 
     const { confirm_password, ...signupData } = formData;
     // Clean up empty fields
@@ -109,8 +118,9 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center px-4 py-12">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
         className="max-w-md w-full"
       >
         {/* Back to Home */}
@@ -132,13 +142,13 @@ export default function Signup() {
           {/* Progress Indicator */}
           <div className="mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
                   currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
                   1
                 </div>
-                <div className={`w-12 sm:w-16 h-1 rounded ${
+                <div className={`w-8 sm:w-12 h-1 rounded ${
                   currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'
                 }`}></div>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
@@ -146,11 +156,23 @@ export default function Signup() {
                 }`}>
                   2
                 </div>
+                <div className={`w-8 sm:w-12 h-1 rounded ${
+                  currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'
+                }`}></div>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                  currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  3
+                </div>
               </div>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Step {currentStep} of 2: {currentStep === 1 ? 'Basic Information' : 'Educational & Security'}
+                Step {currentStep} of 3: {
+                  currentStep === 1 ? 'Personal Information' : 
+                  currentStep === 2 ? 'Account & Education' : 
+                  'Security'
+                }
               </p>
             </div>
           </div>
@@ -220,32 +242,10 @@ export default function Signup() {
 
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                      Username *
-                    </label>
-                    <div className="relative">
-                      <i className="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                      <input
-                        type="text"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          stepErrors.username ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="johndoe"
-                      />
-                    </div>
-                    {stepErrors.username && (
-                      <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2 text-sm">
                       Email Address *
                     </label>
                     <div className="relative">
-                      <i className="ri-mail-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <i className="ri-mail-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                       <input
                         type="email"
                         name="email"
@@ -267,9 +267,10 @@ export default function Signup() {
                       Phone Number
                     </label>
                     <div className="relative">
-                      <i className="ri-phone-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <i className="ri-phone-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                       <input
-                        type="tel"
+                        type="text"
+                        inputMode="tel"
                         name="phone_number"
                         value={formData.phone_number}
                         onChange={handleChange}
@@ -299,24 +300,28 @@ export default function Signup() {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
               >
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                      School Name
+                      Username *
                     </label>
                     <div className="relative">
-                      <i className="ri-school-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <i className="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                       <input
                         type="text"
-                        name="school_name"
-                        value={formData.school_name}
+                        name="username"
+                        value={formData.username}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="University of Lagos"
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          stepErrors.username ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="johndoe"
                       />
                     </div>
+                    {stepErrors.username && (
+                      <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
+                    )}
                   </div>
-
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2 text-sm">
                       School Category
@@ -334,12 +339,25 @@ export default function Signup() {
                     </select>
                   </div>
 
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                      School Name
+                    </label>
+                    <div className="relative">
+                      <i className="ri-school-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                      <input
+                        type="text"
+                        name="school_name"
+                        value={formData.school_name}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="University of Lagos"
+                      />
+                    </div>
+                  </div>
+
                   {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
+                    <div>
                       <label className="block text-gray-700 font-semibold mb-2 text-sm">
                         Class Level
                       </label>
@@ -351,15 +369,11 @@ export default function Signup() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder={formData.school_category === 'Primary' ? 'Primary 1' : 'SS1'}
                       />
-                    </motion.div>
+                    </div>
                   )}
 
                   {formData.school_category === 'Tertiary' && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
+                    <div>
                       <label className="block text-gray-700 font-semibold mb-2 text-sm">
                         Department
                       </label>
@@ -371,15 +385,47 @@ export default function Signup() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Computer Science"
                       />
-                    </motion.div>
+                    </div>
                   )}
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                    >
+                      <i className="ri-arrow-left-line mr-2"></i>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+                    >
+                      Continue to Step 3
+                      <i className="ri-arrow-right-line ml-2"></i>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleSubmit} className="space-y-4">
 
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2 text-sm">
                       Password *
                     </label>
                     <div className="relative">
-                      <i className="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <i className="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         name="password"
@@ -408,7 +454,7 @@ export default function Signup() {
                       Confirm Password *
                     </label>
                     <div className="relative">
-                      <i className="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <i className="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         name="confirm_password"
@@ -446,7 +492,7 @@ export default function Signup() {
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
                     <button
                       type="button"
                       onClick={prevStep}

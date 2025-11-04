@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-const UserDetailModal = ({ isOpen, onClose, user }) => {
+const UserDetailModal = ({ isOpen, onClose, user, onEdit }) => {
   if (!isOpen || !user) return null;
 
   const getRoleColor = (role) => {
@@ -170,7 +170,17 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
           </div>
         </div>
 
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={() => {
+              onClose();
+              if (onEdit) onEdit(user);
+            }}
+            className="px-6 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-teal-700 flex items-center gap-2"
+          >
+            <i className="ri-edit-line"></i>
+            Edit User
+          </button>
           <button
             onClick={onClose}
             className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700"

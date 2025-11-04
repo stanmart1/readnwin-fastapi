@@ -249,6 +249,7 @@ const AdminUsers = () => {
           isOpen={showViewModal}
           onClose={closeViewModal}
           user={selectedUser}
+          onEdit={openEditModal}
         />
 
         <EditUserModal

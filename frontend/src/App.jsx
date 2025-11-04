@@ -74,6 +74,7 @@ function App() {
   return (
     <CartProvider>
       <Router>
+        <ScrollToTop />
         <SessionTimeoutWarning
           show={showWarning}
           timeRemaining={timeRemaining}

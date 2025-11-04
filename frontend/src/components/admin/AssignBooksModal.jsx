@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import api from '../../lib/api';
 
 const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
   const [books, setBooks] = useState([]);
@@ -15,10 +16,9 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch('/api/books');
-      const data = await response.json();
-      if (data.success) {
-        setBooks(data.books);
+      const response = await api.get('/api/admin/books');
+      if (response.data?.success) {
+        setBooks(response.data.books || []);
       }
     } catch (error) {
       console.error('Error fetching books:', error);
