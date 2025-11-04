@@ -99,7 +99,7 @@ const AdminLayout = ({ children }) => {
         className={`fixed left-0 bg-white shadow-lg z-40 transform transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 overflow-y-auto overflow-x-hidden border-r border-gray-200`}
-        style={{ top: '120px', height: 'calc(100vh - 120px)' }}
+        style={{ top: '66px', height: 'calc(100vh - 66px)' }}
       >
         {/* User Profile Section */}
         <div className="p-4 border-b border-gray-200">
@@ -175,16 +175,17 @@ const AdminLayout = ({ children }) => {
         initial={false}
         animate={{ marginLeft: collapsed ? 80 : 288 }}
         className="flex-1 transition-all duration-300 hidden lg:block lg:ml-0"
+        style={{ marginTop: '64px' }}
       >
         {/* Content */}
-        <div className="p-4 sm:p-6 mt-1">
+        <div className="p-4 sm:p-6">
           {children}
         </div>
       </motion.main>
 
       {/* Mobile Main Content */}
-      <div className="lg:hidden">
-        <div className="p-4 sm:p-6 mt-1">
+      <div className="lg:hidden" style={{ marginTop: '64px' }}>
+        <div className="p-4 sm:p-6">
           {children}
         </div>
       </div>
