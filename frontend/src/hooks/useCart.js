@@ -70,9 +70,11 @@ export const useCart = () => {
           id: item.book_id,
           title: item.book_title,
           author: item.book_author,
+          author_name: item.book_author,
           price: item.book_price,
           original_price: item.book_original_price,
           cover_image_url: item.book_cover_url,
+          cover_image: item.book_cover_image,
           format: item.book_format,
           category: item.book_category,
           stock_quantity: item.book_stock_quantity,
@@ -118,7 +120,7 @@ export const useCart = () => {
       // Use dedicated transfer endpoint if available
       try {
         await api.post('/cart/transfer-guest', {
-          items: guestItems.map(item => ({
+          cartItems: guestItems.map(item => ({
             book_id: item.book_id,
             quantity: item.quantity
           }))
@@ -184,6 +186,23 @@ export const useCart = () => {
       }
     }
   }, [isAuthenticated, transferGuestCart, loadAuthenticatedCart]);
+
+  // Listen for storage events to sync cart across tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === GUEST_CART_KEY && !isAuthenticated) {
+        try {
+          const newCart = e.newValue ? JSON.parse(e.newValue) : [];
+          setCartItems(newCart);
+        } catch (error) {
+          console.error('Error syncing cart from storage:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [isAuthenticated]);
 
   // Update analytics when cart changes
   useEffect(() => {

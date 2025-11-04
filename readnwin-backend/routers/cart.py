@@ -25,6 +25,7 @@ class CartResponse(BaseModel):
     book_price: float
     book_original_price: float
     book_cover_url: str
+    book_cover_image: str
     book_format: str
     book_category: str
     book_stock_quantity: int
@@ -41,8 +42,12 @@ def get_cart(current_user: User = Depends(get_current_user_from_token), db: Sess
         for item in cart_items:
             print(f"Book: {item.book.title}, Format: {item.book.format}, ID: {item.book.id}")
 
-        response_items = [
-            CartResponse(
+        response_items = []
+        for item in cart_items:
+            cover_url = storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else ""
+            print(f"Book {item.book.title}: cover_image='{item.book.cover_image}', cover_url='{cover_url}'")
+            
+            response_items.append(CartResponse(
                 id=item.id,
                 book_id=item.book_id,
                 quantity=item.quantity,
@@ -50,15 +55,14 @@ def get_cart(current_user: User = Depends(get_current_user_from_token), db: Sess
                 book_author=item.book.author or "Unknown Author",
                 book_price=float(item.book.price),
                 book_original_price=float(item.book.original_price) if item.book.original_price else float(item.book.price),
-                book_cover_url=storage.get_url(item.book.cover_image) if item.book.cover_image and item.book.cover_image.strip() else "",
+                book_cover_url=cover_url,
+                book_cover_image=item.book.cover_image or "",
                 book_format=item.book.format or "ebook",
                 book_category=item.book.category.name if item.book.category else "Uncategorized",
                 book_stock_quantity=item.book.stock_quantity or 0,
                 book_is_active=getattr(item.book, 'is_active', True),
                 book_inventory_enabled=getattr(item.book, 'inventory_enabled', False)
-            )
-            for item in cart_items
-        ]
+            ))
         print(f"Returning cart response with formats: {[item.book_format for item in response_items]}")
         return response_items
     except Exception as e:

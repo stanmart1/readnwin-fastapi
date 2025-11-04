@@ -29,9 +29,12 @@ export default function Cart() {
   useEffect(() => {
     if (isAuthenticated && !hasLoaded.current) {
       hasLoaded.current = true;
-      refreshCart();
+      // Small delay to allow cart transfer to complete
+      setTimeout(() => {
+        refreshCart();
+      }, 500);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refreshCart]);
 
   const handleUpdateQuantity = async (bookId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -68,7 +71,7 @@ export default function Cart() {
 
   const handleGuestSignup = () => {
     localStorage.setItem('redirectAfterLogin', '/checkout');
-    navigate('/register?redirect=/checkout');
+    navigate('/signup?redirect=/checkout');
   };
 
   // Get cart type info
@@ -255,8 +258,8 @@ export default function Cart() {
                   <AnimatePresence>
                     <div className="space-y-3 sm:space-y-4">
                       {cartItems.map((item) => {
-                        // Use getImageUrl with cover_image_url from backend (like FeaturedBooks)
-                        const itemImageUrl = getImageUrl(item.book?.cover_image_url);
+                        // Use same fallback pattern as BookCard component
+                        const itemImageUrl = getImageUrl(item.book?.cover_image_url || item.book?.cover_image);
                         return (
                         <motion.div
                           key={item.id}

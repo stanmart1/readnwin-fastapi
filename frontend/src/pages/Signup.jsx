@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Signup() {
@@ -23,6 +23,17 @@ export default function Signup() {
   const [stepErrors, setStepErrors] = useState({});
   const { signup, loading, error } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || localStorage.getItem('redirectAfterLogin');
+
+  useEffect(() => {
+    // Clear redirect from localStorage when component unmounts
+    return () => {
+      if (!redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+      }
+    };
+  }, [redirectPath]);
 
   const handleChange = (e) => {
     setFormData({
@@ -86,7 +97,12 @@ export default function Signup() {
     
     if (success) {
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 2000);
+      // If there's a redirect path, go to login with redirect, otherwise just go to login
+      const loginPath = redirectPath ? `/login?redirect=${encodeURIComponent(redirectPath)}` : '/login';
+      setTimeout(() => {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(loginPath);
+      }, 2000);
     }
   };
 

@@ -206,21 +206,44 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       )}
 
       {/* Cart Type Indicator */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center space-x-2">
-          {analytics.isEbookOnly ? (
-            <>
-              <i className="ri-download-line text-blue-600"></i>
-              <span className="text-blue-900 font-medium">Digital Purchase</span>
-              <span className="text-blue-700">• No shipping required • Instant access</span>
-            </>
-          ) : (
-            <>
-              <i className="ri-box-3-line text-blue-600"></i>
-              <span className="text-blue-900 font-medium">Physical Books</span>
-              <span className="text-blue-700">• Shipping required • Delivery to your address</span>
-            </>
-          )}
+      <div className={`border-2 rounded-lg p-4 mb-6 ${
+        analytics.isEbookOnly 
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-blue-50 border-blue-200'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {analytics.isEbookOnly ? (
+              <>
+                <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+                  <i className="ri-download-cloud-line text-green-600 text-xl"></i>
+                </div>
+                <div>
+                  <span className="text-green-900 font-semibold block">Digital Purchase</span>
+                  <span className="text-green-700 text-sm">Instant delivery • No shipping fees</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                  <i className="ri-truck-line text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                  <span className="text-blue-900 font-semibold block">Physical Delivery</span>
+                  <span className="text-blue-700 text-sm">Shipping required • Address needed</span>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="text-right">
+            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+              analytics.isEbookOnly 
+                ? 'bg-green-200 text-green-800' 
+                : 'bg-blue-200 text-blue-800'
+            }`}>
+              {analytics.isEbookOnly ? 'Digital Only' : 'Physical Books'}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -542,6 +565,26 @@ function PaymentStep({ formData, updateFormData, paymentGateways, analytics }) {
           <div className="flex justify-between font-semibold text-lg border-t pt-2">
             <span>Total</span>
             <span>₦{analytics.total.toLocaleString()}</span>
+          </div>
+        </div>
+        
+        {/* Format Breakdown */}
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <div className="flex items-center justify-between text-xs text-gray-600">
+            <span>Order Type:</span>
+            <div className="flex items-center space-x-2">
+              {analytics.isEbookOnly ? (
+                <>
+                  <i className="ri-download-line text-green-600"></i>
+                  <span className="text-green-700 font-medium">Digital Only</span>
+                </>
+              ) : (
+                <>
+                  <i className="ri-truck-line text-blue-600"></i>
+                  <span className="text-blue-700 font-medium">Physical Delivery</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

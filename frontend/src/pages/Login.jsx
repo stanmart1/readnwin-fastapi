@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
@@ -9,12 +9,24 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || localStorage.getItem('redirectAfterLogin');
+
+  useEffect(() => {
+    // Clear redirect from localStorage when component mounts
+    return () => {
+      localStorage.removeItem('redirectAfterLogin');
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await login(email, password);
     if (result) {
-      navigate(result.redirect_path || '/dashboard');
+      // Use redirect path from URL params, localStorage, or default to dashboard
+      const targetPath = redirectPath || '/dashboard';
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(targetPath);
     }
   };
 
