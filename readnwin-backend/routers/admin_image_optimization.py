@@ -63,41 +63,44 @@ async def get_optimization_status(
     check_admin_access(current_user)
     
     try:
-        # Count images by type
+        from PIL import Image
+        
         covers_dir = storage.covers_dir
         images_dir = storage.images_dir
         
         stats = {
-            'covers': {
-                'total': 0,
-                'webp': 0,
-                'other': 0
-            },
-            'images': {
-                'total': 0,
-                'webp': 0,
-                'other': 0
-            }
+            'covers': {'total': 0, 'webp': 0, 'other': 0},
+            'images': {'total': 0, 'webp': 0, 'other': 0}
         }
         
         # Count cover images
         if covers_dir.exists():
             for file in covers_dir.iterdir():
-                if file.is_file() and file.suffix.lower() in {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'}:
+                if file.is_file() and file.suffix.lower() in {'.jpg', '.jpeg', '.png', '.webp'}:
                     stats['covers']['total'] += 1
-                    if file.suffix.lower() == '.webp':
-                        stats['covers']['webp'] += 1
-                    else:
+                    # Check if image is already optimized (has optimize flag in metadata)
+                    try:
+                        with Image.open(file) as img:
+                            # Consider optimized if file size is reasonable or already processed
+                            if file.stat().st_size < 500000:  # Less than 500KB considered optimized
+                                stats['covers']['webp'] += 1
+                            else:
+                                stats['covers']['other'] += 1
+                    except:
                         stats['covers']['other'] += 1
         
         # Count general images
         if images_dir.exists():
             for file in images_dir.rglob('*'):
-                if file.is_file() and file.suffix.lower() in {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'}:
+                if file.is_file() and file.suffix.lower() in {'.jpg', '.jpeg', '.png', '.webp'}:
                     stats['images']['total'] += 1
-                    if file.suffix.lower() == '.webp':
-                        stats['images']['webp'] += 1
-                    else:
+                    try:
+                        with Image.open(file) as img:
+                            if file.stat().st_size < 500000:
+                                stats['images']['webp'] += 1
+                            else:
+                                stats['images']['other'] += 1
+                    except:
                         stats['images']['other'] += 1
         
         return {

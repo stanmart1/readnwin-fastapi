@@ -97,16 +97,19 @@ export default function FeaturedBooks() {
 
     const handleScroll = () => {
       const cardWidth = 296;
-      const { scrollLeft, scrollWidth, clientWidth } = carousel;
+      const { scrollLeft } = carousel;
       const sectionWidth = cardWidth * books.length;
 
-      // If scrolled past second section, jump to first section
-      if (scrollLeft >= sectionWidth * 2) {
-        carousel.scrollLeft = sectionWidth;
+      // Reset without smooth behavior to avoid visual jump
+      if (scrollLeft >= sectionWidth * 2 - cardWidth / 2) {
+        carousel.style.scrollBehavior = 'auto';
+        carousel.scrollLeft = scrollLeft - sectionWidth;
+        carousel.style.scrollBehavior = 'smooth';
       }
-      // If scrolled before first section, jump to second section
-      else if (scrollLeft <= 0) {
-        carousel.scrollLeft = sectionWidth;
+      else if (scrollLeft <= cardWidth / 2) {
+        carousel.style.scrollBehavior = 'auto';
+        carousel.scrollLeft = scrollLeft + sectionWidth;
+        carousel.style.scrollBehavior = 'smooth';
       }
     };
 
@@ -321,7 +324,7 @@ export default function FeaturedBooks() {
                   >
                     {/* Book Image */}
                     <div className="relative overflow-hidden h-64">
-                      <ProgressiveImage
+                      <img
                         src={getBookImage(book)}
                         alt={book.title}
                         className="w-full h-full object-cover"

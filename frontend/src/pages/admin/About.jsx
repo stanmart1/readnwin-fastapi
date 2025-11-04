@@ -119,40 +119,71 @@ const AdminAbout = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">About Page Management</h1>
-              <p className="text-gray-600 mt-1">Manage your About Us page content</p>
-              {lastSaved && <p className="text-sm text-green-600 mt-2">Last saved: {lastSaved.toLocaleTimeString()}</p>}
-              {unsavedChanges && <p className="text-sm text-amber-600 mt-1">Unsaved changes</p>}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="ri-information-line text-blue-600"></i>
+                  About Page Management
+                </h1>
+                <p className="text-gray-600 mt-1">Manage your About Us page content</p>
+              </div>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin"></i>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-save-line"></i>
+                    Save Changes
+                  </>
+                )}
+              </button>
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+          </div>
+          <div className="px-6 py-3 bg-white flex items-center gap-4 text-sm">
+            {lastSaved && (
+              <div className="flex items-center gap-2 text-green-600">
+                <i className="ri-check-circle-line"></i>
+                <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
+              </div>
+            )}
+            {unsavedChanges && (
+              <div className="flex items-center gap-2 text-amber-600">
+                <i className="ri-alert-line"></i>
+                <span>Unsaved changes</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border p-4">
-              <h3 className="font-semibold mb-4">Sections</h3>
-              <nav className="space-y-1">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900">Sections</h3>
+              </div>
+              <nav className="p-3 space-y-1">
                 {sections.map(section => (
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${
-                      activeSection === section.id ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                      activeSection === section.id 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <i className={section.icon}></i>
-                    <span>{section.label}</span>
+                    <span className="font-medium">{section.label}</span>
                   </button>
                 ))}
               </nav>
@@ -161,7 +192,7 @@ const AdminAbout = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-xl shadow-md p-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeSection}

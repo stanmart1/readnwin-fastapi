@@ -51,7 +51,7 @@ export default function ImageOptimization() {
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Image Optimization</h2>
         <p className="text-gray-600 mb-6">
-          Optimize and convert images to WebP format for better performance and smaller file sizes.
+          Compress images to reduce file sizes without changing format or losing quality.
         </p>
 
         {status && (
@@ -65,11 +65,11 @@ export default function ImageOptimization() {
                   <span className="font-medium">{status.stats.covers.total}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-green-700">WebP Optimized:</span>
+                  <span className="text-green-700">Optimized:</span>
                   <span className="font-medium">{status.stats.covers.webp}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-orange-700">Need Optimization:</span>
+                  <span className="text-orange-700">Unoptimized:</span>
                   <span className="font-medium">{status.stats.covers.other}</span>
                 </div>
               </div>
@@ -84,11 +84,11 @@ export default function ImageOptimization() {
                   <span className="font-medium">{status.stats.images.total}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-green-700">WebP Optimized:</span>
+                  <span className="text-green-700">Optimized:</span>
                   <span className="font-medium">{status.stats.images.webp}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-orange-700">Need Optimization:</span>
+                  <span className="text-orange-700">Unoptimized:</span>
                   <span className="font-medium">{status.stats.images.other}</span>
                 </div>
               </div>
@@ -153,10 +153,10 @@ export default function ImageOptimization() {
         <div className="mt-6 bg-gray-50 rounded-lg p-4">
           <h4 className="font-medium text-gray-900 mb-2">What happens during optimization?</h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Images are converted to WebP format for better compression</li>
-            <li>• Book covers are resized to standard dimensions (400x600px)</li>
+            <li>• Images are compressed without changing format (JPEG stays JPEG, PNG stays PNG)</li>
+            <li>• Quality is set to 85% for JPEG/WebP (minimal visual loss)</li>
+            <li>• PNG images use maximum compression level</li>
             <li>• Original files are replaced with optimized versions</li>
-            <li>• Database references are updated automatically</li>
             <li>• Process runs in background to avoid timeouts</li>
           </ul>
         </div>
