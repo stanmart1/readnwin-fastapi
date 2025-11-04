@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks';
 import { useCheckout } from '../hooks/useCheckout';
 import api from '../lib/api';
+import { validateCheckoutData, formatCheckoutRequest, validateCartItems } from '../utils/checkoutValidation';
 
 export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   const { user } = useAuth();
@@ -120,15 +121,19 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       setIsLoading(true);
       setError(null);
 
-      const checkoutData = {
-        formData: {
-          shipping: formData.shipping,
-          billing: formData.billing,
-          payment: formData.payment,
-          shippingMethod: formData.shipping_method
-        },
-        total: analytics.total
-      };
+      // Validate cart items
+      const cartErrors = validateCartItems(cartItems);
+      if (cartErrors.length > 0) {
+        throw new Error(cartErrors.join(', '));
+      }
+
+      // Validate checkout data
+      const validationErrors = validateCheckoutData(formData, analytics);
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join(', '));
+      }
+
+      const checkoutData = formatCheckoutRequest(formData, analytics);
       
       const response = await api.post('/checkout', checkoutData);
 

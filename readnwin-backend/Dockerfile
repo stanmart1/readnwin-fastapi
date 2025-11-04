@@ -20,8 +20,6 @@ COPY . .
 # Create storage directory structure (will be mounted as volume)
 RUN mkdir -p /app/storage/books /app/storage/covers /app/storage/samples /app/storage/images
 
-# Restore original image extensions at build time
-RUN python3 restore_images.py || true
 
 # Expose port
 EXPOSE 8000
