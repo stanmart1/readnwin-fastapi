@@ -216,6 +216,7 @@ const AdminUsers = () => {
               onEdit={openEditModal}
               onAnalytics={openAnalyticsModal}
               onAssignBooks={openAssignBooksModal}
+              onAssignRole={openAssignRoleModal}
               onPasswordReset={openPasswordModal}
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteUser}

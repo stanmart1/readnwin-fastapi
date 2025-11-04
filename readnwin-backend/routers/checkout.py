@@ -64,6 +64,7 @@ class CheckoutRequest(BaseModel):
     total_amount: Optional[float] = None
 
 @router.post("/")
+@router.post("")
 async def create_order(
     checkout_data: CheckoutRequest,
     current_user: User = Depends(get_current_user_from_token),

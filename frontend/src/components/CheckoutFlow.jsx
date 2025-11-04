@@ -94,7 +94,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
         return !!(formData.shipping.first_name && formData.shipping.last_name && formData.shipping.email);
       case 2:
         if (analytics?.isEbookOnly) return true;
-        return !!(formData.shipping.address && formData.shipping.city && formData.shipping.state && formData.shipping.zip_code);
+        return !!(formData.shipping.address && formData.shipping.city && formData.shipping.state);
       case 3:
         if (analytics?.isEbookOnly) return true;
         return !!formData.shipping_method;
@@ -438,10 +438,9 @@ function ShippingAddressStep({ formData, updateFormData }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">ZIP/Postal Code *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ZIP/Postal Code</label>
           <input
             type="text"
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.zip_code}
             onChange={(e) => updateFormData('shipping', { zip_code: e.target.value })}

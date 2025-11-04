@@ -1,4 +1,4 @@
-const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onPasswordReset, onStatusChange, onDelete }) => {
+const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onAssignRole, onPasswordReset, onStatusChange, onDelete }) => {
   const getStatusColor = (isActive) => {
     return isActive ? 'bg-green-500' : 'bg-red-500';
   };
@@ -79,11 +79,18 @@ const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onPa
           Analytics
         </button>
         <button
+          onClick={() => onAssignRole?.(user)}
+          className="text-indigo-600 hover:text-indigo-800 flex items-center text-sm"
+        >
+          <i className="ri-shield-user-line mr-1"></i>
+          Role
+        </button>
+        <button
           onClick={() => onAssignBooks(user)}
           className="text-green-600 hover:text-green-800 flex items-center text-sm"
         >
           <i className="ri-book-add-line mr-1"></i>
-          Assign
+          Books
         </button>
         <button
           onClick={() => onEdit(user)}

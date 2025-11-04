@@ -49,6 +49,7 @@ import Roles from './pages/admin/Roles';
 import AdminRoles from './pages/admin/Roles';
 import AdminAudit from './pages/admin/Audit';
 import AdminBooks from './pages/admin/Books';
+import AdminLibrary from './pages/admin/Library';
 import AdminReviews from './pages/admin/Reviews';
 import AdminOrders from './pages/admin/Orders';
 import AdminShipping from './pages/admin/Shipping';
@@ -105,6 +106,7 @@ function App() {
         <Route path="/admin/roles" element={<AdminRoute><Roles /></AdminRoute>} />
         <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
         <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
+        <Route path="/admin/library" element={<AdminRoute><AdminLibrary /></AdminRoute>} />
         <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
         <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
         <Route path="/admin/shipping" element={<AdminRoute><AdminShipping /></AdminRoute>} />

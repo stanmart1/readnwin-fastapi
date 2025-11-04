@@ -109,56 +109,56 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                       className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors text-sm"
                       title="View"
                     >
-                      <i className="ri-eye-line"></i>
+                      <i className="ri-eye-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onAssignRole?.(user)}
                       className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors text-sm"
                       title="Assign Role"
                     >
-                      <i className="ri-shield-user-line"></i>
+                      <i className="ri-shield-user-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onAnalytics(user.id)}
                       className="p-1.5 text-purple-600 hover:bg-purple-50 rounded transition-colors text-sm"
                       title="Analytics"
                     >
-                      <i className="ri-line-chart-line"></i>
+                      <i className="ri-line-chart-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onAssignBooks(user)}
                       className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors text-sm"
                       title="Assign Books"
                     >
-                      <i className="ri-book-add-line"></i>
+                      <i className="ri-book-add-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onEdit(user)}
                       className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors text-sm"
                       title="Edit"
                     >
-                      <i className="ri-edit-line"></i>
+                      <i className="ri-edit-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onPasswordReset(user)}
                       className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors text-sm"
                       title="Reset Password"
                     >
-                      <i className="ri-lock-password-line"></i>
+                      <i className="ri-lock-password-line text-base"></i>
                     </button>
                     <button
                       onClick={() => onStatusChange(user.id, !user.is_active)}
                       className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded transition-colors text-sm"
                       title={user.is_active ? 'Deactivate' : 'Activate'}
                     >
-                      <i className={user.is_active ? 'ri-pause-circle-line' : 'ri-play-circle-line'}></i>
+                      <i className={`${user.is_active ? 'ri-pause-circle-line' : 'ri-play-circle-line'} text-base`}></i>
                     </button>
                     <button
                       onClick={() => onDelete(user.id)}
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors text-sm"
                       title="Delete"
                     >
-                      <i className="ri-delete-bin-line"></i>
+                      <i className="ri-delete-bin-line text-base"></i>
                     </button>
                   </div>
                 </td>

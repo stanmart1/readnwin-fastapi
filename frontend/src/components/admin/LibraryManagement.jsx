@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUsers } from '../../hooks/useUsers';
 import { useBookManagement } from '../../hooks/useBookManagement';
 import api from '../../lib/api';
@@ -10,6 +10,9 @@ const LibraryManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState('ebook');
+  const [userSearch, setUserSearch] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = useRef(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -29,6 +32,17 @@ const LibraryManagement = () => {
   useEffect(() => {
     fetchUsers({ limit: 100 });
     loadBooks();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Load library data when filters change
@@ -81,6 +95,8 @@ const LibraryManagement = () => {
       setSelectedUser(null);
       setSelectedBook(null);
       setSelectedFormat('ebook');
+      setUserSearch('');
+      setShowUserDropdown(false);
       loadData();
     } catch (error) {
       console.error('Assignment error:', error);
@@ -281,88 +297,222 @@ const LibraryManagement = () => {
         </div>
       )}
 
-      {/* Assign Book Modal */}
+      {/* Enhanced Assign Book Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Assign Book to User</h3>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                    <i className="ri-book-line text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Assign Book to User</h3>
+                    <p className="text-sm text-gray-600">Grant access to a book for a specific user</p>
+                  </div>
+                </div>
                 <button
-                  onClick={() => setShowAssignModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setSelectedUser(null);
+                    setSelectedBook(null);
+                    setUserSearch('');
+                    setShowUserDropdown(false);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
                 >
                   <i className="ri-close-line text-2xl"></i>
                 </button>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
-                  <select
-                    value={selectedUser || ''}
-                    onChange={(e) => setSelectedUser(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Searchable User Dropdown */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  <i className="ri-user-line mr-1"></i>
+                  Select User *
+                </label>
+                <div className="relative" ref={userDropdownRef}>
+                  <div
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 cursor-pointer transition-all hover:border-gray-300"
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
                   >
-                    <option value="">Choose a user</option>
-                    {users.length === 0 ? (
-                      <option disabled>Loading users...</option>
-                    ) : (
-                      users.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.first_name} {user.last_name} ({user.email})
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Book</label>
-                  <select
-                    value={selectedBook || ''}
-                    onChange={(e) => setSelectedBook(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Choose a book</option>
-                    {books.length === 0 ? (
-                      <option disabled>Loading books...</option>
-                    ) : (
-                      books.map(book => (
-                        <option key={book.id} value={book.id}>
-                          {book.title} - {book.author_name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
-                  <select
-                    value={selectedFormat}
-                    onChange={(e) => setSelectedFormat(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="ebook">Ebook</option>
-                    <option value="physical">Physical</option>
-                  </select>
+                    <div className="flex items-center justify-between">
+                      {selectedUser ? (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            {users.find(u => u.id === selectedUser)?.first_name?.[0]}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {users.find(u => u.id === selectedUser)?.first_name} {users.find(u => u.id === selectedUser)?.last_name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {users.find(u => u.id === selectedUser)?.email}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">Choose a user...</span>
+                      )}
+                      <i className={`ri-arrow-down-s-line text-gray-400 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`}></i>
+                    </div>
+                  </div>
+                  
+                  {showUserDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-64 overflow-hidden">
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="relative">
+                          <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {users
+                          .filter(user => 
+                            `${user.first_name} ${user.last_name} ${user.email}`
+                              .toLowerCase()
+                              .includes(userSearch.toLowerCase())
+                          )
+                          .map(user => (
+                            <div
+                              key={user.id}
+                              className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                              onClick={() => {
+                                setSelectedUser(user.id);
+                                setShowUserDropdown(false);
+                                setUserSearch('');
+                              }}
+                            >
+                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                {user.first_name?.[0]}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {user.first_name} {user.last_name}
+                                </p>
+                                <p className="text-sm text-gray-500">{user.email}</p>
+                              </div>
+                              {selectedUser === user.id && (
+                                <i className="ri-check-line text-blue-600"></i>
+                              )}
+                            </div>
+                          ))
+                        }
+                        {users.filter(user => 
+                          `${user.first_name} ${user.last_name} ${user.email}`
+                            .toLowerCase()
+                            .includes(userSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="px-4 py-8 text-center text-gray-500">
+                            <i className="ri-user-search-line text-3xl mb-2"></i>
+                            <p>No users found</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
+              {/* Book Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  <i className="ri-book-open-line mr-1"></i>
+                  Select Book *
+                </label>
+                <select
+                  value={selectedBook || ''}
+                  onChange={(e) => setSelectedBook(parseInt(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-300 appearance-none bg-white"
+                >
+                  <option value="">Choose a book...</option>
+                  {books.length === 0 ? (
+                    <option disabled>Loading books...</option>
+                  ) : (
+                    books.map(book => (
+                      <option key={book.id} value={book.id}>
+                        {book.title} - {book.author_name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Format Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">
+                  <i className="ri-file-list-line mr-1"></i>
+                  Book Format *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFormat('ebook')}
+                    className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                      selectedFormat === 'ebook'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <i className={`ri-smartphone-line text-2xl mb-2 block ${
+                      selectedFormat === 'ebook' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                    }`}></i>
+                    <span className="text-sm font-medium">Digital Ebook</span>
+                    <p className="text-xs text-gray-500 mt-1">Instant access</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFormat('physical')}
+                    className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                      selectedFormat === 'physical'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <i className={`ri-book-line text-2xl mb-2 block ${
+                      selectedFormat === 'physical' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                    }`}></i>
+                    <span className="text-sm font-medium">Physical Book</span>
+                    <p className="text-xs text-gray-500 mt-1">Hardcopy access</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setShowAssignModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setSelectedUser(null);
+                    setSelectedBook(null);
+                    setUserSearch('');
+                    setShowUserDropdown(false);
+                  }}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-medium text-gray-700"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAssignBook}
                   disabled={!selectedUser || !selectedBook}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
                 >
-                  Assign
+                  <i className="ri-check-line"></i>
+                  <span>Assign Book</span>
                 </button>
               </div>
             </div>

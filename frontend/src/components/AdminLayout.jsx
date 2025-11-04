@@ -40,6 +40,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/roles', icon: 'ri-shield-user-line', label: 'Roles', permission: 'roles.view' },
     { path: '/admin/audit', icon: 'ri-file-list-line', label: 'Audit Log', permission: 'audit_logs.view' },
     { path: '/admin/books', icon: 'ri-book-line', label: 'Books', permission: 'books.view' },
+    { path: '/admin/library', icon: 'ri-book-shelf-line', label: 'Library Management', permission: 'books.view' },
     { path: '/admin/reviews', icon: 'ri-star-line', label: 'Reviews', permission: 'reviews.view' },
     { path: '/admin/orders', icon: 'ri-shopping-cart-line', label: 'Orders', permission: 'orders.view' },
     { path: '/admin/shipping', icon: 'ri-truck-line', label: 'Shipping', permission: 'shipping.view' },
