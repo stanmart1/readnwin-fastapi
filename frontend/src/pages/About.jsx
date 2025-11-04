@@ -17,14 +17,20 @@ export default function About() {
       subtitle: 'Empowering The Mind Through Reading'
     },
     mission: {
-      description: 'Our mission is to make quality literature accessible to everyone, everywhere.',
-      features: ['Unlimited Access', 'AI-Powered Recommendations', 'Global Community']
+      description: '<p>At ReadnWin, we believe that reading is the gateway to knowledge, imagination, and personal growth. Our mission is to make quality literature accessible to everyone, everywhere, breaking down barriers between readers and the books they love.</p><p>We combine cutting-edge technology with a passion for literature to create an immersive reading experience that adapts to your lifestyle. Whether you prefer physical books or digital formats, we\'re here to support your reading journey every step of the way.</p>',
+      features: [
+        'Unlimited Access to Thousands of Titles',
+        'AI-Powered Personalized Recommendations',
+        'Vibrant Global Reading Community',
+        'Seamless Cross-Platform Experience',
+        'Support for Authors and Publishers'
+      ]
     },
     values: [
-      { icon: 'ri-book-open-line', title: 'Accessibility', description: 'Making reading accessible to everyone' },
-      { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'Cutting-edge technology' },
-      { icon: 'ri-heart-line', title: 'Community', description: 'Building connections' },
-      { icon: 'ri-shield-check-line', title: 'Quality', description: 'Highest standards' }
+      { icon: 'ri-book-open-line', title: 'Accessibility', description: 'We believe everyone deserves access to quality literature, regardless of location or economic status. Our platform breaks down barriers to make reading accessible to all.' },
+      { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'We leverage cutting-edge technology to enhance the reading experience, from AI recommendations to seamless digital delivery, while preserving the joy of traditional reading.' },
+      { icon: 'ri-heart-line', title: 'Community', description: 'Reading is better together. We foster a vibrant community where readers can connect, share insights, and discover new perspectives through literature.' },
+      { icon: 'ri-shield-check-line', title: 'Quality', description: 'We maintain the highest standards in content curation, user experience, and customer service, ensuring every interaction with ReadnWin exceeds expectations.' }
     ]
   };
 
@@ -98,7 +104,7 @@ export default function About() {
               viewport={{ once: true }}
             >
               <img
-                src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800"
+                src={aboutData.mission?.image_url ? getFileUrl(aboutData.mission.image_url) : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                 alt="Our Mission"
                 className="rounded-2xl shadow-2xl"
               />

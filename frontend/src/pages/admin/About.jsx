@@ -9,22 +9,32 @@ import { getFileUrl } from '../../lib/fileService';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const defaultContent = {
-  hero: { title: 'About ReadnWin', subtitle: 'Revolutionizing reading through technology' },
-  mission: { title: 'Our Mission', description: 'Making reading accessible to everyone.', features: ['Unlimited Access', 'AI Recommendations', 'Global Community'] },
+  hero: { title: 'About ReadnWin', subtitle: 'Empowering The Mind Through Reading' },
+  mission: { 
+    title: 'Our Mission', 
+    description: '<p>At ReadnWin, we believe that reading is the gateway to knowledge, imagination, and personal growth. Our mission is to make quality literature accessible to everyone, everywhere, breaking down barriers between readers and the books they love.</p><p>We combine cutting-edge technology with a passion for literature to create an immersive reading experience that adapts to your lifestyle. Whether you prefer physical books or digital formats, we\'re here to support your reading journey every step of the way.</p>', 
+    features: [
+      'Unlimited Access to Thousands of Titles',
+      'AI-Powered Personalized Recommendations',
+      'Vibrant Global Reading Community',
+      'Seamless Cross-Platform Experience',
+      'Support for Authors and Publishers'
+    ]
+  },
   stats: [
     { number: '50K+', label: 'Active Readers' },
-    { number: '100K+', label: 'Books' },
-    { number: '95%', label: 'Satisfaction' },
-    { number: '24/7', label: 'Support' }
+    { number: '100K+', label: 'Books Available' },
+    { number: '95%', label: 'Customer Satisfaction' },
+    { number: '24/7', label: 'Customer Support' }
   ],
   values: [
-    { icon: 'ri-book-open-line', title: 'Accessibility', description: 'Making reading accessible to everyone.' },
-    { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'Enhancing reading with technology.' },
-    { icon: 'ri-heart-line', title: 'Community', description: 'Building a global reader community.' },
-    { icon: 'ri-shield-check-line', title: 'Quality', description: 'Highest standards in content.' }
+    { icon: 'ri-book-open-line', title: 'Accessibility', description: 'We believe everyone deserves access to quality literature, regardless of location or economic status. Our platform breaks down barriers to make reading accessible to all.' },
+    { icon: 'ri-lightbulb-line', title: 'Innovation', description: 'We leverage cutting-edge technology to enhance the reading experience, from AI recommendations to seamless digital delivery, while preserving the joy of traditional reading.' },
+    { icon: 'ri-heart-line', title: 'Community', description: 'Reading is better together. We foster a vibrant community where readers can connect, share insights, and discover new perspectives through literature.' },
+    { icon: 'ri-shield-check-line', title: 'Quality', description: 'We maintain the highest standards in content curation, user experience, and customer service, ensuring every interaction with ReadnWin exceeds expectations.' }
   ],
   team: [],
-  cta: { title: 'Join the Reading Revolution', description: 'Start your journey with ReadnWin.', primaryButton: 'Get Started', secondaryButton: 'Learn More' }
+  cta: { title: 'Join the Reading Revolution', description: 'Start your journey with ReadnWin today and discover a world of endless stories.', primaryButton: 'Get Started Free', secondaryButton: 'Learn More' }
 };
 
 const iconOptions = ['ri-book-line', 'ri-brain-line', 'ri-heart-line', 'ri-shield-check-line', 'ri-group-line', 'ri-star-line'];
@@ -233,6 +243,36 @@ const AdminAbout = () => {
                           modules={{ toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'bullet' }], ['clean']] }}
                           style={{ height: '150px', marginBottom: '50px' }}
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Mission Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              try {
+                                const token = localStorage.getItem('token');
+                                const response = await axios.post(`${API_BASE_URL}/api/about/upload-image`, formData, {
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                updateContent('mission', { ...content.mission, image_url: response.data.url });
+                              } catch (error) {
+                                console.error('Upload error:', error);
+                                alert('Failed to upload image');
+                              }
+                            }
+                          }}
+                          className="w-full px-4 py-3 border rounded-lg"
+                        />
+                        {content.mission?.image_url && (
+                          <div className="mt-2">
+                            <img src={getFileUrl(content.mission.image_url)} alt="Mission" className="w-full h-48 object-cover rounded-lg border border-gray-200" />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Features</label>
