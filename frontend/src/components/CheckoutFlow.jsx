@@ -29,15 +29,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   });
 
-  const { shippingMethods, paymentGateways, isLoading: isLoadingCheckoutData, error: checkoutDataError } = useCheckout(analytics?.isEbookOnly);
-  
-  // Handle checkout data loading errors
-  useEffect(() => {
-    if (checkoutDataError) {
-      setError(`Failed to load checkout data: ${checkoutDataError}`);
-    }
-  }, [checkoutDataError]);
-
+  // Analyze cart first to determine if ebook-only
   const analyzeCart = useCallback(() => {
     if (!cartItems || cartItems.length === 0) return null;
 
@@ -57,6 +49,15 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   }, [cartItems, formData.shipping_method]);
 
   const analytics = analyzeCart();
+  
+  const { shippingMethods, paymentGateways, isLoading: isLoadingCheckoutData, error: checkoutDataError } = useCheckout(analytics?.isEbookOnly);
+  
+  // Handle checkout data loading errors
+  useEffect(() => {
+    if (checkoutDataError) {
+      setError(`Failed to load checkout data: ${checkoutDataError}`);
+    }
+  }, [checkoutDataError]);
 
   const generateSteps = useCallback(() => {
     if (!analytics) return [];
