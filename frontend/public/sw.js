@@ -20,9 +20,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Force HTTPS for API requests to prevent mixed content errors
+  let request = event.request;
+  if (request.url.includes('backend.readnwin.com') && request.url.startsWith('http://')) {
+    request = new Request(request.url.replace('http://', 'https://'), {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      mode: request.mode,
+      credentials: request.credentials,
+      cache: request.cache,
+      redirect: request.redirect,
+      referrer: request.referrer
+    });
+  }
+  
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+    caches.match(request)
+      .then((response) => response || fetch(request))
   );
 });
 
