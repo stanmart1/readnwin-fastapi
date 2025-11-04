@@ -121,11 +121,13 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       setError(null);
 
       const checkoutData = {
-        shipping_info: formData.shipping,
-        billing_info: formData.billing.sameAsShipping ? formData.shipping : formData.billing,
-        payment_method: formData.payment.method,
-        shipping_method_id: formData.shipping_method?.id,
-        total_amount: analytics.total
+        formData: {
+          shipping: formData.shipping,
+          billing: formData.billing,
+          payment: formData.payment,
+          shippingMethod: formData.shipping_method
+        },
+        total: analytics.total
       };
       
       const response = await api.post('/checkout', checkoutData);

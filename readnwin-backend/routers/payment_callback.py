@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from core.database import get_db
 from models.payment import Payment, PaymentStatus
@@ -109,9 +110,8 @@ async def payment_callback(
                         
                         # Redirect to success page
                         from core.config import settings
-                        return {
-                            "redirect": f"{settings.frontend_url}/order-confirmation/{order.order_number}?status=success"
-                        }
+                        from fastapi.responses import RedirectResponse
+                        return RedirectResponse(url=f"{settings.frontend_url}/order-confirmation/{order.order_number}?status=success")
                 else:
                     # Payment failed
                     payment.status = PaymentStatus.FAILED
@@ -121,25 +121,20 @@ async def payment_callback(
                     db.commit()
                     
                     from core.config import settings
-                    return {
-                        "redirect": f"{settings.frontend_url}/checkout?status=failed&message=Payment verification failed"
-                    }
+                    from fastapi.responses import RedirectResponse
+                    return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=failed&message=Payment verification failed")
         
         # If no transaction_id, just redirect based on status
         from core.config import settings
+        from fastapi.responses import RedirectResponse
         if status == "successful":
             order = db.query(Order).filter(Order.id == payment.order_id).first()
-            return {
-                "redirect": f"{settings.frontend_url}/order-confirmation/{order.order_number if order else payment.order_id}?status=pending"
-            }
+            return RedirectResponse(url=f"{settings.frontend_url}/order-confirmation/{order.order_number if order else payment.order_id}?status=pending")
         else:
-            return {
-                "redirect": f"{settings.frontend_url}/checkout?status=cancelled"
-            }
+            return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=cancelled")
             
     except Exception as e:
         logger.error(f"Payment callback error: {str(e)}")
         from core.config import settings
-        return {
-            "redirect": f"{settings.frontend_url}/checkout?status=error&message={str(e)}"
-        }
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=error&message={str(e)}")

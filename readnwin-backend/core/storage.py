@@ -89,21 +89,13 @@ class StorageManager:
             file.file.close()
     
     async def save_cover(self, file: UploadFile) -> str:
-        """Save book cover with automatic WebP optimization"""
+        """Save book cover"""
         self._validate_image(file)
         
         filename = self._generate_unique_filename(file.filename)
         file_path = self.covers_dir / filename
         await self._save_file(file, file_path)
-        
-        # Always optimize and convert to WebP
-        try:
-            from core.image_optimizer import image_optimizer
-            optimized_path = image_optimizer.optimize_cover(file_path)
-            return f"covers/{optimized_path.name}"
-        except Exception as e:
-            print(f"Image optimization failed: {e}")
-            return f"covers/{filename}"
+        return f"covers/{filename}"
     
     async def save_book(self, file: UploadFile) -> str:
         """Save book file and return relative path"""
@@ -132,27 +124,11 @@ class StorageManager:
             target_dir.mkdir(parents=True, exist_ok=True)
             file_path = target_dir / filename
             await self._save_file(file, file_path)
-            
-            # Optimize and convert to WebP
-            try:
-                from core.image_optimizer import image_optimizer
-                optimized_path = image_optimizer.optimize_general(file_path)
-                return f"images/{subfolder}/{optimized_path.name}"
-            except Exception as e:
-                print(f"Image optimization failed: {e}")
-                return f"images/{subfolder}/{filename}"
+            return f"images/{subfolder}/{filename}"
         else:
             file_path = self.images_dir / filename
             await self._save_file(file, file_path)
-            
-            # Optimize and convert to WebP
-            try:
-                from core.image_optimizer import image_optimizer
-                optimized_path = image_optimizer.optimize_general(file_path)
-                return f"images/{optimized_path.name}"
-            except Exception as e:
-                print(f"Image optimization failed: {e}")
-                return f"images/{filename}"
+            return f"images/{filename}"
     
     def delete_file(self, relative_path: str) -> bool:
         """Delete a file from storage"""
@@ -186,11 +162,6 @@ class StorageManager:
         
         # Clean the path
         clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)
-        
-        # Convert image extensions to .webp since all images are converted
-        if any(clean_path.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif']):
-            clean_path = Path(clean_path).with_suffix('.webp')
-        
         return f"{self.url_prefix}/{clean_path}"
     
     def get_absolute_path(self, relative_path: str) -> str:

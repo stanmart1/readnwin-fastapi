@@ -10,7 +10,7 @@ from core.storage import storage
 from pydantic import BaseModel
 from typing import List
 
-router = APIRouter()
+router = APIRouter(prefix="/cart", tags=["cart"])
 
 class CartItem(BaseModel):
     book_id: int

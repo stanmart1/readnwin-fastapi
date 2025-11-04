@@ -124,7 +124,7 @@ async def create_order(
         
         # Add shipping cost if applicable
         shipping_cost = Decimal('0')
-        if checkout_data.formData.shippingMethod:
+        if checkout_data.formData and checkout_data.formData.shippingMethod:
             shipping_method = checkout_data.formData.shippingMethod
             base_cost = shipping_method.get('base_cost', 0)
             cost_per_item = shipping_method.get('cost_per_item', 0)
@@ -160,7 +160,7 @@ async def create_order(
         shipping_addr = shipping_info.dict()
         billing_addr = billing_info.dict()
         
-        print(f"🔍 Order data: user_id={current_user.id}, total={final_total}, payment_method={checkout_data.formData.payment.method}")
+        print(f"🔍 Order data: user_id={current_user.id}, total={final_total}, payment_method={payment_method}")
         
         # Create order with proper transaction handling
         order = Order(

@@ -77,7 +77,7 @@ export const useCart = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get('/cart/');
+      const response = await api.get('/cart');
       const items = Array.isArray(response.data) ? response.data : (response.data.items || []);
       
       // Transform backend format to match expected format

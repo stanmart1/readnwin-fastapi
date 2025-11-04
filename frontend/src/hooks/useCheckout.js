@@ -41,7 +41,7 @@ export function useCheckout(isEbookOnly) {
         }
       } catch (err) {
         console.error('Checkout data loading error:', err);
-        setError(err.message);
+        setError(err.response?.data?.detail || err.message || 'Failed to load checkout data');
       } finally {
         setIsLoading(false);
       }
