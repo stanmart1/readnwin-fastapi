@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getImageUrl } from '../../lib/fileService';
 import { useAdminWorks } from '../../hooks/useAdminWorks';
+import api from '../../lib/api';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -144,22 +145,13 @@ const WorksManagement = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('is_active', (!currentStatus).toString());
 
-      // Use the dedicated toggle endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/admin/works/${id}/toggle`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formDataToSend
-      });
-
-      const result = await response.json();
+      const response = await api.patch(`/admin/works/${id}/toggle`, formDataToSend);
       
-      if (result.success) {
+      if (response.data?.success) {
         fetchWorks();
         alert(`Work ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
       } else {
-        setError(result.error || 'Failed to update status');
+        setError(response.data?.error || 'Failed to update status');
       }
     } catch (error) {
       console.error('Error toggling status:', error);

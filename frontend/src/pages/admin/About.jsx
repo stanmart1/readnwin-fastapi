@@ -59,6 +59,12 @@ const AdminAbout = () => {
       });
       if (response.data && Object.keys(response.data).length > 0) {
         setContent({ ...defaultContent, ...response.data });
+      } else {
+        // No content exists, save default content
+        await axios.put(`${API_BASE_URL}/api/about/admin`, defaultContent, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setContent(defaultContent);
       }
     } catch (error) {
       console.error('Error loading:', error);

@@ -680,8 +680,9 @@ def get_audit_logs(
 ):
     try:
         from models.audit_log import AuditLog
+        from sqlalchemy.orm import joinedload
         
-        query = db.query(AuditLog)
+        query = db.query(AuditLog).options(joinedload(AuditLog.user))
         
         if user_id:
             query = query.filter(AuditLog.user_id == user_id)
@@ -698,11 +699,15 @@ def get_audit_logs(
                 {
                     "id": log.id,
                     "user_id": log.user_id,
+                    "user_name": f"{log.user.first_name or ''} {log.user.last_name or ''}".strip() if log.user else "System",
+                    "user_email": log.user.email if log.user else None,
                     "action": log.action,
                     "resource": log.resource,
                     "resource_id": log.resource_id,
                     "details": log.details,
                     "ip_address": log.ip_address,
+                    "user_agent": log.user_agent,
+                    "page_visited": log.details.get("page") if log.details and isinstance(log.details, dict) else None,
                     "status": log.status,
                     "created_at": log.created_at.isoformat() if log.created_at else None
                 }

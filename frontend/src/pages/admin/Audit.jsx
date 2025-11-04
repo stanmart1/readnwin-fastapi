@@ -54,7 +54,63 @@ const Audit = () => {
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString();
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getDeviceIcon = (userAgent) => {
+    if (!userAgent) return 'ri-computer-line';
+    const ua = userAgent.toLowerCase();
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) return 'ri-smartphone-line';
+    if (ua.includes('tablet') || ua.includes('ipad')) return 'ri-tablet-line';
+    return 'ri-computer-line';
+  };
+
+  const getDeviceInfo = (userAgent) => {
+    if (!userAgent) return 'Unknown Device';
+    const ua = userAgent.toLowerCase();
+    
+    let device = 'Desktop';
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) device = 'Mobile';
+    if (ua.includes('tablet') || ua.includes('ipad')) device = 'Tablet';
+    
+    let os = 'Unknown OS';
+    if (ua.includes('windows')) os = 'Windows';
+    else if (ua.includes('mac')) os = 'macOS';
+    else if (ua.includes('linux')) os = 'Linux';
+    else if (ua.includes('android')) os = 'Android';
+    else if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+    
+    let browser = 'Unknown Browser';
+    if (ua.includes('chrome') && !ua.includes('edg')) browser = 'Chrome';
+    else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+    else if (ua.includes('firefox')) browser = 'Firefox';
+    else if (ua.includes('edg')) browser = 'Edge';
+    
+    return `${device} • ${os} • ${browser}`;
+  };
+
+  const getLocationInfo = (ipAddress) => {
+    if (!ipAddress) return 'Unknown Location';
+    // This is a placeholder - in production, you'd use a geolocation API
+    return ipAddress;
   };
 
   const handleExport = async () => {
@@ -205,40 +261,55 @@ const Audit = () => {
               key={log.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-md p-4 space-y-3"
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 ${getActionColor(log.action)} rounded-full flex items-center justify-center`}>
-                    <i className={`${getActionIcon(log.action)} text-white text-lg`}></i>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">{log.action}</div>
-                    <div className="text-sm text-gray-500">{log.resource}</div>
+              <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className={`w-12 h-12 ${getActionColor(log.action)} rounded-xl flex items-center justify-center flex-shrink-0 shadow-md`}>
+                      <i className={`${getActionIcon(log.action)} text-white text-xl`}></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-gray-900 text-base">{log.action}</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {log.user_name || 'System'} • {log.resource || 'System'}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                        <i className="ri-time-line"></i>
+                        <span>{formatDateTime(log.created_at)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500">{formatDateTime(log.created_at)}</div>
-              </div>
 
-              <div className="border-t pt-3 space-y-2 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Resource ID:</span>
-                  <span className="ml-2 text-gray-900">{log.resource_id || 'N/A'}</span>
+                <div className="border-t border-gray-100 pt-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <i className={`${getDeviceIcon(log.user_agent)} text-gray-400`}></i>
+                    <span className="text-gray-700">{getDeviceInfo(log.user_agent)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <i className="ri-map-pin-line text-gray-400"></i>
+                    <span className="text-gray-700">{getLocationInfo(log.ip_address)}</span>
+                  </div>
+                  {log.page_visited && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <i className="ri-pages-line text-gray-400"></i>
+                      <span className="text-gray-700 truncate">{log.page_visited}</span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="font-medium text-gray-700">IP Address:</span>
-                  <span className="ml-2 text-gray-900">{log.ip_address || 'N/A'}</span>
-                </div>
+
                 {log.details && (
-                  <div>
+                  <div className="pt-2">
                     <button
                       onClick={() => {
                         setSelectedLog(log);
                         setShowDetailsModal(true);
                       }}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                     >
-                      View Details
+                      <i className="ri-information-line"></i>
+                      View Full Details
                     </button>
                   </div>
                 )}
@@ -263,41 +334,63 @@ const Audit = () => {
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resource</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resource ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Activity</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Device & Location</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Page</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="px-4 py-4">
+                  <tr key={log.id} className="hover:bg-blue-50 transition-colors duration-200">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className={`w-8 h-8 ${getActionColor(log.action)} rounded-full flex items-center justify-center mr-3`}>
-                          <i className={`${getActionIcon(log.action)} text-white text-sm`}></i>
+                        <div className={`w-10 h-10 ${getActionColor(log.action)} rounded-xl flex items-center justify-center mr-3 shadow-sm`}>
+                          <i className={`${getActionIcon(log.action)} text-white text-lg`}></i>
                         </div>
-                        <span className="text-sm font-medium text-gray-900">{log.action}</span>
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900">{log.action}</div>
+                          <div className="text-xs text-gray-500">{log.resource || 'System'}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900">{log.resource || 'N/A'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-900">{log.resource_id || 'N/A'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-900">{log.ip_address || 'N/A'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-500">{formatDateTime(log.created_at)}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{log.user_name || 'System'}</div>
+                      <div className="text-xs text-gray-500">{log.user_email || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
+                        <i className={`${getDeviceIcon(log.user_agent)} text-gray-400`}></i>
+                        <span className="text-xs">{getDeviceInfo(log.user_agent)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <i className="ri-map-pin-line text-gray-400"></i>
+                        <span>{getLocationInfo(log.ip_address)}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700 max-w-xs truncate" title={log.page_visited}>
+                        {log.page_visited || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700">{formatDateTime(log.created_at)}</div>
+                    </td>
+                    <td className="px-6 py-4">
                       {log.details && (
                         <button
                           onClick={() => {
                             setSelectedLog(log);
                             setShowDetailsModal(true);
                           }}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                         >
-                          View
+                          <i className="ri-information-line"></i>
+                          Details
                         </button>
                       )}
                     </td>
@@ -341,51 +434,132 @@ const Audit = () => {
         {/* Details Modal */}
         {showDetailsModal && selectedLog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-              <div className="p-6 border-b border-gray-200">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden"
+            >
+              <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-gray-900">Audit Log Details</h3>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 ${getActionColor(selectedLog.action)} rounded-xl flex items-center justify-center shadow-md`}>
+                      <i className={`${getActionIcon(selectedLog.action)} text-white text-xl`}></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Activity Details</h3>
+                      <p className="text-sm text-gray-600">{selectedLog.action}</p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setShowDetailsModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <i className="ri-close-line text-2xl"></i>
                   </button>
                 </div>
               </div>
-              <div className="p-6 overflow-y-auto max-h-[60vh]">
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-medium text-gray-700">Action:</span>
-                    <span className="ml-2 text-gray-900">{selectedLog.action}</span>
+              <div className="p-6 overflow-y-auto max-h-[calc(85vh-100px)]">
+                <div className="space-y-6">
+                  {/* User Information */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <i className="ri-user-line"></i>
+                      User Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Name</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedLog.user_name || 'System'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Email</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedLog.user_email || 'N/A'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Resource:</span>
-                    <span className="ml-2 text-gray-900">{selectedLog.resource || 'N/A'}</span>
+
+                  {/* Activity Information */}
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <i className="ri-file-list-line"></i>
+                      Activity Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Resource</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedLog.resource || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Resource ID</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedLog.resource_id || 'N/A'}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="text-xs text-gray-600">Page Visited</p>
+                        <p className="text-sm font-medium text-gray-900 break-all">{selectedLog.page_visited || 'N/A'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Resource ID:</span>
-                    <span className="ml-2 text-gray-900">{selectedLog.resource_id || 'N/A'}</span>
+
+                  {/* Device & Location */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <i className="ri-device-line"></i>
+                      Device & Location
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Device Information</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <i className={`${getDeviceIcon(selectedLog.user_agent)} text-gray-500`}></i>
+                          <p className="text-sm font-medium text-gray-900">{getDeviceInfo(selectedLog.user_agent)}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">IP Address / Location</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <i className="ri-map-pin-line text-gray-500"></i>
+                          <p className="text-sm font-medium text-gray-900">{getLocationInfo(selectedLog.ip_address)}</p>
+                        </div>
+                      </div>
+                      {selectedLog.user_agent && (
+                        <div>
+                          <p className="text-xs text-gray-600">User Agent</p>
+                          <p className="text-xs text-gray-700 mt-1 break-all bg-white p-2 rounded">{selectedLog.user_agent}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700">IP Address:</span>
-                    <span className="ml-2 text-gray-900">{selectedLog.ip_address || 'N/A'}</span>
+
+                  {/* Timestamp */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <i className="ri-time-line"></i>
+                      Timestamp
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedLog.created_at)}</p>
+                      <span className="text-xs text-gray-500">•</span>
+                      <p className="text-xs text-gray-600">{new Date(selectedLog.created_at).toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Timestamp:</span>
-                    <span className="ml-2 text-gray-900">{formatDateTime(selectedLog.created_at)}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Details:</span>
-                    <pre className="mt-2 p-4 bg-gray-50 rounded-lg text-sm overflow-x-auto">
-                      {formatDetails(selectedLog.details)}
-                    </pre>
-                  </div>
+
+                  {/* Additional Details */}
+                  {selectedLog.details && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i className="ri-information-line"></i>
+                        Additional Details
+                      </h4>
+                      <pre className="text-xs text-gray-700 overflow-x-auto bg-white p-3 rounded border border-gray-200">
+                        {formatDetails(selectedLog.details)}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        )}
+        )
 
         {loading && (
           <div className="flex items-center justify-center py-12">
