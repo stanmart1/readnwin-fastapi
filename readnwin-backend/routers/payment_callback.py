@@ -109,8 +109,6 @@ async def payment_callback(
                             logger.warning(f"Failed to send payment confirmation email: {e}")
                         
                         # Redirect to success page
-                        from core.config import settings
-                        from fastapi.responses import RedirectResponse
                         return RedirectResponse(url=f"{settings.frontend_url}/order-confirmation/{order.order_number}?status=success")
                 else:
                     # Payment failed
@@ -122,7 +120,7 @@ async def payment_callback(
                     
                     from core.config import settings
                     from fastapi.responses import RedirectResponse
-                    return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=failed&message=Payment verification failed")
+                    return RedirectResponse(url=f"{settings.frontend_url}/payment-failed?status=failed&order={order.order_number if order else ''}&message=Payment verification failed")
         
         # If no transaction_id, just redirect based on status
         from core.config import settings
@@ -131,10 +129,11 @@ async def payment_callback(
             order = db.query(Order).filter(Order.id == payment.order_id).first()
             return RedirectResponse(url=f"{settings.frontend_url}/order-confirmation/{order.order_number if order else payment.order_id}?status=pending")
         else:
-            return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=cancelled")
+            order = db.query(Order).filter(Order.id == payment.order_id).first()
+            return RedirectResponse(url=f"{settings.frontend_url}/payment-failed?status=cancelled&order={order.order_number if order else ''}")
             
     except Exception as e:
         logger.error(f"Payment callback error: {str(e)}")
         from core.config import settings
         from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=f"{settings.frontend_url}/checkout?status=error&message={str(e)}")
+        return RedirectResponse(url=f"{settings.frontend_url}/payment-failed?status=error&message={str(e)}")
