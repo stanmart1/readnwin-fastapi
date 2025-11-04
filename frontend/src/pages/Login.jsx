@@ -11,6 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || localStorage.getItem('redirectAfterLogin');
+  const sessionExpired = searchParams.get('reason') === 'session_expired';
 
   useEffect(() => {
     // Clear redirect from localStorage when component mounts
@@ -52,6 +53,13 @@ export default function Login() {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">ReadnWin</h1>
             <p className="text-gray-600">Welcome back! Please login to your account.</p>
           </div>
+
+          {sessionExpired && (
+            <div className="mb-6 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+              <i className="ri-time-line mr-2"></i>
+              Your session has expired. Please login again.
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
+import SessionTimeoutWarning from './components/SessionTimeoutWarning';
+import { useSessionTimeout } from './hooks/useSessionTimeout';
 
 { /* Scroll to top on route change*/}
 function ScrollToTop() {
@@ -66,9 +68,17 @@ import AdminSettings from './pages/admin/Settings';
 import './styles/index.css';
 
 function App() {
+  const { showWarning, timeRemaining, extendSession, handleLogout } = useSessionTimeout();
+
   return (
     <CartProvider>
       <Router>
+        <SessionTimeoutWarning
+          show={showWarning}
+          timeRemaining={timeRemaining}
+          onExtend={extendSession}
+          onLogout={handleLogout}
+        />
         <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />

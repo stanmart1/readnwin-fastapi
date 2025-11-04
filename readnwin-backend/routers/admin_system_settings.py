@@ -107,11 +107,11 @@ def initialize_default_settings(
         {"key": "review_moderation", "value": "true", "data_type": "boolean", "category": "general", "description": "Moderate reviews before publishing"},
         
         # Security Settings
-        {"key": "session_timeout_minutes", "value": "40", "data_type": "integer", "category": "security", "description": "Session timeout in minutes"},
-        {"key": "max_login_attempts", "value": "5", "data_type": "integer", "category": "security", "description": "Maximum login attempts before lockout"},
-        {"key": "lockout_duration_minutes", "value": "15", "data_type": "integer", "category": "security", "description": "Account lockout duration in minutes"},
-        {"key": "password_min_length", "value": "8", "data_type": "integer", "category": "security", "description": "Minimum password length"},
-        {"key": "require_password_complexity", "value": "true", "data_type": "boolean", "category": "security", "description": "Require complex passwords"},
+        {"key": "session_timeout_minutes", "value": "40", "data_type": "integer", "category": "security", "description": "Session timeout in minutes", "is_public": True},
+        {"key": "max_login_attempts", "value": "5", "data_type": "integer", "category": "security", "description": "Maximum login attempts before lockout", "is_public": True},
+        {"key": "lockout_duration_minutes", "value": "15", "data_type": "integer", "category": "security", "description": "Account lockout duration in minutes", "is_public": True},
+        {"key": "password_min_length", "value": "8", "data_type": "integer", "category": "security", "description": "Minimum password length", "is_public": True},
+        {"key": "require_password_complexity", "value": "true", "data_type": "boolean", "category": "security", "description": "Require complex passwords", "is_public": True},
         {"key": "auto_backup", "value": "true", "data_type": "boolean", "category": "security", "description": "Enable automatic backups"},
         {"key": "backup_frequency", "value": "daily", "data_type": "string", "category": "security", "description": "Backup frequency"},
         {"key": "max_file_size_mb", "value": "10", "data_type": "integer", "category": "security", "description": "Maximum file upload size in MB"},

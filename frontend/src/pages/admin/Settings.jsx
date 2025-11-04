@@ -172,6 +172,19 @@ export default function SystemSettings() {
 
   const renderSecuritySettings = () => (
     <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+        <input
+          type="number"
+          min="5"
+          max="1440"
+          value={settings.sessionTimeoutMinutes || 40}
+          onChange={(e) => handleSettingChange('sessionTimeoutMinutes', parseInt(e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">Users will be warned 5 minutes before timeout (5-1440 minutes)</p>
+      </div>
+      
       <div className="flex items-center justify-between">
         <div>
           <label className="text-sm font-medium text-gray-700">Auto Backup</label>

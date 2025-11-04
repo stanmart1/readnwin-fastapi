@@ -29,3 +29,4 @@ export { useEmailTemplates } from './useEmailTemplates';
 export { useAdminBlog } from './useAdminBlog';
 export { useAdminWorks } from './useAdminWorks';
 export { useSettings } from './useSettings';
+export { useSessionTimeout } from './useSessionTimeout';

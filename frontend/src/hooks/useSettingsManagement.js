@@ -16,7 +16,9 @@ export const useSettingsManagement = () => {
       const settingsData = response.data.settings || {};
       const extractedSettings = {};
       Object.keys(settingsData).forEach(key => {
-        extractedSettings[key] = settingsData[key].value;
+        // Convert snake_case to camelCase for frontend
+        const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+        extractedSettings[camelKey] = settingsData[key].value;
       });
       setSettings(extractedSettings);
     } catch (err) {
@@ -33,7 +35,9 @@ export const useSettingsManagement = () => {
       setError(null);
       // Save each setting individually
       for (const [key, value] of Object.entries(settings)) {
-        await api.put(`/admin/system-settings/${key}`, { value });
+        // Convert camelCase back to snake_case for backend
+        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        await api.put(`/admin/system-settings/${snakeKey}`, { value });
       }
       return { success: true };
     } catch (err) {
