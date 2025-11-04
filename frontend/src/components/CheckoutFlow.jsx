@@ -30,7 +30,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   });
 
-  // Autofill user details when component mounts or user changes
+  // Autofill user details only once when component mounts
   useEffect(() => {
     const currentUser = getUser();
     if (currentUser) {
@@ -38,19 +38,20 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
         ...prev,
         shipping: {
           ...prev.shipping,
-          first_name: currentUser.first_name || '',
-          last_name: currentUser.last_name || '',
-          email: currentUser.email || '',
-          phone: currentUser.phone || '',
-          address: currentUser.address || '',
-          city: currentUser.city || '',
-          state: currentUser.state || '',
-          zip_code: currentUser.zip_code || '',
-          country: currentUser.country || 'Nigeria'
+          first_name: currentUser.first_name || prev.shipping.first_name,
+          last_name: currentUser.last_name || prev.shipping.last_name,
+          email: currentUser.email || prev.shipping.email,
+          phone: currentUser.phone || prev.shipping.phone,
+          address: currentUser.address || prev.shipping.address,
+          city: currentUser.city || prev.shipping.city,
+          state: currentUser.state || prev.shipping.state,
+          zip_code: currentUser.zip_code || prev.shipping.zip_code,
+          country: currentUser.country || prev.shipping.country
         }
       }));
     }
-  }, [getUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Analyze cart first to determine if ebook-only
   const analyzeCart = useCallback(() => {
@@ -382,9 +383,10 @@ function CustomerInformationStep({ formData, updateFormData }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
         <div className="relative">
-          <i className="ri-mail-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <i className="ri-mail-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
           <input
             type="email"
+            inputMode="email"
             required
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.email}
@@ -396,9 +398,10 @@ function CustomerInformationStep({ formData, updateFormData }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
         <div className="relative">
-          <i className="ri-phone-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <i className="ri-phone-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
           <input
-            type="tel"
+            type="text"
+            inputMode="tel"
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={formData.shipping.phone}
             onChange={(e) => updateFormData('shipping', { phone: e.target.value })}
@@ -418,7 +421,7 @@ function ShippingAddressStep({ formData, updateFormData }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Street Address *</label>
         <div className="relative">
-          <i className="ri-home-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <i className="ri-home-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
           <input
             type="text"
             required
@@ -434,7 +437,7 @@ function ShippingAddressStep({ formData, updateFormData }) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
           <div className="relative">
-            <i className="ri-building-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <i className="ri-building-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
             <input
               type="text"
               required

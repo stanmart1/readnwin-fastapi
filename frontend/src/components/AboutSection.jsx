@@ -140,7 +140,7 @@ export default function AboutSection() {
                   }`}></i>
                   <div>
                     <h4 className="font-semibold text-gray-900">{value.title}</h4>
-                    <p className="text-sm text-gray-600">{value.description}</p>
+                    <div className="text-sm text-gray-600" {...createHTMLProps(value.description)} />
                   </div>
                 </motion.div>
               ))}
