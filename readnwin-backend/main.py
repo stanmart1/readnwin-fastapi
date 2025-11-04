@@ -81,6 +81,27 @@ async def shutdown_event():
 from middleware.xss_protection import XSSProtectionMiddleware
 app.add_middleware(XSSProtectionMiddleware)
 
+# HTTPS redirect middleware for production
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse
+
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Check if request is coming through a proxy with HTTPS
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto == "https":
+            # Store the original scheme for redirects
+            request.scope["scheme"] = "https"
+        response = await call_next(request)
+        # Fix redirect responses to use HTTPS in production
+        if response.status_code in (301, 302, 303, 307, 308):
+            location = response.headers.get("location")
+            if location and forwarded_proto == "https" and location.startswith("http://"):
+                response.headers["location"] = location.replace("http://", "https://", 1)
+        return response
+
+app.add_middleware(HTTPSRedirectMiddleware)
+
 # CORS configuration
 import os
 allowed_origins = [
@@ -236,7 +257,7 @@ app.include_router(blog.router, prefix="/api/blog", tags=["blog"])
 app.include_router(about.router, prefix="/api/about", tags=["about"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
-app.include_router(faq.router, prefix="/api/faq", tags=["faq"])
+app.include_router(faq.router, prefix="/api/faq", tags=["faq"], redirect_slashes=False)
 
 # Testing (only for development)
 if app.debug:

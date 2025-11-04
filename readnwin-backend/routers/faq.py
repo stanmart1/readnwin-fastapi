@@ -19,6 +19,7 @@ class FAQResponse(BaseModel):
     class Config:
         from_attributes = True
 
+@router.get("")
 @router.get("/")
 def get_faqs(db: Session = Depends(get_db)):
     try:
