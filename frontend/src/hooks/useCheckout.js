@@ -17,7 +17,7 @@ export function useCheckout(isEbookOnly) {
         if (!isEbookOnly) {
           try {
             const shippingRes = await api.get('/shipping/methods');
-            setShippingMethods(shippingRes.data.methods || []);
+            setShippingMethods(shippingRes.data.methods || shippingRes.data || []);
           } catch (shippingErr) {
             console.error('Failed to load shipping methods:', shippingErr);
             // Don't fail the entire checkout if shipping fails
@@ -30,7 +30,7 @@ export function useCheckout(isEbookOnly) {
         // Always fetch payment gateways
         try {
           const paymentRes = await api.get('/payment-gateways');
-          setPaymentGateways(paymentRes.data.gateways || []);
+          setPaymentGateways(paymentRes.data.gateways || paymentRes.data || []);
         } catch (paymentErr) {
           console.error('Failed to load payment gateways:', paymentErr);
           // Provide fallback payment options

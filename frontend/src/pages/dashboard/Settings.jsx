@@ -19,7 +19,12 @@ export default function Settings() {
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
     email: user?.email || '',
-    username: user?.username || ''
+    username: user?.username || '',
+    phone_number: user?.phone_number || '',
+    school_name: user?.school_name || '',
+    school_category: user?.school_category || '',
+    class_level: user?.class_level || '',
+    department: user?.department || ''
   });
   const [passwordData, setPasswordData] = useState({
     current_password: '',
@@ -226,6 +231,83 @@ export default function Settings() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone_number"
+                        value={formData.phone_number}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="+234 123 456 7890"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">
+                        School Name
+                      </label>
+                      <input
+                        type="text"
+                        name="school_name"
+                        value={formData.school_name}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="University of Lagos"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">
+                        School Category
+                      </label>
+                      <select
+                        name="school_category"
+                        value={formData.school_category}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select school category</option>
+                        <option value="Primary">Primary</option>
+                        <option value="Secondary">Secondary</option>
+                        <option value="Tertiary">Tertiary</option>
+                      </select>
+                    </div>
+
+                    {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (
+                      <div>
+                        <label className="block text-gray-700 font-semibold mb-2">
+                          Class Level
+                        </label>
+                        <input
+                          type="text"
+                          name="class_level"
+                          value={formData.class_level}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={formData.school_category === 'Primary' ? 'Primary 1' : 'SS1'}
+                        />
+                      </div>
+                    )}
+
+                    {formData.school_category === 'Tertiary' && (
+                      <div>
+                        <label className="block text-gray-700 font-semibold mb-2">
+                          Department
+                        </label>
+                        <input
+                          type="text"
+                          name="department"
+                          value={formData.department}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Computer Science"
+                        />
+                      </div>
+                    )}
 
                     <button
                       type="submit"

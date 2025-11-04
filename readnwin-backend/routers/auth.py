@@ -45,6 +45,11 @@ class UserRegister(BaseModel):
     password: str = Field(..., min_length=8, description="Password (minimum 8 characters)")
     first_name: Optional[str] = Field(None, max_length=100, description="First name")
     last_name: Optional[str] = Field(None, max_length=100, description="Last name")
+    phone_number: Optional[str] = Field(None, max_length=20, description="Phone number")
+    school_name: Optional[str] = Field(None, max_length=200, description="Name of school")
+    school_category: Optional[str] = Field(None, description="School category: Primary, Secondary, Tertiary")
+    class_level: Optional[str] = Field(None, max_length=50, description="Class level (for Primary/Secondary)")
+    department: Optional[str] = Field(None, max_length=100, description="Department (for Tertiary)")
 
     @validator('email')
     def validate_email(cls, v):
@@ -115,6 +120,26 @@ class UserRegister(BaseModel):
             # Only allow letters, spaces, hyphens, and apostrophes
             if not re.match(r"^[a-zA-Z\s\-']+$", v):
                 raise ValueError('Last name can only contain letters, spaces, hyphens, and apostrophes')
+        return v
+
+    @validator('phone_number')
+    def validate_phone_number(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+            if not re.match(r'^[\d\s\-\(\)\+]+$', v):
+                raise ValueError('Phone number can only contain digits, spaces, hyphens, parentheses, and plus sign')
+        return v
+
+    @validator('school_category')
+    def validate_school_category(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+            if v not in ['Primary', 'Secondary', 'Tertiary']:
+                raise ValueError('School category must be Primary, Secondary, or Tertiary')
         return v
 
 class PasswordReset(BaseModel):
@@ -200,6 +225,11 @@ class UpdateProfile(BaseModel):
     first_name: Optional[str] = Field(None, max_length=100, description="First name")
     last_name: Optional[str] = Field(None, max_length=100, description="Last name")
     username: Optional[str] = Field(None, min_length=3, max_length=50, description="Username")
+    phone_number: Optional[str] = Field(None, max_length=20, description="Phone number")
+    school_name: Optional[str] = Field(None, max_length=200, description="Name of school")
+    school_category: Optional[str] = Field(None, description="School category: Primary, Secondary, Tertiary")
+    class_level: Optional[str] = Field(None, max_length=50, description="Class level (for Primary/Secondary)")
+    department: Optional[str] = Field(None, max_length=100, description="Department (for Tertiary)")
 
     @validator('first_name')
     def validate_first_name(cls, v):
@@ -242,6 +272,26 @@ class UpdateProfile(BaseModel):
                 raise ValueError('Username can only contain letters, numbers, underscores, and hyphens')
         return v
 
+    @validator('phone_number')
+    def validate_phone_number(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+            if not re.match(r'^[\d\s\-\(\)\+]+$', v):
+                raise ValueError('Phone number can only contain digits, spaces, hyphens, parentheses, and plus sign')
+        return v
+
+    @validator('school_category')
+    def validate_school_category(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+            if v not in ['Primary', 'Secondary', 'Tertiary']:
+                raise ValueError('School category must be Primary, Secondary, or Tertiary')
+        return v
+
 class VerificationCheck(BaseModel):
     email: EmailStr = Field(..., description="Valid email address")
 
@@ -257,6 +307,11 @@ class UserResponse(BaseModel):
     username: str
     first_name: Optional[str]
     last_name: Optional[str]
+    phone_number: Optional[str] = None
+    school_name: Optional[str] = None
+    school_category: Optional[str] = None
+    class_level: Optional[str] = None
+    department: Optional[str] = None
     is_active: bool
     role: Optional[dict] = None
     permissions: list = []
@@ -343,6 +398,11 @@ async def register(user_data: UserRegister, request: Request, db: Session = Depe
             password_hash=get_password_hash(user_data.password),
             first_name=user_data.first_name,
             last_name=user_data.last_name,
+            phone_number=user_data.phone_number,
+            school_name=user_data.school_name,
+            school_category=user_data.school_category,
+            class_level=user_data.class_level,
+            department=user_data.department,
             role_id=default_role.id,
             is_active=True,  # Set to False if email verification is required
             is_email_verified=True,  # Set to False if email verification is required
@@ -587,6 +647,11 @@ def get_current_user(current_user: User = Depends(get_current_user_from_token), 
             username=current_user.username,
             first_name=current_user.first_name,
             last_name=current_user.last_name,
+            phone_number=current_user.phone_number,
+            school_name=current_user.school_name,
+            school_category=current_user.school_category,
+            class_level=current_user.class_level,
+            department=current_user.department,
             is_active=current_user.is_active,
             role=role_data,
             permissions=[]
@@ -822,6 +887,16 @@ def update_profile(data: UpdateProfile, current_user: User = Depends(get_current
             current_user.last_name = data.last_name
         if data.username is not None:
             current_user.username = data.username
+        if data.phone_number is not None:
+            current_user.phone_number = data.phone_number
+        if data.school_name is not None:
+            current_user.school_name = data.school_name
+        if data.school_category is not None:
+            current_user.school_category = data.school_category
+        if data.class_level is not None:
+            current_user.class_level = data.class_level
+        if data.department is not None:
+            current_user.department = data.department
 
         db.commit()
         db.refresh(current_user)
@@ -834,6 +909,11 @@ def update_profile(data: UpdateProfile, current_user: User = Depends(get_current
             "username": current_user.username,
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
+            "phone_number": current_user.phone_number,
+            "school_name": current_user.school_name,
+            "school_category": current_user.school_category,
+            "class_level": current_user.class_level,
+            "department": current_user.department,
             "message": "Profile updated successfully"
         }
 

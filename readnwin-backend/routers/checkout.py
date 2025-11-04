@@ -50,10 +50,18 @@ class FormData(BaseModel):
     shippingMethod: Optional[Dict[str, Any]] = None
 
 class CheckoutRequest(BaseModel):
-    formData: FormData
-    cartItems: List[Dict[str, Any]]
-    total: float
+    # Support both old and new formats
+    formData: Optional[FormData] = None
+    cartItems: Optional[List[Dict[str, Any]]] = None
+    total: Optional[float] = None
     payment_method: Optional[str] = None
+    
+    # New format fields
+    shipping_info: Optional[ShippingAddress] = None
+    billing_info: Optional[ShippingAddress] = None
+    payment_method: Optional[str] = None
+    shipping_method_id: Optional[int] = None
+    total_amount: Optional[float] = None
 
 @router.post("/")
 async def create_order(
@@ -64,7 +72,23 @@ async def create_order(
     """Create comprehensive order with payment processing"""
     try:
         print(f"🔍 Checkout request received for user {current_user.id}")
-        print(f"🔍 Payment method: {checkout_data.formData.payment.method}")
+        # Handle both old and new request formats
+        if checkout_data.formData:
+            # Old format
+            shipping_info = checkout_data.formData.shipping
+            billing_info = checkout_data.formData.shipping if checkout_data.formData.billing.sameAsShipping else checkout_data.formData.billing
+            payment_method = checkout_data.formData.payment.method
+            shipping_method = checkout_data.formData.shippingMethod
+            total_amount = checkout_data.total
+        else:
+            # New format
+            shipping_info = checkout_data.shipping_info
+            billing_info = checkout_data.billing_info or checkout_data.shipping_info
+            payment_method = checkout_data.payment_method
+            shipping_method = None  # TODO: fetch from shipping_method_id
+            total_amount = checkout_data.total_amount
+        
+        print(f"🔍 Payment method: {payment_method}")
         
         # Get user's cart items with book details
         cart_items = db.query(Cart).join(Book).filter(
@@ -133,8 +157,8 @@ async def create_order(
         print(f"🔍 Creating order {order_number}")
         
         # Prepare addresses
-        shipping_addr = checkout_data.formData.shipping.dict()
-        billing_addr = checkout_data.formData.shipping.dict() if checkout_data.formData.billing.sameAsShipping else checkout_data.formData.billing.dict()
+        shipping_addr = shipping_info.dict()
+        billing_addr = billing_info.dict()
         
         print(f"🔍 Order data: user_id={current_user.id}, total={final_total}, payment_method={checkout_data.formData.payment.method}")
         
@@ -147,7 +171,7 @@ async def create_order(
             shipping_cost=shipping_cost,
             total_amount=final_total,
             status='pending',
-            payment_method=checkout_data.formData.payment.method,
+            payment_method=payment_method,
             shipping_address=shipping_addr,
             billing_address=billing_addr
         )
@@ -184,12 +208,11 @@ async def create_order(
         # NOTE: Cart will be cleared after successful payment confirmation
         # Do not clear cart here as payment might fail
         
-        # Handle payment method
-        payment_method = checkout_data.formData.payment.method
+        # Handle payment method (already extracted above)
         
         if payment_method == 'flutterwave':
             # Initialize Flutterwave payment
-            flutterwave_data = initialize_flutterwave_payment(order, checkout_data.formData.shipping, db)
+            flutterwave_data = initialize_flutterwave_payment(order, shipping_info, db)
             db.commit()  # Commit after successful payment initialization
             
             # Send order confirmation email
@@ -222,7 +245,8 @@ async def create_order(
                     "order_number": order.order_number,
                     "total_amount": float(order.total_amount)
                 },
-                "flutterwavePaymentUrl": flutterwave_data["payment_url"],
+                "payment_url": flutterwave_data["payment_url"],
+                "payment_method": "flutterwave",
                 "reference": flutterwave_data.get('tx_ref')
             }
         
@@ -262,7 +286,7 @@ async def create_order(
                 
                 return {
                     "success": True,
-                    "paymentMethod": "bank_transfer",
+                    "payment_method": "bank_transfer",
                     "order": {
                         "id": order.id,
                         "order_number": order.order_number,

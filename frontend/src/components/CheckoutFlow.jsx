@@ -29,7 +29,14 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     }
   });
 
-  const { shippingMethods, paymentGateways, isLoading: isLoadingCheckoutData } = useCheckout(analytics?.isEbookOnly);
+  const { shippingMethods, paymentGateways, isLoading: isLoadingCheckoutData, error: checkoutDataError } = useCheckout(analytics?.isEbookOnly);
+  
+  // Handle checkout data loading errors
+  useEffect(() => {
+    if (checkoutDataError) {
+      setError(`Failed to load checkout data: ${checkoutDataError}`);
+    }
+  }, [checkoutDataError]);
 
   const analyzeCart = useCallback(() => {
     if (!cartItems || cartItems.length === 0) return null;
@@ -67,10 +74,10 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
   }, [analytics]);
 
   useEffect(() => {
-    if (analytics?.isEbookOnly) {
+    if (analytics?.isEbookOnly && currentStep === 1) {
       setCurrentStep(2);
     }
-  }, [analytics?.isEbookOnly]);
+  }, [analytics?.isEbookOnly, currentStep]);
 
   const updateFormData = (section, data) => {
     setFormData(prev => ({
@@ -112,16 +119,15 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
       setIsLoading(true);
       setError(null);
 
-      const response = await api.post('/checkout', {
-        formData: {
-          shipping: formData.shipping,
-          billing: formData.billing,
-          payment: { method: formData.payment.method },
-          shippingMethod: formData.shipping_method
-        },
-        cartItems,
-        total: analytics.total
-      });
+      const checkoutData = {
+        shipping_info: formData.shipping,
+        billing_info: formData.billing.sameAsShipping ? formData.shipping : formData.billing,
+        payment_method: formData.payment.method,
+        shipping_method_id: formData.shipping_method?.id,
+        total_amount: analytics.total
+      };
+      
+      const response = await api.post('/checkout', checkoutData);
 
       if (response.data.success) {
         onComplete(response.data);

@@ -9,6 +9,11 @@ export default function Signup() {
     username: '',
     first_name: '',
     last_name: '',
+    phone_number: '',
+    school_name: '',
+    school_category: '',
+    class_level: '',
+    department: '',
     password: '',
     confirm_password: ''
   });
@@ -33,6 +38,12 @@ export default function Signup() {
     }
 
     const { confirm_password, ...signupData } = formData;
+    // Clean up empty fields
+    Object.keys(signupData).forEach(key => {
+      if (signupData[key] === '') {
+        signupData[key] = null;
+      }
+    });
     const success = await signup(signupData);
     
     if (success) {
@@ -145,6 +156,89 @@ export default function Signup() {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                Phone Number
+              </label>
+              <div className="relative">
+                <i className="ri-phone-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input
+                  type="tel"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+234 123 456 7890"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                School Name
+              </label>
+              <div className="relative">
+                <i className="ri-school-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input
+                  type="text"
+                  name="school_name"
+                  value={formData.school_name}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="University of Lagos"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                School Category
+              </label>
+              <select
+                name="school_category"
+                value={formData.school_category}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select school category</option>
+                <option value="Primary">Primary</option>
+                <option value="Secondary">Secondary</option>
+                <option value="Tertiary">Tertiary</option>
+              </select>
+            </div>
+
+            {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                  Class Level
+                </label>
+                <input
+                  type="text"
+                  name="class_level"
+                  value={formData.class_level}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={formData.school_category === 'Primary' ? 'Primary 1' : 'SS1'}
+                />
+              </div>
+            )}
+
+            {formData.school_category === 'Tertiary' && (
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Computer Science"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-gray-700 font-semibold mb-2 text-sm">

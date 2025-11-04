@@ -16,6 +16,11 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[str] = None
     username: Optional[str] = None
+    phone_number: Optional[str] = None
+    school_name: Optional[str] = None
+    school_category: Optional[str] = None
+    class_level: Optional[str] = None
+    department: Optional[str] = None
     is_active: Optional[bool] = None
     role_id: Optional[int] = None
 
@@ -92,6 +97,11 @@ def get_all_users(
                     "username": u.username,
                     "first_name": u.first_name,
                     "last_name": u.last_name,
+                    "phone_number": u.phone_number,
+                    "school_name": u.school_name,
+                    "school_category": u.school_category,
+                    "class_level": u.class_level,
+                    "department": u.department,
                     "is_active": u.is_active,
                     "is_email_verified": u.is_email_verified,
                     "created_at": u.created_at,
@@ -181,6 +191,16 @@ def update_user(
             if existing:
                 raise HTTPException(status_code=400, detail="Username already in use")
             user.username = user_data.username
+        if user_data.phone_number is not None:
+            user.phone_number = user_data.phone_number
+        if user_data.school_name is not None:
+            user.school_name = user_data.school_name
+        if user_data.school_category is not None:
+            user.school_category = user_data.school_category
+        if user_data.class_level is not None:
+            user.class_level = user_data.class_level
+        if user_data.department is not None:
+            user.department = user_data.department
         if user_data.is_active is not None:
             user.is_active = user_data.is_active
         if user_data.role_id is not None:
@@ -198,6 +218,11 @@ def update_user(
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
+                "phone_number": user.phone_number,
+                "school_name": user.school_name,
+                "school_category": user.school_category,
+                "class_level": user.class_level,
+                "department": user.department,
                 "is_active": user.is_active,
                 "role_id": user.role_id
             }

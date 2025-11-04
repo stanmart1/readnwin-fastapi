@@ -12,6 +12,11 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     first_name = Column(String)
     last_name = Column(String)
+    phone_number = Column(String)
+    school_name = Column(String)
+    school_category = Column(String)  # Primary, Secondary, Tertiary
+    class_level = Column(String)  # For Primary/Secondary
+    department = Column(String)  # For Tertiary
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     is_active = Column(Boolean, default=False)  # Changed default to False until verified
     created_at = Column(DateTime(timezone=True), server_default=func.now())

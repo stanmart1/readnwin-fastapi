@@ -14,8 +14,11 @@ export default function Checkout() {
 
   // Refresh cart on mount
   useEffect(() => {
-    refreshCart();
-  }, []);
+    refreshCart().catch(err => {
+      console.error('Failed to refresh cart:', err);
+      setError('Failed to load cart items');
+    });
+  }, [refreshCart]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -30,19 +33,19 @@ export default function Checkout() {
       setError(null);
 
       if (orderData.success) {
-        const orderId = orderData.order?.order_number || orderData.order?.id;
+        const orderId = orderData.order?.order_number || orderData.order?.id || orderData.orderId;
 
         // Handle different payment methods
-        if (orderData.paymentMethod === 'flutterwave' && orderData.flutterwavePaymentUrl) {
-          window.location.href = orderData.flutterwavePaymentUrl;
-        } else if (orderData.paymentMethod === 'bank_transfer') {
+        if (orderData.payment_method === 'flutterwave' && orderData.payment_url) {
+          window.location.href = orderData.payment_url;
+        } else if (orderData.payment_method === 'bank_transfer') {
           localStorage.setItem('bank_transfer_details', JSON.stringify(orderData));
           navigate(`/bank-transfer/${orderId}`);
         } else {
           navigate(`/order-confirmation/${orderId}`);
         }
       } else {
-        throw new Error(orderData.error || 'Checkout failed');
+        throw new Error(orderData.error || orderData.message || 'Checkout failed');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -210,6 +213,7 @@ function OrderSummarySidebar({ cartItems }) {
                 if (e.currentTarget.src !== '/placeholder-book.jpg') {
                   e.currentTarget.src = '/placeholder-book.jpg';
                 }
+                e.currentTarget.onerror = null;
               }}
             />
             <div className="flex-1 min-w-0">

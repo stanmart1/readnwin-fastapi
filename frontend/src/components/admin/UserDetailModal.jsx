@@ -54,8 +54,47 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
                 <p className="text-sm text-gray-600 mb-1">Username</p>
                 <p className="font-medium text-gray-900">{user.username}</p>
               </div>
+              {user.phone_number && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Phone Number</p>
+                  <p className="font-medium text-gray-900">{user.phone_number}</p>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Educational Information */}
+          {(user.school_name || user.school_category) && (
+            <div>
+              <h5 className="text-lg font-semibold text-gray-900 mb-3">Educational Information</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {user.school_name && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">School Name</p>
+                    <p className="font-medium text-gray-900">{user.school_name}</p>
+                  </div>
+                )}
+                {user.school_category && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">School Category</p>
+                    <p className="font-medium text-gray-900">{user.school_category}</p>
+                  </div>
+                )}
+                {user.class_level && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">Class Level</p>
+                    <p className="font-medium text-gray-900">{user.class_level}</p>
+                  </div>
+                )}
+                {user.department && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">Department</p>
+                    <p className="font-medium text-gray-900">{user.department}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Account Status */}
           <div>
