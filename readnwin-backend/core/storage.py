@@ -186,6 +186,11 @@ class StorageManager:
         
         # Clean the path
         clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)
+        
+        # Convert image extensions to .webp since all images are converted
+        if any(clean_path.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif']):
+            clean_path = Path(clean_path).with_suffix('.webp')
+        
         return f"{self.url_prefix}/{clean_path}"
     
     def get_absolute_path(self, relative_path: str) -> str:
