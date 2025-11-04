@@ -99,7 +99,6 @@ const AdminAbout = () => {
   const sections = [
     { id: 'hero', label: 'Hero', icon: 'ri-home-line' },
     { id: 'mission', label: 'Mission', icon: 'ri-target-line' },
-    { id: 'stats', label: 'Statistics', icon: 'ri-bar-chart-line' },
     { id: 'values', label: 'Values', icon: 'ri-heart-line' },
     { id: 'team', label: 'Team Members', icon: 'ri-team-line' },
     { id: 'cta', label: 'Call to Action', icon: 'ri-megaphone-line' }
@@ -341,56 +340,6 @@ const AdminAbout = () => {
                           className="w-full px-3 py-2 border-2 border-dashed rounded-lg text-gray-500"
                         >
                           Add Feature
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Stats Section */}
-                  {activeSection === 'stats' && (
-                    <>
-                      <h2 className="text-2xl font-bold">Statistics</h2>
-                      <div className="grid grid-cols-2 gap-4">
-                        {(content.stats || []).map((stat, idx) => (
-                          <div key={idx} className="border rounded-lg p-4 space-y-3">
-                            <div className="flex justify-between">
-                              <h3 className="font-medium">Stat {idx + 1}</h3>
-                              <button
-                                onClick={() => updateContent('stats', content.stats.filter((_, i) => i !== idx))}
-                                className="text-red-600"
-                              >
-                                <i className="ri-delete-bin-line"></i>
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="Number"
-                              value={stat.number}
-                              onChange={(e) => {
-                                const newStats = [...content.stats];
-                                newStats[idx] = { ...stat, number: e.target.value };
-                                updateContent('stats', newStats);
-                              }}
-                              className="w-full px-3 py-2 border rounded-lg"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Label"
-                              value={stat.label}
-                              onChange={(e) => {
-                                const newStats = [...content.stats];
-                                newStats[idx] = { ...stat, label: e.target.value };
-                                updateContent('stats', newStats);
-                              }}
-                              className="w-full px-3 py-2 border rounded-lg"
-                            />
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => updateContent('stats', [...content.stats, { number: '', label: '' }])}
-                          className="border-2 border-dashed rounded-lg p-8 text-gray-500"
-                        >
-                          Add Stat
                         </button>
                       </div>
                     </>

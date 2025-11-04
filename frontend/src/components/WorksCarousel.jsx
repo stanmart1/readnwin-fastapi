@@ -37,11 +37,14 @@ export default function WorksCarousel() {
   useEffect(() => {
     if (works.length === 0) return;
 
+    const cardWidth = 336; // 320px width + 16px gap
+    const threshold = cardWidth / 2;
+
     // Reset to middle section when reaching boundaries
-    if (currentIndex >= works.length * 2) {
-      setTimeout(() => setCurrentIndex(works.length), 300);
-    } else if (currentIndex < works.length) {
-      setTimeout(() => setCurrentIndex(works.length * 2 - 1), 300);
+    if (currentIndex * cardWidth >= works.length * 2 * cardWidth - threshold) {
+      setCurrentIndex(currentIndex - works.length);
+    } else if (currentIndex * cardWidth <= threshold) {
+      setCurrentIndex(currentIndex + works.length);
     }
   }, [currentIndex, works.length]);
 
@@ -143,8 +146,7 @@ export default function WorksCarousel() {
                 transition={{ 
                   type: 'spring', 
                   stiffness: 300, 
-                  damping: 30,
-                  duration: currentIndex >= works.length * 2 || currentIndex < works.length ? 0 : undefined
+                  damping: 30
                 }}
                 className="flex gap-6"
               >
