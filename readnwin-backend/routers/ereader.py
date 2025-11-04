@@ -78,11 +78,19 @@ async def get_html_content(
     if not book.file_path:
         raise HTTPException(status_code=404, detail="Book file not found")
     
-    # Validate and get safe file path
-    file_path = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
-    safe_path = validate_path("./uploads/ebooks", file_path)
+    # Get file path using storage manager
+    file_path = storage.get_absolute_path(book.file_path)
     
-    if not safe_path or not safe_path.exists():
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Book file path not found")
+    
+    # For S3 URLs, we can't serve directly - need to implement streaming
+    if file_path.startswith('http'):
+        raise HTTPException(status_code=501, detail="S3 streaming not implemented for HTML content")
+    
+    # Validate local file path
+    safe_path = Path(file_path)
+    if not safe_path.exists():
         raise HTTPException(status_code=404, detail="Book file not accessible")
     
     try:
@@ -387,11 +395,20 @@ async def get_book_file(
     if not book.file_path.lower().endswith('.epub'):
         raise HTTPException(status_code=400, detail="Only EPUB format books can be read in the e-reader")
     
-    # Validate and get safe file path
-    file_path = book.file_path.replace('uploads/', '') if book.file_path.startswith('uploads/') else book.file_path
-    safe_path = validate_path("./uploads/ebooks", file_path)
+    # Get file path using storage manager
+    file_path = storage.get_absolute_path(book.file_path)
     
-    if not safe_path or not safe_path.exists():
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Book file path not found")
+    
+    # For S3 URLs, redirect to S3 URL for direct download
+    if file_path.startswith('http'):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=file_path)
+    
+    # Validate local file path
+    safe_path = Path(file_path)
+    if not safe_path.exists():
         raise HTTPException(status_code=404, detail="Book file not accessible")
     
     # Serve the file

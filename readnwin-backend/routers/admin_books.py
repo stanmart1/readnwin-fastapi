@@ -220,23 +220,33 @@ async def create_book(
         weight_grams_int = int(weight_grams) if weight_grams else None
         low_stock_threshold_int = int(low_stock_threshold) if low_stock_threshold else 10
         
-        # Import storage module
-        from core.storage import storage
-        
-        # Secure file upload handling
+        # Secure file upload handling with validation
         cover_image_path = None
         ebook_file_path = None
         sample_file_path = None
         
         if cover_image and cover_image.filename:
+            # Validate file size
+            if cover_image.size > storage.MAX_IMAGE_SIZE:
+                raise HTTPException(status_code=400, detail=f"Cover image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
             cover_image_path = await storage.save_cover(cover_image)
             logging.info(f"Cover image uploaded: {cover_image_path}")
         
         if ebook_file and ebook_file.filename:
+            # Validate file size
+            if ebook_file.size > storage.MAX_BOOK_SIZE:
+                raise HTTPException(status_code=400, detail=f"Book file too large (max {storage.MAX_BOOK_SIZE // 1024 // 1024}MB)")
+            # Validate file format
+            ext = Path(ebook_file.filename).suffix.lower()
+            if ext not in storage.ALLOWED_BOOK_EXTENSIONS:
+                raise HTTPException(status_code=400, detail=f"Invalid book format. Allowed: {', '.join(storage.ALLOWED_BOOK_EXTENSIONS)}")
             ebook_file_path = await storage.save_book(ebook_file)
             logging.info(f"Ebook file uploaded: {ebook_file_path}")
         
         if sample_file and sample_file.filename:
+            # Validate file size
+            if sample_file.size > storage.MAX_BOOK_SIZE:
+                raise HTTPException(status_code=400, detail=f"Sample file too large (max {storage.MAX_BOOK_SIZE // 1024 // 1024}MB)")
             sample_file_path = await storage.save_sample(sample_file)
             logging.info(f"Sample file uploaded: {sample_file_path}")
         
@@ -482,13 +492,21 @@ async def update_book(
         if is_featured is not None:
             book.is_featured = is_featured.lower() == "true"
         
-        # Handle file updates
-        from core.storage import storage
-        
+        # Handle file updates with validation
         if cover_image and cover_image.filename:
+            if cover_image.size > storage.MAX_IMAGE_SIZE:
+                raise HTTPException(status_code=400, detail=f"Cover image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+            # Delete old cover if exists
+            if book.cover_image:
+                storage.delete_file(book.cover_image)
             book.cover_image = await storage.save_cover(cover_image)
         
         if ebook_file and ebook_file.filename:
+            if ebook_file.size > storage.MAX_BOOK_SIZE:
+                raise HTTPException(status_code=400, detail=f"Book file too large (max {storage.MAX_BOOK_SIZE // 1024 // 1024}MB)")
+            # Delete old file if exists
+            if book.file_path:
+                storage.delete_file(book.file_path)
             book.file_path = await storage.save_book(ebook_file)
         
         db.commit()

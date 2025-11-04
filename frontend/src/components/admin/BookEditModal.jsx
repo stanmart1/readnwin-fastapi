@@ -179,12 +179,17 @@ const BookEditModal = ({ isOpen, onClose, book, categories, authors, onSuccess }
       
       setUploadProgress(25);
       
-      await api.put(`/admin/books/${book.id}`, submitData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await api.put(`/admin/books/${book.id}`, submitData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(Math.min(progress, 95));
+        }
       });
       
       setUploadProgress(100);
-      alert('Book updated successfully!');
+      const bookTitle = response.data.book?.title || formData.title;
+      alert(`Book "${bookTitle}" updated successfully!`);
       
       setTimeout(() => {
         onSuccess();
@@ -193,7 +198,8 @@ const BookEditModal = ({ isOpen, onClose, book, categories, authors, onSuccess }
       }, 500);
     } catch (error) {
       console.error('Update error:', error);
-      alert(error.response?.data?.error || 'Update failed');
+      const errorMessage = error.response?.data?.detail || error.response?.data?.error || error.message || 'Update failed';
+      alert(`Update failed: ${errorMessage}`);
       setUploadProgress(0);
     } finally {
       setIsSubmitting(false);
@@ -403,11 +409,11 @@ const BookEditModal = ({ isOpen, onClose, book, categories, authors, onSuccess }
                 >
                   <i className="ri-image-add-line text-4xl text-gray-400 mb-2"></i>
                   <p className="text-sm text-gray-600">{formData.cover_image ? formData.cover_image.name : 'Drag & drop cover or click to browse'}</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, JPEG, WebP, GIF up to 10MB</p>
                   <input
                     ref={coverInputRef}
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif"
                     onChange={(e) => e.target.files[0] && handleFileChange('cover_image', e.target.files[0])}
                     className="hidden"
                   />
@@ -433,11 +439,11 @@ const BookEditModal = ({ isOpen, onClose, book, categories, authors, onSuccess }
                   >
                     <i className="ri-file-pdf-line text-4xl text-gray-400 mb-2"></i>
                     <p className="text-sm text-gray-600">{formData.ebook_file ? formData.ebook_file.name : 'Drag & drop book file or click'}</p>
-                    <p className="text-xs text-gray-500 mt-1">PDF, EPUB up to 500MB</p>
+                    <p className="text-xs text-gray-500 mt-1">PDF, EPUB, MOBI, HTML up to 500MB</p>
                     <input
                       ref={ebookInputRef}
                       type="file"
-                      accept=".pdf,.epub"
+                      accept=".pdf,.epub,.mobi,.html,.htm"
                       onChange={(e) => e.target.files[0] && handleFileChange('ebook_file', e.target.files[0])}
                       className="hidden"
                     />

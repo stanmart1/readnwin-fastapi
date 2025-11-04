@@ -1,74 +1,55 @@
-"""Path validation to prevent path traversal attacks"""
+"""
+Secure path validation utilities
+"""
 from pathlib import Path
-from typing import Optional
-import logging
+import os
 
-logger = logging.getLogger(__name__)
-
-
-def validate_path(base_dir: str, requested_path: str, allow_absolute: bool = False) -> Optional[Path]:
-    """Validate that requested path is within base directory
+def validate_path(base_dir: str, file_path: str) -> Path:
+    """
+    Validate and resolve file path securely to prevent path traversal attacks
     
     Args:
-        base_dir: Base directory that files must be within
-        requested_path: User-provided path to validate
-        allow_absolute: Whether to allow absolute paths (default: False)
+        base_dir: Base directory to restrict access to
+        file_path: Relative file path to validate
     
     Returns:
         Resolved Path object if valid, None if invalid
-    
-    Example:
-        >>> validate_path('/var/uploads', 'user/file.txt')
-        Path('/var/uploads/user/file.txt')
-        
-        >>> validate_path('/var/uploads', '../etc/passwd')
-        None
     """
     try:
-        # Reject absolute paths unless explicitly allowed
-        if not allow_absolute and Path(requested_path).is_absolute():
-            logger.warning(f"Absolute path not allowed: {requested_path}")
-            return None
-        
-        # Resolve base directory
+        # Convert to Path objects
         base = Path(base_dir).resolve()
         
-        # Resolve target path relative to base
-        if Path(requested_path).is_absolute():
-            target = Path(requested_path).resolve()
-        else:
-            target = (base / requested_path).resolve()
+        # Clean the file path - remove any directory traversal attempts
+        clean_path = file_path.replace('..', '').replace('//', '/').strip('/')
         
-        # Ensure target is within base directory
-        if not str(target).startswith(str(base)):
-            logger.warning(f"Path traversal attempt: {requested_path} -> {target}")
+        # Join with base directory
+        full_path = (base / clean_path).resolve()
+        
+        # Ensure the resolved path is within the base directory
+        if not str(full_path).startswith(str(base)):
             return None
         
-        return target
-        
-    except (ValueError, OSError) as e:
-        logger.error(f"Path validation error: {e}")
+        return full_path
+    except Exception:
         return None
 
-
-def sanitize_filename(filename: str) -> str:
-    """Sanitize filename to prevent path traversal
-    
-    Args:
-        filename: Original filename
-    
-    Returns:
-        Sanitized filename with dangerous characters removed
+def is_safe_filename(filename: str) -> bool:
     """
-    # Remove path separators and parent directory references
-    filename = filename.replace('..', '').replace('/', '').replace('\\', '')
+    Check if filename is safe (no path traversal, special chars, etc.)
+    """
+    if not filename or filename in ('.', '..'):
+        return False
     
-    # Remove null bytes
-    filename = filename.replace('\x00', '')
+    # Check for path traversal attempts
+    if '..' in filename or '/' in filename or '\\' in filename:
+        return False
     
-    # Limit length
-    if len(filename) > 255:
-        name, ext = filename.rsplit('.', 1) if '.' in filename else (filename, '')
-        filename = name[:250] + ('.' + ext if ext else '')
+    # Check for null bytes
+    if '\x00' in filename:
+        return False
     
-    return filename
+    # Check for control characters
+    if any(ord(c) < 32 for c in filename):
+        return False
+    
+    return True
