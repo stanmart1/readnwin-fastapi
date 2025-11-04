@@ -105,7 +105,6 @@ export const useCart = () => {
     } catch (err) {
       // Silently handle 401 errors (user not authenticated)
       if (err.response?.status === 401) {
-        console.log('Cart requires authentication');
         // Clear any stale cart data
         setCartItems([]);
         return;
@@ -192,7 +191,7 @@ export const useCart = () => {
         setCartItems([]);
       }
     } else {
-      // Authenticated user with valid token
+      // Authenticated user with valid token - only load once
       if (!hasLoadedCart.current) {
         hasLoadedCart.current = true;
         
@@ -204,7 +203,7 @@ export const useCart = () => {
         }
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadAuthenticatedCart, transferGuestCart]);
 
   // Listen for storage events to sync cart across tabs
   useEffect(() => {

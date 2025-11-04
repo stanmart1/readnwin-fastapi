@@ -34,7 +34,8 @@ export default function About() {
     ]
   };
 
-  const aboutData = content || defaultContent;
+  // Only use default content if loading is complete and no content from API
+  const aboutData = loading ? defaultContent : (content || defaultContent);
 
   // Auto-rotate carousel every 5 seconds
   useEffect(() => {
