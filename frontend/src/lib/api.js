@@ -4,9 +4,15 @@ import axios from 'axios';
 let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // Force HTTPS in production to prevent mixed content errors
-if (window.location.protocol === 'https:' && API_BASE_URL.startsWith('http://')) {
-  API_BASE_URL = API_BASE_URL.replace('http://', 'https://');
-  console.warn('Forced HTTPS for API URL:', API_BASE_URL);
+if (window.location.protocol === 'https:') {
+  if (API_BASE_URL.startsWith('http://')) {
+    API_BASE_URL = API_BASE_URL.replace('http://', 'https://');
+  }
+  // Also handle production domain specifically
+  if (API_BASE_URL.includes('localhost')) {
+    API_BASE_URL = 'https://backend.readnwin.com';
+  }
+  console.warn('Production mode - API URL:', API_BASE_URL);
 }
 
 // Create axios instance with base configuration

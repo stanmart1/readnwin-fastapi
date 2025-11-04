@@ -125,6 +125,13 @@ const AdminLayout = ({ children }) => {
             >
               <i className={`ri-arrow-left-s-line text-lg transition-transform ${collapsed ? 'rotate-180' : ''}`}></i>
             </button>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="lg:hidden p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Close sidebar"
+            >
+              <i className="ri-arrow-left-s-line text-lg"></i>
+            </button>
           </div>
         </div>
 
