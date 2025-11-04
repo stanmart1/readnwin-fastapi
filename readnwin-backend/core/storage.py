@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 class StorageManager:
-    """Central file storage management system"""
+    """Local file storage management system"""
     
     # Allowed file extensions
     ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -19,34 +19,10 @@ class StorageManager:
     MAX_BOOK_SIZE = 500 * 1024 * 1024  # 500MB
     
     def __init__(self):
-        """Initialize storage manager based on environment and database settings"""
-        # Check environment variable first
-        env_s3 = os.getenv("USE_S3", "false").lower() == "true"
-        
-        # Try to check database setting (fallback to env if DB not available)
-        try:
-            from core.database import get_db
-            from models.system_settings import SystemSetting
-            db = next(get_db())
-            try:
-                setting = db.query(SystemSetting).filter(SystemSetting.key == "use_s3").first()
-                self.use_s3 = setting.value.lower() == "true" if setting else env_s3
-            finally:
-                db.close()
-        except Exception:
-            # Database not available, use environment variable
-            self.use_s3 = env_s3
-        
+        """Initialize local storage manager"""
         self.env = os.getenv("ENVIRONMENT", "")
         
-        if self.use_s3:
-            print(f"📦 Using S3 for file storage (Bucket: {os.getenv('AWS_S3_BUCKET_NAME')})")
-            # Set base_dir for migration purposes and hybrid mode
-            if self.env == "production":
-                self.base_dir = Path("/app/storage")
-            else:
-                self.base_dir = Path("uploads")
-        elif self.env == "production":
+        if self.env == "production":
             self.base_dir = Path("/app/storage")
             self.url_prefix = "/app/storage"
         else:
@@ -62,12 +38,15 @@ class StorageManager:
         self._init_directories()
     
     def _init_directories(self):
-        """Create all required directories (skip if using S3)"""
-        if self.use_s3:
-            return  # No need to create local directories when using S3
-        
+        """Create all required directories"""
         for directory in [self.base_dir, self.covers_dir, self.books_dir, self.samples_dir, self.images_dir]:
-            directory.mkdir(parents=True, exist_ok=True)
+            try:
+                directory.mkdir(parents=True, exist_ok=True)
+            except (OSError, PermissionError) as e:
+                if self.env == "production":
+                    print(f"⚠️ Directory creation skipped in production: {directory} ({e})")
+                else:
+                    raise
     
     def _get_file_extension(self, filename: str) -> str:
         """Get file extension from filename"""
@@ -110,12 +89,8 @@ class StorageManager:
             file.file.close()
     
     async def save_cover(self, file: UploadFile) -> str:
-        """Save book cover, optimize and convert to WebP"""
+        """Save book cover"""
         self._validate_image(file)
-        
-        if self.use_s3:
-            from core.s3_storage import s3_storage
-            return await s3_storage.upload_file(file, "covers")
         
         filename = self._generate_unique_filename(file.filename)
         file_path = self.covers_dir / filename
@@ -131,12 +106,8 @@ class StorageManager:
             return f"covers/{filename}"
     
     async def save_book(self, file: UploadFile) -> str:
-        """Save book file and return relative path or S3 key"""
+        """Save book file and return relative path"""
         self._validate_book(file)
-        
-        if self.use_s3:
-            from core.s3_storage import s3_storage
-            return await s3_storage.upload_file(file, "books")
         
         filename = self._generate_unique_filename(file.filename)
         file_path = self.books_dir / filename
@@ -193,42 +164,18 @@ class StorageManager:
         return file_path.stat().st_size if file_path.exists() else 0
     
     def get_url(self, relative_path: str) -> str:
-        """Get URL for accessing file - hybrid mode supporting both S3 and local"""
+        """Get URL for accessing file"""
         if not relative_path:
             return None
         
         # Clean the path
         clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)
-        
-        # If S3 is enabled, use hybrid approach
-        if self.use_s3:
-            try:
-                # Check if file exists locally first (faster than S3 check)
-                local_path = self.base_dir / clean_path
-                if local_path.exists():
-                    # File exists locally, use local URL
-                    return f"{self.url_prefix}/{clean_path}"
-                else:
-                    # File doesn't exist locally, assume it's in S3
-                    from core.s3_storage import s3_storage
-                    return s3_storage.get_url(clean_path)
-            except Exception as e:
-                # Fallback to local URL on any error
-                print(f"Error checking file location: {e}")
-                return f"{self.url_prefix}/{clean_path}"
-        
-        # S3 disabled, use local storage
         return f"{self.url_prefix}/{clean_path}"
     
     def get_absolute_path(self, relative_path: str) -> str:
-        """Get absolute filesystem path for a file (or S3 URL)"""
+        """Get absolute filesystem path for a file"""
         if not relative_path:
             return None
-        
-        # If using S3, return S3 URL (ereader will stream from URL)
-        if self.use_s3:
-            from core.s3_storage import s3_storage
-            return s3_storage.get_url(relative_path)
         
         # Remove any leading slashes and 'uploads/' prefix
         clean_path = relative_path.lstrip('/').replace('uploads/', '', 1)

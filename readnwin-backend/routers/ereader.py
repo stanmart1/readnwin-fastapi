@@ -84,10 +84,6 @@ async def get_html_content(
     if not file_path:
         raise HTTPException(status_code=404, detail="Book file path not found")
     
-    # For S3 URLs, we can't serve directly - need to implement streaming
-    if file_path.startswith('http'):
-        raise HTTPException(status_code=501, detail="S3 streaming not implemented for HTML content")
-    
     # Validate local file path
     safe_path = Path(file_path)
     if not safe_path.exists():
@@ -400,11 +396,6 @@ async def get_book_file(
     
     if not file_path:
         raise HTTPException(status_code=404, detail="Book file path not found")
-    
-    # For S3 URLs, redirect to S3 URL for direct download
-    if file_path.startswith('http'):
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=file_path)
     
     # Validate local file path
     safe_path = Path(file_path)

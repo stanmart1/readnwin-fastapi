@@ -105,7 +105,7 @@ app.add_middleware(
 
 # Serve uploaded files using StorageManager
 from core.storage import storage
-app.mount(storage.url_prefix, StaticFiles(directory=str(storage.base_dir)), name="uploads")
+app.mount(storage.url_prefix, StaticFiles(directory=str(storage.base_dir)), name="storage")
 
 # Register exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
