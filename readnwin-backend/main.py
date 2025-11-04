@@ -257,7 +257,7 @@ app.include_router(blog.router, prefix="/api/blog", tags=["blog"])
 app.include_router(about.router, prefix="/api/about", tags=["about"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
-app.include_router(faq.router, prefix="/api/faq", tags=["faq"], redirect_slashes=False)
+app.include_router(faq.router, prefix="/api/faq", tags=["faq"])
 
 # Testing (only for development)
 if app.debug:
