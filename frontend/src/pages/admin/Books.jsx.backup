@@ -292,7 +292,7 @@ const AdminBooks = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex overflow-x-auto scrollbar-thin px-3 sm:px-4 md:px-6">
-                {['books', 'library', 'categories', 'authors'].map((section) => (
+                {['books', 'categories', 'authors'].map((section) => (
                   <button
                     key={section}
                     onClick={() => setActiveSection(section)}
@@ -395,10 +395,6 @@ const AdminBooks = () => {
                     </div>
                   )}
                 </div>
-              )}
-
-              {activeSection === 'library' && (
-                <LibraryManagement />
               )}
 
               {activeSection === 'categories' && (
@@ -635,13 +631,22 @@ const AdminBooks = () => {
             }}
           />
 
-          {/* Book Assign Modal */}
+          {/* Enhanced Book Assign Modal */}
           {modals.bookAssign && selection.bookForAction && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Assign Book to Users</h3>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                        <i className="ri-book-line text-white text-lg"></i>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Assign Book to Users</h3>
+                        <p className="text-sm text-gray-600">Grant access to "{selection.bookForAction.title}"</p>
+                      </div>
+                    </div>
                     <button
                       onClick={() => {
                         setModals(prev => ({ ...prev, bookAssign: false }));
@@ -649,102 +654,159 @@ const AdminBooks = () => {
                         setErrors({});
                         setForms(prev => ({ ...prev, selectedFormat: 'ebook' }));
                       }}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
                     >
                       <i className="ri-close-line text-2xl"></i>
                     </button>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Select Users *</label>
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">
+                      <i className="ri-user-line mr-1"></i>
+                      Select Users *
+                    </label>
+                    <div className="relative">
                       <div className="relative">
+                        <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input
                           type="text"
                           value={forms.userSearch}
                           onChange={(e) => setForms(prev => ({ ...prev, userSearch: e.target.value }))}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                            errors.users ? 'border-red-500' : 'border-gray-300'
+                          className={`w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-300 ${
+                            errors.users ? 'border-red-400 bg-red-50' : ''
                           }`}
                           placeholder="Search and select users..."
                         />
-                        {forms.userSearch && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {data.users
-                              .filter(u => 
-                                (u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
-                                u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
-                                !selection.users.find(su => su.id === u.id)
-                              )
-                              .map(user => (
-                                <button
-                                  key={user.id}
-                                  onClick={() => {
-                                    setSelection(prev => ({ 
-                                      ...prev, 
-                                      users: [...prev.users, user] 
-                                    }));
-                                    setForms(prev => ({ ...prev, userSearch: '' }));
-                                    setErrors(prev => ({ ...prev, users: '' }));
-                                  }}
-                                  className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
-                                >
-                                  <div className="font-medium text-gray-900">{user.name}</div>
-                                  <div className="text-sm text-gray-500">{user.email}</div>
-                                </button>
-                              ))
-                            }
-                          </div>
-                        )}
                       </div>
-                      {errors.users && <p className="text-red-500 text-sm mt-1">{errors.users}</p>}
-                      
-                      {/* Selected Users */}
-                      {selection.users.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Selected Users ({selection.users.length}):</p>
-                          <div className="space-y-2 max-h-32 overflow-y-auto">
-                            {selection.users.map(user => (
-                              <div key={user.id} className="flex items-center justify-between bg-blue-50 px-3 py-2 rounded-lg">
-                                <div>
-                                  <span className="font-medium text-gray-900">{user.name}</span>
-                                  <span className="text-sm text-gray-500 ml-2">({user.email})</span>
+                      {forms.userSearch && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                          {data.users
+                            .filter(u => 
+                              (u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
+                              u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
+                              !selection.users.find(su => su.id === u.id)
+                            )
+                            .map(user => (
+                              <button
+                                key={user.id}
+                                onClick={() => {
+                                  setSelection(prev => ({ 
+                                    ...prev, 
+                                    users: [...prev.users, user] 
+                                  }));
+                                  setForms(prev => ({ ...prev, userSearch: '' }));
+                                  setErrors(prev => ({ ...prev, users: '' }));
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors flex items-center space-x-3"
+                              >
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                  {user.name?.[0] || user.first_name?.[0] || 'U'}
                                 </div>
-                                <button
-                                  onClick={() => {
-                                    setSelection(prev => ({ 
-                                      ...prev, 
-                                      users: prev.users.filter(u => u.id !== user.id) 
-                                    }));
-                                  }}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <i className="ri-close-line"></i>
-                                </button>
-                              </div>
-                            ))}
-                          </div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900">{user.name || `${user.first_name} ${user.last_name}`}</div>
+                                  <div className="text-sm text-gray-500">{user.email}</div>
+                                </div>
+                              </button>
+                            ))
+                          }
+                          {data.users.filter(u => 
+                            (u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
+                            u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
+                            !selection.users.find(su => su.id === u.id)
+                          ).length === 0 && (
+                            <div className="px-4 py-8 text-center text-gray-500">
+                              <i className="ri-user-search-line text-3xl mb-2"></i>
+                              <p>No users found</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
+                    {errors.users && <p className="text-red-500 text-sm mt-2 flex items-center"><i className="ri-error-warning-line mr-1"></i>{errors.users}</p>}
+                    
+                    {/* Selected Users */}
+                    {selection.users.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm font-semibold text-gray-800 mb-3">Selected Users ({selection.users.length}):</p>
+                        <div className="space-y-2 max-h-32 overflow-y-auto bg-gray-50 rounded-xl p-3">
+                          {selection.users.map(user => (
+                            <div key={user.id} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg shadow-sm">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-xs">
+                                  {user.name?.[0] || user.first_name?.[0] || 'U'}
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-900 text-sm">{user.name || `${user.first_name} ${user.last_name}`}</span>
+                                  <span className="text-xs text-gray-500 ml-2">({user.email})</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setSelection(prev => ({ 
+                                    ...prev, 
+                                    users: prev.users.filter(u => u.id !== user.id) 
+                                  }));
+                                }}
+                                className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                              >
+                                <i className="ri-close-line text-sm"></i>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Format *</label>
-                      <select
-                        value={forms.selectedFormat}
-                        onChange={(e) => {
-                          setForms(prev => ({ ...prev, selectedFormat: e.target.value }));
+                  {/* Format Selection */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">
+                      <i className="ri-file-list-line mr-1"></i>
+                      Book Format *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForms(prev => ({ ...prev, selectedFormat: 'ebook' }));
                           setErrors(prev => ({ ...prev, format: '' }));
                         }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                          errors.format ? 'border-red-500' : 'border-gray-300'
+                        className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                          forms.selectedFormat === 'ebook'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <option value="ebook">Ebook Only</option>
-                        <option value="physical">Physical Only</option>
-                      </select>
-                      {errors.format && <p className="text-red-500 text-sm mt-1">{errors.format}</p>}
+                        <i className={`ri-smartphone-line text-2xl mb-2 block ${
+                          forms.selectedFormat === 'ebook' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}></i>
+                        <span className="text-sm font-medium">Digital Ebook</span>
+                        <p className="text-xs text-gray-500 mt-1">Instant access</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForms(prev => ({ ...prev, selectedFormat: 'physical' }));
+                          setErrors(prev => ({ ...prev, format: '' }));
+                        }}
+                        className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                          forms.selectedFormat === 'physical'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <i className={`ri-book-line text-2xl mb-2 block ${
+                          forms.selectedFormat === 'physical' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}></i>
+                        <span className="text-sm font-medium">Physical Book</span>
+                        <p className="text-xs text-gray-500 mt-1">Hardcopy access</p>
+                      </button>
                     </div>
+                    {errors.format && <p className="text-red-500 text-sm mt-2 flex items-center"><i className="ri-error-warning-line mr-1"></i>{errors.format}</p>}
+                  </div>
 
                     {/* Assignment Summary */}
                     {selection.users.length > 0 && (
@@ -777,7 +839,11 @@ const AdminBooks = () => {
                     )}
                   </div>
 
-                  <div className="flex gap-3 mt-6">
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => {
                         setModals(prev => ({ ...prev, bookAssign: false }));
@@ -787,7 +853,7 @@ const AdminBooks = () => {
                         setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
                       }}
                       disabled={loadingStates.assign}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-gray-700"
                     >
                       Cancel
                     </button>
@@ -810,10 +876,10 @@ const AdminBooks = () => {
                         setModals(prev => ({ ...prev, assignConfirm: true }));
                       }}
                       disabled={selection.users.length === 0 || loadingStates.assign}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
                     >
                       <i className="ri-user-add-line"></i>
-                      Assign to {selection.users.length} User{selection.users.length !== 1 ? 's' : ''}
+                      <span>Assign to {selection.users.length} User{selection.users.length !== 1 ? 's' : ''}</span>
                     </button>
                   </div>
                 </div>
