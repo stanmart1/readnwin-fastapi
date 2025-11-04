@@ -118,7 +118,7 @@ from routers import (
     faq, user, about, portfolio, reviews, rbac, users, dashboard, reading_goals,
     reading, reading_enhanced, admin_enhanced, admin_email,
     analytics, payment, shopping_enhanced, testing, ereader, ereader_enhanced, upload,
-    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard, admin_library, admin_cache, payment_callback, admin_image_optimization, debug_storage, debug_db
+    reader_settings, payment_settings, shipping, admin_shipping, admin_payment_settings, admin_reviews, admin_reports, admin_notifications, admin_email_templates, admin_authors_categories, test_simple, admin_books, receipts, user_library, flutterwave, file_upload, bank_transfer, payment_completion, user_activation, email, admin_works, works, admin_blog, admin_email_test, admin_email_categories, admin_email_functions, admin_email_gateways, admin_stats, admin_stats_fast, images, admin_system_settings, admin_payment_proofs, csrf, testimonials, admin_user_analytics, admin_users_mgmt, admin_stats_dashboard, admin_library, admin_cache, payment_callback, admin_image_optimization, debug_storage
 )
 
 # Import optional routers
@@ -235,7 +235,6 @@ if app.debug:
 
 # Debug endpoints (temporary for troubleshooting)
 app.include_router(debug_storage.router, tags=["debug"])
-app.include_router(debug_db.router, tags=["debug"])
 
 @app.get("/")
 def read_root():

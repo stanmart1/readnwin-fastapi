@@ -132,11 +132,27 @@ class StorageManager:
             target_dir.mkdir(parents=True, exist_ok=True)
             file_path = target_dir / filename
             await self._save_file(file, file_path)
-            return f"images/{subfolder}/{filename}"
+            
+            # Optimize and convert to WebP
+            try:
+                from core.image_optimizer import image_optimizer
+                optimized_path = image_optimizer.optimize_general(file_path)
+                return f"images/{subfolder}/{optimized_path.name}"
+            except Exception as e:
+                print(f"Image optimization failed: {e}")
+                return f"images/{subfolder}/{filename}"
         else:
             file_path = self.images_dir / filename
             await self._save_file(file, file_path)
-            return f"images/{filename}"
+            
+            # Optimize and convert to WebP
+            try:
+                from core.image_optimizer import image_optimizer
+                optimized_path = image_optimizer.optimize_general(file_path)
+                return f"images/{optimized_path.name}"
+            except Exception as e:
+                print(f"Image optimization failed: {e}")
+                return f"images/{filename}"
     
     def delete_file(self, relative_path: str) -> bool:
         """Delete a file from storage"""
