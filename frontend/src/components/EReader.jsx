@@ -256,7 +256,9 @@ export default function EReader({ bookId, onClose }) {
   const goToHeading = (headingId) => {
     const element = document.getElementById(headingId);
     if (element && contentRef.current) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const headerHeight = 80;
+      const elementPosition = element.offsetTop;
+      contentRef.current.scrollTo({ top: elementPosition - headerHeight, behavior: 'smooth' });
       setShowToc(false);
     }
   };
@@ -662,10 +664,10 @@ export default function EReader({ bookId, onClose }) {
       {showToc && (
         <div className="absolute top-0 left-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-10 overflow-y-auto">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Table of Contents</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Table of Contents</h2>
             <button
               onClick={() => setShowToc(false)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-900 dark:text-gray-100"
             >
               <i className="ri-close-line text-xl"></i>
             </button>
@@ -675,12 +677,12 @@ export default function EReader({ bookId, onClose }) {
               <button
                 key={item.id}
                 onClick={() => goToHeading(item.id)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-900 dark:text-gray-100"
               >
                 <p className="font-medium">{item.label}</p>
               </button>
             )) : (
-              <p className="text-center text-gray-500 py-8 text-sm">No chapters found</p>
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm">No chapters found</p>
             )}
           </div>
         </div>
@@ -690,28 +692,28 @@ export default function EReader({ bookId, onClose }) {
       {showSettings && (
         <div className="absolute top-16 right-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-10 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold">Reading Settings</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Reading Settings</h3>
             <button
               onClick={() => setShowSettings(false)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-900 dark:text-gray-100"
             >
               <i className="ri-close-line text-xl"></i>
             </button>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-3">Font Size</label>
+            <label className="block text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Font Size</label>
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
               >
                 <i className="ri-subtract-line"></i>
               </button>
-              <span className="flex-1 text-center font-medium">{fontSize}px</span>
+              <span className="flex-1 text-center font-medium text-gray-900 dark:text-gray-100">{fontSize}px</span>
               <button
                 onClick={() => setFontSize(Math.min(32, fontSize + 2))}
-                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
               >
                 <i className="ri-add-line"></i>
               </button>
@@ -719,7 +721,7 @@ export default function EReader({ bookId, onClose }) {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-3">Font Family</label>
+            <label className="block text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Font Family</label>
             <div className="grid grid-cols-2 gap-2">
               {['Georgia', 'Arial', 'Times New Roman', 'Verdana'].map(font => (
                 <button
@@ -728,7 +730,7 @@ export default function EReader({ bookId, onClose }) {
                   className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
                     fontFamily === font
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 text-gray-900 dark:text-gray-100'
                   }`}
                   style={{ fontFamily: font }}
                 >
@@ -739,7 +741,7 @@ export default function EReader({ bookId, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-3">Theme</label>
+            <label className="block text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">Theme</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setTheme('light')}
@@ -748,7 +750,7 @@ export default function EReader({ bookId, onClose }) {
                 }`}
               >
                 <div className="w-full h-8 bg-white border border-gray-300 rounded mb-2"></div>
-                <p className="text-xs font-medium">Light</p>
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100">Light</p>
               </button>
               <button
                 onClick={() => setTheme('sepia')}
@@ -757,7 +759,7 @@ export default function EReader({ bookId, onClose }) {
                 }`}
               >
                 <div className="w-full h-8 bg-amber-50 border border-amber-200 rounded mb-2"></div>
-                <p className="text-xs font-medium">Sepia</p>
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100">Sepia</p>
               </button>
               <button
                 onClick={() => setTheme('dark')}
@@ -766,7 +768,7 @@ export default function EReader({ bookId, onClose }) {
                 }`}
               >
                 <div className="w-full h-8 bg-gray-900 border border-gray-700 rounded mb-2"></div>
-                <p className="text-xs font-medium">Dark</p>
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100">Dark</p>
               </button>
             </div>
           </div>
