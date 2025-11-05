@@ -11,7 +11,7 @@ import BookFilters from '../../components/admin/BookFilters';
 import BookTable from '../../components/admin/BookTable';
 import BookEditModal from '../../components/admin/BookEditModal';
 import BookAddModal from '../../components/admin/BookAddModal';
-import LibraryManagement from '../../components/admin/LibraryManagement';
+
 import CategoriesManagement from '../../components/admin/CategoriesManagement';
 import AuthorsManagement from '../../components/admin/AuthorsManagement';
 
@@ -76,18 +76,20 @@ const AdminBooks = () => {
   });
   const [errors, setErrors] = useState({});
   const [assignmentResult, setAssignmentResult] = useState(null);
+  const [userAssignments, setUserAssignments] = useState({});
 
   // Load authors and categories on mount
   useEffect(() => {
     loadAuthorsAndCategories();
   }, []);
   
-  // Load users when assign modal opens
+  // Load users and assignments when assign modal opens
   useEffect(() => {
-    if (modals.bookAssign) {
+    if (modals.bookAssign && selection.bookForAction) {
       loadUsers();
+      loadBookAssignments(selection.bookForAction.id);
     }
-  }, [modals.bookAssign]);
+  }, [modals.bookAssign, selection.bookForAction]);
 
   // Load categories and authors when edit modal opens
   useEffect(() => {
@@ -105,6 +107,24 @@ const AdminBooks = () => {
 
   const loadUsers = async () => {
     await fetchUsers();
+  };
+
+  const loadBookAssignments = async (bookId) => {
+    try {
+      const response = await api.get('/admin/library-assignments', {
+        params: { limit: 1000 }
+      });
+      const assignments = response.data.assignments || [];
+      const bookAssignments = {};
+      assignments.forEach(a => {
+        if (a.book_id === bookId) {
+          bookAssignments[a.user_id] = a.format;
+        }
+      });
+      setUserAssignments(bookAssignments);
+    } catch (error) {
+      console.error('Failed to load assignments:', error);
+    }
   };
 
   // Update data state when hooks update
@@ -210,6 +230,7 @@ const AdminBooks = () => {
         setModals(prev => ({ ...prev, bookAssign: true }));
         setErrors({});
         setAssignmentResult(null);
+        setUserAssignments({});
         setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
         break;
     }
@@ -292,7 +313,7 @@ const AdminBooks = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex overflow-x-auto scrollbar-thin px-3 sm:px-4 md:px-6">
-                {['books', 'library', 'categories', 'authors'].map((section) => (
+                {['books', 'categories', 'authors'].map((section) => (
                   <button
                     key={section}
                     onClick={() => setActiveSection(section)}
@@ -395,10 +416,6 @@ const AdminBooks = () => {
                     </div>
                   )}
                 </div>
-              )}
-
-              {activeSection === 'library' && (
-                <LibraryManagement />
               )}
 
               {activeSection === 'categories' && (
@@ -671,28 +688,45 @@ const AdminBooks = () => {
                         {forms.userSearch && (
                           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             {data.users
-                              .filter(u => 
-                                (u.name?.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
-                                u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
-                                !selection.users.find(su => su.id === u.id)
-                              )
-                              .map(user => (
-                                <button
-                                  key={user.id}
-                                  onClick={() => {
-                                    setSelection(prev => ({ 
-                                      ...prev, 
-                                      users: [...prev.users, user] 
-                                    }));
-                                    setForms(prev => ({ ...prev, userSearch: '' }));
-                                    setErrors(prev => ({ ...prev, users: '' }));
-                                  }}
-                                  className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
-                                >
-                                  <div className="font-medium text-gray-900">{user.name}</div>
-                                  <div className="text-sm text-gray-500">{user.email}</div>
-                                </button>
-                              ))
+                              .filter(u => {
+                                const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+                                return (fullName.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
+                                  u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
+                                  !selection.users.find(su => su.id === u.id);
+                              })
+                              .map(user => {
+                                const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                                const alreadyAssigned = userAssignments[user.id];
+                                return (
+                                  <button
+                                    key={user.id}
+                                    onClick={() => {
+                                      if (alreadyAssigned) return;
+                                      setSelection(prev => ({ 
+                                        ...prev, 
+                                        users: [...prev.users, user] 
+                                      }));
+                                      setForms(prev => ({ ...prev, userSearch: '' }));
+                                      setErrors(prev => ({ ...prev, users: '' }));
+                                    }}
+                                    className={`w-full text-left px-3 py-2 border-b border-gray-100 last:border-b-0 ${
+                                      alreadyAssigned ? 'bg-gray-50 opacity-60 cursor-not-allowed' : 'hover:bg-blue-50'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className="font-medium text-gray-900">{fullName}</div>
+                                        <div className="text-sm text-gray-500">{user.email}</div>
+                                      </div>
+                                      {alreadyAssigned && (
+                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                                          Assigned ({alreadyAssigned})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })
                             }
                           </div>
                         )}
@@ -704,25 +738,28 @@ const AdminBooks = () => {
                         <div className="mt-3">
                           <p className="text-sm font-medium text-gray-700 mb-2">Selected Users ({selection.users.length}):</p>
                           <div className="space-y-2 max-h-32 overflow-y-auto">
-                            {selection.users.map(user => (
-                              <div key={user.id} className="flex items-center justify-between bg-blue-50 px-3 py-2 rounded-lg">
-                                <div>
-                                  <span className="font-medium text-gray-900">{user.name}</span>
-                                  <span className="text-sm text-gray-500 ml-2">({user.email})</span>
+                            {selection.users.map(user => {
+                              const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                              return (
+                                <div key={user.id} className="flex items-center justify-between bg-blue-50 px-3 py-2 rounded-lg">
+                                  <div>
+                                    <span className="font-medium text-gray-900">{fullName}</span>
+                                    <span className="text-sm text-gray-500 ml-2">({user.email})</span>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setSelection(prev => ({ 
+                                        ...prev, 
+                                        users: prev.users.filter(u => u.id !== user.id) 
+                                      }));
+                                    }}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <i className="ri-close-line"></i>
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => {
-                                    setSelection(prev => ({ 
-                                      ...prev, 
-                                      users: prev.users.filter(u => u.id !== user.id) 
-                                    }));
-                                  }}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <i className="ri-close-line"></i>
-                                </button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -848,43 +885,20 @@ const AdminBooks = () => {
                         setAssignmentResult(null);
                         
                         try {
-                          let successCount = 0;
-                          let failedUsers = [];
+                          const response = await api.post('/admin/bulk-assign', {
+                            user_ids: selection.users.map(u => u.id),
+                            book_id: selection.bookForAction.id,
+                            format: forms.selectedFormat
+                          });
                           
-                          for (const user of selection.users) {
-                            try {
-                              const result = await assignBookToUser(
-                                user.id,
-                                selection.bookForAction.id,
-                                forms.selectedFormat
-                              );
-                              if (result.success) {
-                                successCount++;
-                              } else {
-                                failedUsers.push(user.name);
-                              }
-                            } catch (error) {
-                              failedUsers.push(user.name);
-                            }
-                          }
+                          setModals(prev => ({ ...prev, assignConfirm: false, bookAssign: false }));
+                          setSelection(prev => ({ ...prev, users: [], bookForAction: null }));
+                          setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
+                          setUserAssignments({});
                           
-                          setModals(prev => ({ ...prev, assignConfirm: false }));
-                          
-                          if (successCount === selection.users.length) {
-                            setAssignmentResult(`Successfully assigned book to all ${successCount} users!`);
-                            setTimeout(() => {
-                              setModals(prev => ({ ...prev, bookAssign: false }));
-                              setSelection(prev => ({ ...prev, users: [], bookForAction: null }));
-                              setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
-                              setAssignmentResult(null);
-                            }, 2000);
-                          } else if (successCount > 0) {
-                            setAssignmentResult(`Assigned to ${successCount} users. Failed for: ${failedUsers.join(', ')}`);
-                          } else {
-                            setErrors({ general: `Failed to assign book to any users. Please try again.` });
-                          }
+                          alert(`Successfully assigned book to ${response.data.assigned_count} users!`);
                         } catch (error) {
-                          setErrors({ general: 'An unexpected error occurred. Please try again.' });
+                          setErrors({ general: error.response?.data?.detail || 'Failed to assign book. Please try again.' });
                           setModals(prev => ({ ...prev, assignConfirm: false }));
                         } finally {
                           setLoadingStates(prev => ({ ...prev, assign: false }));
