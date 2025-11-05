@@ -104,11 +104,7 @@ export default function CheckoutFlow({ cartItems, onComplete, onCancel }) {
     return steps;
   }, [analytics]);
 
-  useEffect(() => {
-    if (analytics?.isEbookOnly && currentStep === 1) {
-      setCurrentStep(2);
-    }
-  }, [analytics?.isEbookOnly, currentStep]);
+
 
   const updateFormData = (section, data) => {
     setFormData(prev => {
