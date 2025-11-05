@@ -474,6 +474,9 @@ const LibraryManagement = () => {
                   Format
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Active Readers
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Progress
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -491,14 +494,14 @@ const LibraryManagement = () => {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-6 py-4 whitespace-nowrap" colSpan={7}>
+                    <td className="px-6 py-4 whitespace-nowrap" colSpan={8}>
                       <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                     </td>
                   </tr>
                 ))
               ) : libraries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <i className="ri-book-shelf-line text-6xl text-gray-300 mb-4"></i>
                     <p className="text-gray-500">No library assignments found</p>
                   </td>
@@ -518,6 +521,12 @@ const LibraryManagement = () => {
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                         {library.format}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <i className="ri-user-line text-green-600"></i>
+                        <span className="text-sm font-semibold text-gray-900">{library.active_readers || 0}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

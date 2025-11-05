@@ -107,6 +107,17 @@ def get_library_assignments(
         # Get paginated results
         assignments = query.offset(skip).limit(limit).all()
         
+        # Get reader counts per book
+        from sqlalchemy import func
+        reader_counts = dict(
+            db.query(
+                UserLibrary.book_id,
+                func.count(func.distinct(UserLibrary.user_id))
+            ).filter(UserLibrary.status == 'reading')
+            .group_by(UserLibrary.book_id)
+            .all()
+        )
+        
         # Format response
         result = []
         for assignment in assignments:
@@ -123,7 +134,8 @@ def get_library_assignments(
                     "progress": assignment.progress or 0,
                     "status": assignment.status or "unread",
                     "assigned_at": assignment.created_at.isoformat() if assignment.created_at else None,
-                    "last_read": assignment.last_read_at.isoformat() if assignment.last_read_at else None
+                    "last_read": assignment.last_read_at.isoformat() if assignment.last_read_at else None,
+                    "active_readers": reader_counts.get(assignment.book_id, 0)
                 })
             except Exception as e:
                 # Skip problematic assignments but log the error
@@ -297,22 +309,32 @@ def get_library_stats(
     
     from sqlalchemy import func, distinct
     
-    # Total assignments
-    total_assignments = db.query(func.count(UserLibrary.id)).scalar() or 0
+    # Total assignments (only valid ones with book_id and user_id)
+    total_assignments = db.query(func.count(UserLibrary.id)).filter(
+        UserLibrary.book_id.isnot(None),
+        UserLibrary.user_id.isnot(None)
+    ).scalar() or 0
     
     # Active readers (users with reading status)
     active_readers = db.query(func.count(distinct(UserLibrary.user_id))).filter(
-        UserLibrary.status == 'reading'
+        UserLibrary.status == 'reading',
+        UserLibrary.book_id.isnot(None),
+        UserLibrary.user_id.isnot(None)
     ).scalar() or 0
     
     # Completion rate
     completed = db.query(func.count(UserLibrary.id)).filter(
-        UserLibrary.status == 'completed'
+        UserLibrary.status == 'completed',
+        UserLibrary.book_id.isnot(None),
+        UserLibrary.user_id.isnot(None)
     ).scalar() or 0
     completion_rate = round((completed / total_assignments * 100) if total_assignments > 0 else 0, 1)
     
     # Average progress
-    avg_progress = db.query(func.avg(UserLibrary.progress)).scalar() or 0
+    avg_progress = db.query(func.avg(UserLibrary.progress)).filter(
+        UserLibrary.book_id.isnot(None),
+        UserLibrary.user_id.isnot(None)
+    ).scalar() or 0
     avg_progress = round(float(avg_progress), 1)
     
     return {
