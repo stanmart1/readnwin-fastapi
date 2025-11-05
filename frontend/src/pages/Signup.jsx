@@ -11,6 +11,7 @@ export default function Signup() {
     first_name: '',
     last_name: '',
     phone_number: '',
+    is_student: '',
     school_name: '',
     school_category: '',
     class_level: '',
@@ -52,6 +53,7 @@ export default function Signup() {
     if (!formData.last_name.trim()) errors.last_name = 'Last name is required';
     if (!formData.email.trim()) errors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Email is invalid';
+    if (!formData.is_student) errors.is_student = 'Please select if you are a student';
     
     setStepErrors(errors);
     return Object.keys(errors).length === 0;
@@ -95,8 +97,8 @@ export default function Signup() {
     
     if (!validateStep3()) return;
 
-    const { confirm_password, ...signupData } = formData;
-    // Clean up empty fields
+    const { confirm_password, is_student, ...signupData } = formData;
+    // Clean up empty fields and remove is_student (not needed in backend)
     Object.keys(signupData).forEach(key => {
       if (signupData[key] === '') {
         signupData[key] = null;
@@ -280,6 +282,39 @@ export default function Signup() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                      Are you a student? *
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="is_student"
+                          value="yes"
+                          checked={formData.is_student === 'yes'}
+                          onChange={handleChange}
+                          className="mr-2 w-4 h-4 text-blue-600"
+                        />
+                        <span className="text-gray-700">Yes</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="is_student"
+                          value="no"
+                          checked={formData.is_student === 'no'}
+                          onChange={handleChange}
+                          className="mr-2 w-4 h-4 text-blue-600"
+                        />
+                        <span className="text-gray-700">No</span>
+                      </label>
+                    </div>
+                    {stepErrors.is_student && (
+                      <p className="text-red-500 text-xs mt-1">{stepErrors.is_student}</p>
+                    )}
+                  </div>
+
                   <button
                     type="button"
                     onClick={nextStep}
@@ -322,70 +357,74 @@ export default function Signup() {
                       <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                      School Category
-                    </label>
-                    <select
-                      name="school_category"
-                      value={formData.school_category}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select school category</option>
-                      <option value="Primary">Primary</option>
-                      <option value="Secondary">Secondary</option>
-                      <option value="Tertiary">Tertiary</option>
-                    </select>
-                  </div>
+                  {formData.is_student === 'yes' && (
+                    <>
+                      <div>
+                        <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                          School Category
+                        </label>
+                        <select
+                          name="school_category"
+                          value={formData.school_category}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select school category</option>
+                          <option value="Primary">Primary</option>
+                          <option value="Secondary">Secondary</option>
+                          <option value="Tertiary">Tertiary</option>
+                        </select>
+                      </div>
 
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                      School Name
-                    </label>
-                    <div className="relative">
-                      <i className="ri-school-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                      <input
-                        type="text"
-                        name="school_name"
-                        value={formData.school_name}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="University of Lagos"
-                      />
-                    </div>
-                  </div>
+                      <div>
+                        <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                          School Name
+                        </label>
+                        <div className="relative">
+                          <i className="ri-school-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                          <input
+                            type="text"
+                            name="school_name"
+                            value={formData.school_name}
+                            onChange={handleChange}
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="University of Lagos"
+                          />
+                        </div>
+                      </div>
 
-                  {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                        Class Level
-                      </label>
-                      <input
-                        type="text"
-                        name="class_level"
-                        value={formData.class_level}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={formData.school_category === 'Primary' ? 'Primary 1' : 'SS1'}
-                      />
-                    </div>
-                  )}
+                      {(formData.school_category === 'Primary' || formData.school_category === 'Secondary') && (
+                        <div>
+                          <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                            Class Level
+                          </label>
+                          <input
+                            type="text"
+                            name="class_level"
+                            value={formData.class_level}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={formData.school_category === 'Primary' ? 'Primary 1' : 'SS1'}
+                          />
+                        </div>
+                      )}
 
-                  {formData.school_category === 'Tertiary' && (
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2 text-sm">
-                        Department
-                      </label>
-                      <input
-                        type="text"
-                        name="department"
-                        value={formData.department}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Computer Science"
-                      />
-                    </div>
+                      {formData.school_category === 'Tertiary' && (
+                        <div>
+                          <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                            Department
+                          </label>
+                          <input
+                            type="text"
+                            name="department"
+                            value={formData.department}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Computer Science"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div className="flex flex-col sm:flex-row gap-3 pt-2">

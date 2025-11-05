@@ -23,8 +23,16 @@ const UserMobileCard = ({ user, onView, onEdit, onAnalytics, onAssignBooks, onAs
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-gray-900 break-words">
-              {user.first_name} {user.last_name}
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-semibold text-gray-900 break-words">
+                {user.first_name} {user.last_name}
+              </div>
+              {user.school_name && (
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700" title="Student">
+                  <i className="ri-graduation-cap-line mr-1"></i>
+                  Student
+                </span>
+              )}
             </div>
             <div className="text-sm text-gray-500 break-words">{user.email}</div>
           </div>

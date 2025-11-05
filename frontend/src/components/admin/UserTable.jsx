@@ -40,12 +40,44 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
           <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
             <tr>
               <th className="px-3 py-4 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedUsers.length === users.length && users.length > 0}
-                  onChange={onSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === users.length && users.length > 0}
+                    onChange={onSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div className="relative group">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <i className="ri-arrow-down-s-line"></i>
+                    </button>
+                    <div className="hidden group-hover:block absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48">
+                      <button
+                        onClick={onSelectAll}
+                        className="w-full px-3 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <i className="ri-checkbox-multiple-line"></i>
+                        Select All on Page
+                      </button>
+                      <button
+                        onClick={() => onSelectAll()}
+                        className="w-full px-3 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <i className="ri-checkbox-blank-line"></i>
+                        Deselect All
+                      </button>
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button className="w-full px-3 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2">
+                        <i className="ri-user-line"></i>
+                        Select Active Only
+                      </button>
+                      <button className="w-full px-3 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2">
+                        <i className="ri-graduation-cap-line"></i>
+                        Select Students Only
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </th>
               <th className="px-3 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap">User</th>
               <th className="px-3 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap">Email</th>
@@ -72,9 +104,16 @@ const UserTable = ({ users, selectedUsers, onSelectAll, onSelectUser, onView, on
                       {user.first_name?.[0] || user.username?.[0] || 'U'}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">
-                        {user.first_name} {user.last_name}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs font-medium text-gray-900 truncate">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        {user.school_name && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700" title="Student">
+                            <i className="ri-graduation-cap-line"></i>
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 truncate">{user.username}</p>
                     </div>
                   </div>

@@ -405,6 +405,18 @@ export default function EReader({ bookId, onClose }) {
   const currentPage = Math.floor((scrollPosition / totalHeight) * 100) || 0;
   const estimatedPages = Math.ceil(totalHeight / (window.innerHeight * 0.8)) || 1;
   const currentEstimatedPage = Math.floor((scrollPosition / (window.innerHeight * 0.8))) + 1;
+  
+  // Calculate time remaining
+  const pagesRemaining = estimatedPages - currentEstimatedPage;
+  const minutesRemaining = Math.ceil(pagesRemaining * 2); // Assume 2 minutes per page
+  
+  const formatTimeRemaining = (minutes) => {
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
 
   return (
     <div className={`fixed inset-0 z-50 ${getThemeClasses()} transition-colors duration-200 flex flex-col`}>
@@ -641,13 +653,17 @@ export default function EReader({ bookId, onClose }) {
             <i className="ri-arrow-up-s-line text-2xl"></i>
           </button>
           
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-300">Page</span>
-            <span className="font-semibold text-lg">{currentEstimatedPage}</span>
-            <span className="text-gray-400">of</span>
-            <span className="font-semibold text-lg">{estimatedPages}</span>
-            <span className="mx-2 text-gray-600">•</span>
-            <span className="text-gray-300">{currentPage}%</span>
+          <div className="flex-1 mx-4 max-w-md">
+            <div className="flex items-center justify-between text-xs text-gray-300 mb-1">
+              <span>{currentPage}% complete</span>
+              <span>{formatTimeRemaining(minutesRemaining)} left</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300"
+                style={{ width: `${currentPage}%` }}
+              />
+            </div>
           </div>
           
           <button

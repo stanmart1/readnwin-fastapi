@@ -188,6 +188,62 @@ const AdminUsers = () => {
           roles={roles}
         />
 
+        {/* Batch Actions Bar */}
+        {selectedUsers.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <i className="ri-checkbox-multiple-line text-blue-600 text-xl"></i>
+                <span className="font-semibold text-blue-900">
+                  {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    if (confirm(`Activate ${selectedUsers.length} selected users?`)) {
+                      selectedUsers.forEach(userId => handleStatusChange(userId, true));
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2"
+                >
+                  <i className="ri-check-line"></i>
+                  Activate All
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Deactivate ${selectedUsers.length} selected users?`)) {
+                      selectedUsers.forEach(userId => handleStatusChange(userId, false));
+                    }
+                  }}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm flex items-center gap-2"
+                >
+                  <i className="ri-pause-line"></i>
+                  Deactivate All
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Delete ${selectedUsers.length} selected users? This cannot be undone!`)) {
+                      selectedUsers.forEach(userId => handleDeleteUser(userId));
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm flex items-center gap-2"
+                >
+                  <i className="ri-delete-bin-line"></i>
+                  Delete All
+                </button>
+                <button
+                  onClick={() => selectAll([])}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
+                >
+                  <i className="ri-close-line"></i>
+                  Clear Selection
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Desktop Table View */}
         <div className="hidden lg:block">
           <UserTable

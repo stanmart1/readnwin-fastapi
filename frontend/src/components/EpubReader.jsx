@@ -757,13 +757,17 @@ export default function EpubReader({ bookId, onClose }) {
               <i className="ri-arrow-left-s-line text-2xl"></i>
             </button>
             
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-300">Page</span>
-              <span className="font-semibold text-lg">{progressData.currentPage}</span>
-              <span className="text-gray-400">of</span>
-              <span className="font-semibold text-lg">{progressData.totalPages}</span>
-              <span className="mx-2 text-gray-600">•</span>
-              <span className="text-gray-300">{progressData.percentage}%</span>
+            <div className="flex-1 mx-4 max-w-md">
+              <div className="flex items-center justify-between text-xs text-gray-300 mb-1">
+                <span>{progressData.percentage}% complete</span>
+                <span>{formatTimeRemaining(progressData.timeRemaining)} left</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300"
+                  style={{ width: `${progressData.percentage}%` }}
+                />
+              </div>
             </div>
             
             <button
