@@ -9,7 +9,9 @@ import { getImageUrl } from '../../lib/fileService';
 export default function Library() {
   const [filter, setFilter] = useState('all');
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [removing, setRemoving] = useState(false);
   const { books, loading, refetch } = useLibrary();
 
   const { filteredBooks, counts } = useMemo(() => {
@@ -221,16 +223,28 @@ export default function Library() {
                       </div>
                     )}
                     
-                    <button
-                      onClick={() => {
-                        setSelectedBook(book);
-                        setShowReviewModal(true);
-                      }}
-                      className="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                    >
-                      <i className="ri-star-line mr-2 text-base"></i>
-                      Add Review
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedBook(book);
+                          setShowReviewModal(true);
+                        }}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      >
+                        <i className="ri-star-line mr-2 text-base"></i>
+                        Review
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedBook(book);
+                          setShowRemoveModal(true);
+                        }}
+                        className="px-4 py-3 bg-red-50 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 border border-red-200 hover:border-red-300 transition-all duration-200"
+                        title="Remove from library"
+                      >
+                        <i className="ri-delete-bin-line text-base"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -258,6 +272,83 @@ export default function Library() {
                 />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Remove Book Modal */}
+        {showRemoveModal && selectedBook && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl max-w-md w-full shadow-2xl"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+                  <i className="ri-alert-line text-3xl text-red-600"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                  Remove from Library?
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  Are you sure you want to remove <span className="font-semibold">"{selectedBook.title || selectedBook.book?.title}"</span> from your library?
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <i className="ri-error-warning-line text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div>
+                      <p className="text-sm font-semibold text-yellow-800 mb-1">Important Warning</p>
+                      <p className="text-sm text-yellow-700">
+                        You will need to repurchase this book if you want to add it back to your library later.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowRemoveModal(false);
+                      setSelectedBook(null);
+                    }}
+                    disabled={removing}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        setRemoving(true);
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/user/library/${selectedBook.id}`, {
+                          method: 'DELETE',
+                          headers: {
+                            'Authorization': `Bearer ${token}`
+                          }
+                        });
+                        
+                        if (response.ok) {
+                          await refetch();
+                          setShowRemoveModal(false);
+                          setSelectedBook(null);
+                        } else {
+                          alert('Failed to remove book from library');
+                        }
+                      } catch (error) {
+                        console.error('Error removing book:', error);
+                        alert('Failed to remove book from library');
+                      } finally {
+                        setRemoving(false);
+                      }
+                    }}
+                    disabled={removing}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {removing ? 'Removing...' : 'Remove Book'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>

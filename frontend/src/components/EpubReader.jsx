@@ -75,12 +75,7 @@ export default function EpubReader({ bookId, onClose }) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      // Remove touch event listeners
-      const viewer = viewerRef.current;
-      if (viewer) {
-        viewer.removeEventListener('touchstart', handleTouchStart);
-        viewer.removeEventListener('touchend', handleTouchEnd);
-      }
+      // Touch events are cleaned up when rendition is destroyed
     };
   }, [bookId]);
 
@@ -178,7 +173,8 @@ export default function EpubReader({ bookId, onClose }) {
         height: '100%',
         spread: 'none',
         flow: 'paginated',
-        minSpreadWidth: 99999 // Force single page by setting impossible spread width
+        minSpreadWidth: 99999, // Force single page by setting impossible spread width
+        snap: true // Snap to page boundaries
       });
 
       setRendition(renditionInstance);
@@ -257,12 +253,15 @@ export default function EpubReader({ bookId, onClose }) {
         setTimeout(() => setShowTour(true), 1000);
       }
 
-      // Add touch event listeners for swipe gestures
-      const viewer = viewerRef.current;
-      if (viewer) {
-        viewer.addEventListener('touchstart', handleTouchStart, { passive: true });
-        viewer.addEventListener('touchend', handleTouchEnd, { passive: true });
-      }
+      // Add touch event listeners for swipe gestures on the iframe
+      renditionInstance.on('rendered', () => {
+        const iframe = viewerRef.current?.querySelector('iframe');
+        if (iframe && iframe.contentDocument) {
+          const iframeDoc = iframe.contentDocument;
+          iframeDoc.addEventListener('touchstart', handleTouchStart, { passive: true });
+          iframeDoc.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+      });
 
     } catch (err) {
       console.error('Error loading EPUB:', err);
@@ -727,9 +726,9 @@ export default function EpubReader({ bookId, onClose }) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative flex flex-col">
         {/* EPUB Viewer */}
-        <div ref={viewerRef} className="w-full h-full"></div>
+        <div ref={viewerRef} className="flex-1 w-full pb-20"></div>
 
         {/* Navigation Buttons - Desktop Only */}
         <button
@@ -746,6 +745,36 @@ export default function EpubReader({ bookId, onClose }) {
         >
           <i className="ri-arrow-right-s-line text-2xl"></i>
         </button>
+
+        {/* Footer Navigation */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-gray-900/95 text-white shadow-2xl z-20">
+          <div className="flex items-center justify-between px-4 py-4">
+            <button
+              onClick={prevPage}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Previous page"
+            >
+              <i className="ri-arrow-left-s-line text-2xl"></i>
+            </button>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-300">Page</span>
+              <span className="font-semibold text-lg">{progressData.currentPage}</span>
+              <span className="text-gray-400">of</span>
+              <span className="font-semibold text-lg">{progressData.totalPages}</span>
+              <span className="mx-2 text-gray-600">•</span>
+              <span className="text-gray-300">{progressData.percentage}%</span>
+            </div>
+            
+            <button
+              onClick={nextPage}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Next page"
+            >
+              <i className="ri-arrow-right-s-line text-2xl"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Table of Contents Sidebar */}

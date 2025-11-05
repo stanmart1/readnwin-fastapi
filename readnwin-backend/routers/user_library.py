@@ -207,6 +207,26 @@ async def toggle_favorite(
     
     return {"success": True, "is_favorite": is_favorite}
 
+@router.delete("/library/{library_item_id}")
+async def remove_from_library(
+    library_item_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user_from_token)
+):
+    """Remove a book from user's library"""
+    library_item = db.query(UserLibrary).filter(
+        UserLibrary.id == library_item_id,
+        UserLibrary.user_id == current_user.id
+    ).first()
+    
+    if not library_item:
+        raise HTTPException(status_code=404, detail="Book not found in your library")
+    
+    db.delete(library_item)
+    db.commit()
+    
+    return {"success": True, "message": "Book removed from library"}
+
 @router.delete("/library/cleanup-orphaned")
 async def cleanup_orphaned_entries(
     db: Session = Depends(get_db),

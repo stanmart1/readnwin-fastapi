@@ -19,8 +19,8 @@ class ReadingGoalCreate(BaseModel):
 
     @validator('goal_type')
     def validate_goal_type(cls, v):
-        if v not in ['books', 'pages', 'minutes']:
-            raise ValueError('goal_type must be one of: books, pages, minutes')
+        if v not in ['books', 'pages', 'minutes', 'streak']:
+            raise ValueError('goal_type must be one of: books, pages, minutes, streak')
         return v
 
     @validator('target_value')
@@ -45,8 +45,8 @@ class ReadingGoalUpdate(BaseModel):
 
     @validator('goal_type')
     def validate_goal_type(cls, v):
-        if v is not None and v not in ['books', 'pages', 'minutes']:
-            raise ValueError('goal_type must be one of: books, pages, minutes')
+        if v is not None and v not in ['books', 'pages', 'minutes', 'streak']:
+            raise ValueError('goal_type must be one of: books, pages, minutes, streak')
         return v
 
     @validator('target_value')
@@ -100,6 +100,34 @@ def calculate_current_value(user_id: int, goal: ReadingGoal, db: Session) -> int
             ReadingSession.created_at <= goal.end_date
         ).scalar() or 0
         return int(total_minutes)
+    
+    elif goal.goal_type == "streak":
+        # Calculate reading streak (consecutive days with reading activity)
+        sessions = db.query(ReadingSession).filter(
+            ReadingSession.user_id == user_id,
+            ReadingSession.created_at >= goal.start_date,
+            ReadingSession.created_at <= goal.end_date
+        ).order_by(desc(ReadingSession.created_at)).all()
+        
+        if not sessions:
+            return 0
+        
+        # Get unique reading dates
+        reading_dates = sorted(set(s.created_at.date() for s in sessions), reverse=True)
+        
+        if not reading_dates:
+            return 0
+        
+        # Calculate streak from most recent date
+        from datetime import timedelta
+        streak = 1
+        for i in range(len(reading_dates) - 1):
+            if (reading_dates[i] - reading_dates[i + 1]).days == 1:
+                streak += 1
+            else:
+                break
+        
+        return streak
     
     return 0
 
