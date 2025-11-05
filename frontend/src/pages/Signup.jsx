@@ -61,7 +61,15 @@ export default function Signup() {
 
   const validateStep2 = () => {
     const errors = {};
-    if (!formData.username.trim()) errors.username = 'Username is required';
+    if (!formData.username.trim()) {
+      errors.username = 'Username is required';
+    } else if (formData.username.trim().length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.trim().length > 50) {
+      errors.username = 'Username must be less than 50 characters';
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.username.trim())) {
+      errors.username = 'Username can only contain letters, numbers, underscores, and hyphens';
+    }
     
     setStepErrors(errors);
     return Object.keys(errors).length === 0;
@@ -69,11 +77,30 @@ export default function Signup() {
 
   const validateStep3 = () => {
     const errors = {};
-    if (formData.is_student === 'no' && !formData.username.trim()) {
-      errors.username = 'Username is required';
+    if (formData.is_student === 'no') {
+      if (!formData.username.trim()) {
+        errors.username = 'Username is required';
+      } else if (formData.username.trim().length < 3) {
+        errors.username = 'Username must be at least 3 characters';
+      } else if (formData.username.trim().length > 50) {
+        errors.username = 'Username must be less than 50 characters';
+      } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.username.trim())) {
+        errors.username = 'Username can only contain letters, numbers, underscores, and hyphens';
+      }
     }
-    if (!formData.password) errors.password = 'Password is required';
-    else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      errors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.password)) {
+      errors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/\d/.test(formData.password)) {
+      errors.password = 'Password must contain at least one number';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      errors.password = 'Password must contain at least one special character';
+    }
     if (formData.password !== formData.confirm_password) {
       errors.confirm_password = 'Passwords do not match';
     }
@@ -373,6 +400,11 @@ export default function Signup() {
                     {stepErrors.username && (
                       <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
                     )}
+                    {!stepErrors.username && (
+                      <p className="text-gray-500 text-xs mt-1">
+                        3-50 characters, letters, numbers, underscores, and hyphens only
+                      </p>
+                    )}
                   </div>
                   {formData.is_student === 'yes' && (
                     <>
@@ -496,6 +528,11 @@ export default function Signup() {
                       {stepErrors.username && (
                         <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
                       )}
+                      {!stepErrors.username && (
+                        <p className="text-gray-500 text-xs mt-1">
+                          3-50 characters, letters, numbers, underscores, and hyphens only
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -525,6 +562,11 @@ export default function Signup() {
                     </div>
                     {stepErrors.password && (
                       <p className="text-red-500 text-xs mt-1">{stepErrors.password}</p>
+                    )}
+                    {!stepErrors.password && (
+                      <p className="text-gray-500 text-xs mt-1">
+                        Must be 8+ characters with uppercase, lowercase, number, and special character
+                      </p>
                     )}
                   </div>
 
