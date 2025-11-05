@@ -655,26 +655,42 @@ const AdminBooks = () => {
           {/* Book Assign Modal */}
           {modals.bookAssign && selection.bookForAction && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Assign Book to Users</h3>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                        <i className="ri-book-line text-white text-lg"></i>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Assign Book to Users</h3>
+                        <p className="text-sm text-gray-600">Grant access to a book for multiple users</p>
+                      </div>
+                    </div>
                     <button
                       onClick={() => {
                         setModals(prev => ({ ...prev, bookAssign: false }));
-                        setSelection(prev => ({ ...prev, users: [] }));
+                        setSelection(prev => ({ ...prev, users: [], bookForAction: null }));
                         setErrors({});
-                        setForms(prev => ({ ...prev, selectedFormat: 'ebook' }));
+                        setUserAssignments({});
+                        setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
                       }}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
                     >
                       <i className="ri-close-line text-2xl"></i>
                     </button>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Select Users *</label>
+                {/* Content */}
+                <div className="p-6 space-y-6">
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      <i className="ri-user-line mr-1"></i>
+                      Select Users *
+                    </label>
                       <div className="relative">
                         <input
                           type="text"
@@ -765,23 +781,44 @@ const AdminBooks = () => {
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Format *</label>
-                      <select
-                        value={forms.selectedFormat}
-                        onChange={(e) => {
-                          setForms(prev => ({ ...prev, selectedFormat: e.target.value }));
-                          setErrors(prev => ({ ...prev, format: '' }));
-                        }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                          errors.format ? 'border-red-500' : 'border-gray-300'
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">
+                      <i className="ri-file-list-line mr-1"></i>
+                      Book Format *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setForms(prev => ({ ...prev, selectedFormat: 'ebook' }))}
+                        className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                          forms.selectedFormat === 'ebook'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <option value="ebook">Ebook Only</option>
-                        <option value="physical">Physical Only</option>
-                      </select>
-                      {errors.format && <p className="text-red-500 text-sm mt-1">{errors.format}</p>}
+                        <i className={`ri-smartphone-line text-2xl mb-2 block ${
+                          forms.selectedFormat === 'ebook' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}></i>
+                        <span className="text-sm font-medium">Digital Ebook</span>
+                        <p className="text-xs text-gray-500 mt-1">Instant access</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForms(prev => ({ ...prev, selectedFormat: 'physical' }))}
+                        className={`p-4 rounded-xl border-2 transition-all text-center group ${
+                          forms.selectedFormat === 'physical'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <i className={`ri-book-line text-2xl mb-2 block ${
+                          forms.selectedFormat === 'physical' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}></i>
+                        <span className="text-sm font-medium">Physical Book</span>
+                        <p className="text-xs text-gray-500 mt-1">Hardcopy access</p>
+                      </button>
                     </div>
+                  </div>
 
                     {/* Assignment Summary */}
                     {selection.users.length > 0 && (
@@ -814,17 +851,20 @@ const AdminBooks = () => {
                     )}
                   </div>
 
-                  <div className="flex gap-3 mt-6">
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => {
                         setModals(prev => ({ ...prev, bookAssign: false }));
-                        setSelection(prev => ({ ...prev, users: [] }));
+                        setSelection(prev => ({ ...prev, users: [], bookForAction: null }));
                         setErrors({});
                         setAssignmentResult(null);
+                        setUserAssignments({});
                         setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
                       }}
                       disabled={loadingStates.assign}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
@@ -847,10 +887,10 @@ const AdminBooks = () => {
                         setModals(prev => ({ ...prev, assignConfirm: true }));
                       }}
                       disabled={selection.users.length === 0 || loadingStates.assign}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
                     >
                       <i className="ri-user-add-line"></i>
-                      Assign to {selection.users.length} User{selection.users.length !== 1 ? 's' : ''}
+                      <span>Assign to {selection.users.length} User{selection.users.length !== 1 ? 's' : ''}</span>
                     </button>
                   </div>
                 </div>
