@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ePub from 'epubjs';
 import api from '../lib/api';
 import { getCachedEpub, cacheEpub, cacheLocations } from '../lib/epubCache';
+import { queueProgressUpdate, syncQueuedUpdates, isOnline } from '../lib/offlineSync';
 import EReaderTour from './EReaderTour';
 
 export default function EpubReader({ bookId, onClose }) {
@@ -61,9 +62,23 @@ export default function EpubReader({ bookId, onClose }) {
       }
     }, 100);
 
+    // Sync queued updates when online
+    const handleOnline = () => {
+      console.log('📡 Back online, syncing queued updates...');
+      syncQueuedUpdates(api);
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    // Try to sync on mount if online
+    if (isOnline()) {
+      syncQueuedUpdates(api);
+    }
+
     return () => {
       isMounted = false;
       clearTimeout(timer);
+      window.removeEventListener('online', handleOnline);
       if (bookRef.current) {
         try {
           bookRef.current.destroy();
@@ -298,16 +313,22 @@ export default function EpubReader({ bookId, onClose }) {
   };
 
   const saveProgress = async (cfi, percentage, immediate = false) => {
+    const progressData = {
+      progress: (percentage || 0) * 100,
+      last_read_location: cfi
+    };
+
     // If immediate save (on load), don't throttle
     if (immediate) {
       try {
-        const progressPercent = (percentage || 0) * 100;
-        await api.post(`/ereader/${bookId}/progress`, {
-          progress: progressPercent,
-          last_read_location: cfi
-        });
+        if (isOnline()) {
+          await api.post(`/ereader/${bookId}/progress`, progressData);
+        } else {
+          queueProgressUpdate(bookId, progressData);
+        }
       } catch (err) {
         console.error('Error saving progress:', err);
+        queueProgressUpdate(bookId, progressData);
       }
       return;
     }
@@ -322,13 +343,14 @@ export default function EpubReader({ bookId, onClose }) {
 
       try {
         setIsSaving(true);
-        const progressPercent = (percentage || 0) * 100;
-        await api.post(`/ereader/${bookId}/progress`, {
-          progress: progressPercent,
-          last_read_location: cfi
-        });
+        if (isOnline()) {
+          await api.post(`/ereader/${bookId}/progress`, progressData);
+        } else {
+          queueProgressUpdate(bookId, progressData);
+        }
       } catch (err) {
         console.error('Error saving progress:', err);
+        queueProgressUpdate(bookId, progressData);
       } finally {
         setIsSaving(false);
       }

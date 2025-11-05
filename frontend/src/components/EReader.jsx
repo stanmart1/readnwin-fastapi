@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
+import { queueProgressUpdate, syncQueuedUpdates, isOnline } from '../lib/offlineSync';
 
 export default function EReader({ bookId, onClose }) {
   const [book, setBook] = useState(null);
@@ -50,11 +51,24 @@ export default function EReader({ bookId, onClose }) {
       }
     };
 
+    // Sync queued updates when online
+    const handleOnline = () => {
+      console.log('📡 Back online, syncing queued updates...');
+      syncQueuedUpdates(api);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('online', handleOnline);
+
+    // Try to sync on mount if online
+    if (isOnline()) {
+      syncQueuedUpdates(api);
+    }
 
     // Cleanup
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('online', handleOnline);
       const styleElement = document.getElementById(`ereader-styles-${bookId}`);
       if (styleElement) {
         styleElement.remove();
@@ -186,14 +200,21 @@ export default function EReader({ bookId, onClose }) {
     }
 
     saveTimeoutRef.current = setTimeout(async () => {
+      const progressData = {
+        progress: newProgress * 100,
+        last_read_location: `scroll:${newProgress}`
+      };
+
       try {
-        await api.post(`/ereader/${bookId}/progress`, {
-          progress: newProgress * 100,
-          last_read_location: `scroll:${newProgress}`
-        });
+        if (isOnline()) {
+          await api.post(`/ereader/${bookId}/progress`, progressData);
+        } else {
+          queueProgressUpdate(bookId, progressData);
+        }
         setProgress(newProgress);
       } catch (err) {
         console.error('Error updating progress:', err);
+        queueProgressUpdate(bookId, progressData);
       }
     }, 2000);
   }, [bookId]);
