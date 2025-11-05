@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUsers } from '../../hooks/useUsers';
 import { useBookManagement } from '../../hooks/useBookManagement';
+import { useToast } from '../../hooks/useToast';
+import { useDebounce } from '../../hooks/useDebounce';
+import Toast from '../Toast';
 import api from '../../lib/api';
 
 const LibraryManagement = () => {
@@ -15,8 +18,13 @@ const LibraryManagement = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState('ebook');
   const [userSearch, setUserSearch] = useState('');
+  const [bookSearch, setBookSearch] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [userLibrary, setUserLibrary] = useState([]);
   const userDropdownRef = useRef(null);
+  const bookDropdownRef = useRef(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -26,11 +34,23 @@ const LibraryManagement = () => {
   const [filters, setFilters] = useState({
     search: '',
     status: '',
-    user_id: undefined
+    user_id: undefined,
+    dateFrom: '',
+    dateTo: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
   });
+  const [stats, setStats] = useState(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkUsers, setBulkUsers] = useState([]);
+  const [bulkBook, setBulkBook] = useState(null);
+  const [bulkFormat, setBulkFormat] = useState('ebook');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const debouncedSearch = useDebounce(filters.search, 300);
 
   const { users, fetchUsers } = useUsers();
   const { books, loadBooks } = useBookManagement();
+  const { toasts, showToast, removeToast } = useToast();
 
   // Load users and books once on mount
   useEffect(() => {
@@ -38,21 +58,61 @@ const LibraryManagement = () => {
     loadBooks();
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
         setShowUserDropdown(false);
+      }
+      if (bookDropdownRef.current && !bookDropdownRef.current.contains(event.target)) {
+        setShowBookDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Fetch user's library when user is selected
+  useEffect(() => {
+    if (selectedUser) {
+      fetchUserLibrary();
+    }
+  }, [selectedUser]);
+
+  const fetchUserLibrary = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await api.get('/admin/library-assignments', {
+        params: { user_id: selectedUser, limit: 1000 }
+      });
+      setUserLibrary(response.data.assignments || []);
+    } catch (error) {
+      console.error('Error fetching user library:', error);
+    }
+  };
+
+  const isBookAlreadyAssigned = (bookId) => {
+    return userLibrary.some(item => item.book_id === bookId);
+  };
+
   // Load library data when filters change
   useEffect(() => {
     loadData();
-  }, [pagination.page, filters.search, filters.status, filters.user_id]);
+  }, [pagination.page, debouncedSearch, filters.status, filters.user_id, filters.dateFrom, filters.dateTo, filters.sortBy, filters.sortOrder]);
+
+  // Load stats on mount
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const response = await api.get('/admin/library-stats');
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -60,9 +120,13 @@ const LibraryManagement = () => {
       const params = {
         skip: (pagination.page - 1) * pagination.limit,
         limit: pagination.limit,
-        ...(filters.search && { search: filters.search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
         ...(filters.user_id && { user_id: filters.user_id }),
-        ...(filters.status && { status: filters.status })
+        ...(filters.status && { status: filters.status }),
+        ...(filters.dateFrom && { date_from: filters.dateFrom }),
+        ...(filters.dateTo && { date_to: filters.dateTo }),
+        sort_by: filters.sortBy,
+        sort_order: filters.sortOrder
       };
 
       const response = await api.get('/admin/library-assignments', { params });
@@ -77,11 +141,10 @@ const LibraryManagement = () => {
       }));
     } catch (error) {
       console.error('Failed to load libraries:', error);
-      console.error('Error details:', error.response?.data);
       if (error.response?.status === 403) {
-        alert('Access denied. Admin privileges required.');
+        showToast('Access denied. Admin privileges required.', 'error');
       } else {
-        alert(`Failed to load library assignments: ${error.response?.data?.detail || error.message}`);
+        showToast(`Failed to load library assignments: ${error.response?.data?.detail || error.message}`, 'error');
       }
     } finally {
       setLoading(false);
@@ -90,10 +153,16 @@ const LibraryManagement = () => {
 
   const handleAssignBook = async () => {
     if (!selectedUser || !selectedBook) {
-      alert('Please select both user and book');
+      showToast('Please select both user and book', 'warning');
       return;
     }
 
+    if (isBookAlreadyAssigned(selectedBook)) {
+      showToast('This book is already assigned to the selected user', 'warning');
+      return;
+    }
+
+    setAssignLoading(true);
     try {
       await api.post('/admin/user-library', {
         user_id: selectedUser,
@@ -101,17 +170,94 @@ const LibraryManagement = () => {
         format: selectedFormat
       });
 
-      alert('Book assigned successfully!');
+      showToast('Book assigned successfully!');
       setShowAssignModal(false);
       setSelectedUser(null);
       setSelectedBook(null);
       setSelectedFormat('ebook');
       setUserSearch('');
+      setBookSearch('');
       setShowUserDropdown(false);
+      setShowBookDropdown(false);
+      setUserLibrary([]);
       loadData();
+      loadStats();
     } catch (error) {
       console.error('Assignment error:', error);
-      alert('Failed to assign book');
+      const errorMsg = error.response?.data?.detail || error.message || 'Failed to assign book';
+      showToast(errorMsg, 'error');
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
+  const handleBulkAssign = async () => {
+    if (bulkUsers.length === 0 || !bulkBook) {
+      showToast('Please select users and a book', 'warning');
+      return;
+    }
+
+    setBulkLoading(true);
+    try {
+      const response = await api.post('/admin/bulk-assign', {
+        user_ids: bulkUsers,
+        book_id: bulkBook,
+        format: bulkFormat
+      });
+
+      showToast(`Book assigned to ${response.data.assigned_count} users successfully!`);
+      setShowBulkModal(false);
+      setBulkUsers([]);
+      setBulkBook(null);
+      setBulkFormat('ebook');
+      loadData();
+      loadStats();
+    } catch (error) {
+      showToast(error.response?.data?.detail || 'Failed to bulk assign', 'error');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(filters.user_id && { user_id: filters.user_id }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.dateFrom && { date_from: filters.dateFrom }),
+        ...(filters.dateTo && { date_to: filters.dateTo })
+      };
+
+      const response = await api.get('/admin/library-assignments', { 
+        params: { ...params, limit: 10000 } 
+      });
+
+      const csv = [
+        ['User Name', 'User Email', 'Book Title', 'Author', 'Format', 'Progress', 'Status', 'Assigned Date'],
+        ...response.data.assignments.map(a => [
+          a.user_name,
+          a.user_email,
+          a.book_title,
+          a.book_author,
+          a.format,
+          `${a.progress}%`,
+          a.status,
+          new Date(a.assigned_at).toLocaleDateString()
+        ])
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `library-assignments-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      showToast('Export completed successfully!');
+    } catch (error) {
+      showToast('Failed to export data', 'error');
     }
   };
 
@@ -121,11 +267,17 @@ const LibraryManagement = () => {
     setDetailsLoading(true);
     
     try {
-      const response = await api.get(`/admin/library-assignment/${libraryId}/details`);
-      setAssignmentDetails(response.data);
+      const [detailsRes, analyticsRes] = await Promise.all([
+        api.get(`/admin/library-assignment/${libraryId}/details`),
+        api.get(`/admin/library-assignment/${libraryId}/analytics`)
+      ]);
+      setAssignmentDetails({
+        ...detailsRes.data,
+        analytics: analyticsRes.data
+      });
     } catch (error) {
       console.error('Failed to load details:', error);
-      alert('Failed to load reading details');
+      showToast('Failed to load reading details', 'error');
       setShowDetailsModal(false);
     } finally {
       setDetailsLoading(false);
@@ -137,25 +289,86 @@ const LibraryManagement = () => {
 
     try {
       await api.delete(`/admin/library-assignment/${libraryId}`);
-      alert('Assignment removed successfully!');
+      showToast('Assignment removed successfully!');
       loadData();
+      loadStats();
     } catch (error) {
       console.error('Remove error:', error);
-      alert('Failed to remove assignment');
+      showToast('Failed to remove assignment', 'error');
     }
   };
 
   return (
     <div className="p-6">
+      {/* Toast Notifications */}
+      {toasts.map(toast => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Library Management</h2>
         <p className="text-gray-600 mt-1">Manage user book assignments and reading progress</p>
       </div>
 
+      {/* Statistics Dashboard */}
+      {stats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="ri-book-line text-white text-lg sm:text-xl"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Total Assignments</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{stats.total_assignments || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="ri-user-line text-white text-lg sm:text-xl"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Active Readers</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{stats.active_readers || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="ri-trophy-line text-white text-lg sm:text-xl"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Completion Rate</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{stats.completion_rate || 0}%</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="ri-bar-chart-line text-white text-lg sm:text-xl"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Avg Progress</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{stats.avg_progress || 0}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters and Actions */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1">
+      <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="lg:col-span-2">
             <input
               type="text"
               placeholder="Search by user name, email, or book title..."
@@ -187,19 +400,66 @@ const LibraryManagement = () => {
             ))}
           </select>
         </div>
-        <div className="flex justify-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <input
+            type="date"
+            value={filters.dateFrom}
+            onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="From Date"
+          />
+          <input
+            type="date"
+            value={filters.dateTo}
+            onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="To Date"
+          />
+          <select
+            value={`${filters.sortBy}-${filters.sortOrder}`}
+            onChange={(e) => {
+              const [sortBy, sortOrder] = e.target.value.split('-');
+              setFilters(prev => ({ ...prev, sortBy, sortOrder }));
+            }}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="created_at-desc">Newest First</option>
+            <option value="created_at-asc">Oldest First</option>
+            <option value="progress-desc">Highest Progress</option>
+            <option value="progress-asc">Lowest Progress</option>
+            <option value="status-asc">Status A-Z</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-2 justify-end">
+          <button
+            onClick={handleExport}
+            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2"
+          >
+            <i className="ri-download-line"></i>
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
+          </button>
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center gap-2"
+          >
+            <i className="ri-group-line"></i>
+            <span className="hidden sm:inline">Bulk Assign</span>
+            <span className="sm:hidden">Bulk</span>
+          </button>
           <button
             onClick={() => setShowAssignModal(true)}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all text-sm flex items-center gap-2"
           >
             <i className="ri-add-line"></i>
-            Assign Book
+            <span className="hidden sm:inline">Assign Book</span>
+            <span className="sm:hidden">Assign</span>
           </button>
         </div>
       </div>
 
       {/* Libraries Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -310,7 +570,7 @@ const LibraryManagement = () => {
 
       {/* Pagination */}
       {libraries.length > 0 && (
-        <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-4 mt-4">
+        <div className="flex items-center justify-between bg-white rounded-lg shadow-md p-4 mt-4">
           <div className="text-sm text-gray-700">
             Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
             <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
@@ -470,22 +730,108 @@ const LibraryManagement = () => {
                   <i className="ri-book-open-line mr-1"></i>
                   Select Book *
                 </label>
-                <select
-                  value={selectedBook || ''}
-                  onChange={(e) => setSelectedBook(parseInt(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-300 appearance-none bg-white"
-                >
-                  <option value="">Choose a book...</option>
-                  {books.length === 0 ? (
-                    <option disabled>Loading books...</option>
-                  ) : (
-                    books.map(book => (
-                      <option key={book.id} value={book.id}>
-                        {book.title} - {book.author_name}
-                      </option>
-                    ))
+                <div className="relative" ref={bookDropdownRef}>
+                  <div
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 cursor-pointer transition-all hover:border-gray-300"
+                    onClick={() => setShowBookDropdown(!showBookDropdown)}
+                  >
+                    <div className="flex items-center justify-between">
+                      {selectedBook ? (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            <i className="ri-book-line"></i>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {books.find(b => b.id === selectedBook)?.title}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {books.find(b => b.id === selectedBook)?.author_name}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">Choose a book...</span>
+                      )}
+                      <i className={`ri-arrow-down-s-line text-gray-400 transition-transform ${showBookDropdown ? 'rotate-180' : ''}`}></i>
+                    </div>
+                  </div>
+                  
+                  {showBookDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-64 overflow-hidden">
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="relative">
+                          <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                          <input
+                            type="text"
+                            placeholder="Search books..."
+                            value={bookSearch}
+                            onChange={(e) => setBookSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {books
+                          .filter(book => 
+                            `${book.title} ${book.author_name}`
+                              .toLowerCase()
+                              .includes(bookSearch.toLowerCase())
+                          )
+                          .map(book => {
+                            const alreadyAssigned = isBookAlreadyAssigned(book.id);
+                            return (
+                              <div
+                                key={book.id}
+                                className={`flex items-center space-x-3 px-4 py-3 transition-colors ${
+                                  alreadyAssigned
+                                    ? 'bg-gray-50 opacity-60 cursor-not-allowed'
+                                    : 'hover:bg-gray-50 cursor-pointer'
+                                }`}
+                                onClick={() => {
+                                  if (!alreadyAssigned) {
+                                    setSelectedBook(book.id);
+                                    setShowBookDropdown(false);
+                                    setBookSearch('');
+                                  }
+                                }}
+                              >
+                                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                  <i className="ri-book-line"></i>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-gray-900">{book.title}</p>
+                                    {alreadyAssigned && (
+                                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                                        Assigned
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-500">{book.author_name}</p>
+                                </div>
+                                {selectedBook === book.id && !alreadyAssigned && (
+                                  <i className="ri-check-line text-blue-600"></i>
+                                )}
+                              </div>
+                            );
+                          })
+                        }
+                        {books.filter(book => 
+                          `${book.title} ${book.author_name}`
+                            .toLowerCase()
+                            .includes(bookSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="px-4 py-8 text-center text-gray-500">
+                            <i className="ri-book-search-line text-3xl mb-2"></i>
+                            <p>No books found</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </select>
+                </div>
               </div>
 
               {/* Format Selection */}
@@ -538,7 +884,10 @@ const LibraryManagement = () => {
                     setSelectedUser(null);
                     setSelectedBook(null);
                     setUserSearch('');
+                    setBookSearch('');
                     setShowUserDropdown(false);
+                    setShowBookDropdown(false);
+                    setUserLibrary([]);
                   }}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-medium text-gray-700"
                 >
@@ -546,11 +895,144 @@ const LibraryManagement = () => {
                 </button>
                 <button
                   onClick={handleAssignBook}
-                  disabled={!selectedUser || !selectedBook}
+                  disabled={!selectedUser || !selectedBook || assignLoading}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
                 >
-                  <i className="ri-check-line"></i>
-                  <span>Assign Book</span>
+                  {assignLoading ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin"></i>
+                      <span>Assigning...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-check-line"></i>
+                      <span>Assign Book</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Assign Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+                    <i className="ri-group-line text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Bulk Assign Book</h3>
+                    <p className="text-sm text-gray-600">Assign one book to multiple users</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBulkModal(false);
+                    setBulkUsers([]);
+                    setBulkBook(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <i className="ri-close-line text-2xl"></i>
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Select Users *</label>
+                <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+                  {users.map(user => (
+                    <label key={user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bulkUsers.includes(user.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setBulkUsers([...bulkUsers, user.id]);
+                          } else {
+                            setBulkUsers(bulkUsers.filter(id => id !== user.id));
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{user.first_name} {user.last_name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">{bulkUsers.length} user(s) selected</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Select Book *</label>
+                <select
+                  value={bulkBook || ''}
+                  onChange={(e) => setBulkBook(parseInt(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Choose a book...</option>
+                  {books.map(book => (
+                    <option key={book.id} value={book.id}>{book.title} - {book.author_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Format *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setBulkFormat('ebook')}
+                    className={`p-3 rounded-xl border-2 ${bulkFormat === 'ebook' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+                  >
+                    <i className="ri-smartphone-line text-xl mb-1 block"></i>
+                    <span className="text-sm font-medium">Ebook</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkFormat('physical')}
+                    className={`p-3 rounded-xl border-2 ${bulkFormat === 'physical' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+                  >
+                    <i className="ri-book-line text-xl mb-1 block"></i>
+                    <span className="text-sm font-medium">Physical</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowBulkModal(false);
+                    setBulkUsers([]);
+                    setBulkBook(null);
+                  }}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkAssign}
+                  disabled={bulkUsers.length === 0 || !bulkBook || bulkLoading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+                >
+                  {bulkLoading ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin"></i>
+                      <span>Assigning...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-check-line"></i>
+                      <span>Assign to {bulkUsers.length} Users</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -623,6 +1105,109 @@ const LibraryManagement = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Reading Analytics */}
+                  {assignmentDetails.analytics && (
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <i className="ri-line-chart-line text-blue-600"></i>
+                        Reading Analytics
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-white rounded-lg shadow-md p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                              <i className="ri-time-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Total Time</p>
+                              <p className="text-sm font-bold text-gray-900">{assignmentDetails.analytics.total_reading_time || '0h'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                              <i className="ri-calendar-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Sessions</p>
+                              <p className="text-sm font-bold text-gray-900">{assignmentDetails.analytics.total_sessions || 0}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                              <i className="ri-speed-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Avg Session</p>
+                              <p className="text-sm font-bold text-gray-900">{assignmentDetails.analytics.avg_session_time || '0m'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
+                              <i className="ri-fire-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Streak</p>
+                              <p className="text-sm font-bold text-gray-900">{assignmentDetails.analytics.reading_streak || 0} days</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reading Goals */}
+                  {assignmentDetails.analytics?.goals && assignmentDetails.analytics.goals.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <i className="ri-flag-line text-green-600"></i>
+                        Reading Goals ({assignmentDetails.analytics.goals.length})
+                      </h4>
+                      <div className="space-y-3">
+                        {assignmentDetails.analytics.goals.map((goal) => (
+                          <div key={goal.id} className="bg-white rounded-lg shadow-md p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <h5 className="font-semibold text-gray-900">{goal.title}</h5>
+                                <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                goal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                goal.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {goal.status === 'completed' ? 'Completed' : goal.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Progress</span>
+                                <span className="font-semibold text-gray-900">{goal.current_value || 0} / {goal.target_value}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    goal.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'
+                                  }`}
+                                  style={{ width: `${Math.min((goal.current_value / goal.target_value) * 100, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Started: {new Date(goal.start_date).toLocaleDateString()}</span>
+                                <span>Target: {new Date(goal.target_date).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Highlights Section */}
                   <div>

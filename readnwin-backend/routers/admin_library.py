@@ -81,7 +81,7 @@ def get_library_assignments(
         raise HTTPException(status_code=500, detail=f"Admin access check failed: {str(e)}")
     
     try:
-        query = db.query(UserLibrary).join(User).join(Book).options(
+        query = db.query(UserLibrary).outerjoin(User).outerjoin(Book).options(
             joinedload(UserLibrary.user),
             joinedload(UserLibrary.book)
         )
@@ -227,3 +227,190 @@ def remove_library_assignment(
     db.commit()
     
     return {"success": True, "message": "Assignment removed successfully"}
+
+class BulkAssignRequest(BaseModel):
+    user_ids: list[int]
+    book_id: int
+    format: str
+
+@router.post("/bulk-assign")
+def bulk_assign_book(
+    request: BulkAssignRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Bulk assign a book to multiple users"""
+    check_admin_access(current_user)
+    
+    # Check if book exists
+    book = db.query(Book).filter(Book.id == request.book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    assigned_count = 0
+    skipped_count = 0
+    
+    for user_id in request.user_ids:
+        # Check if user exists
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            skipped_count += 1
+            continue
+        
+        # Check if already assigned
+        existing = db.query(UserLibrary).filter(
+            UserLibrary.user_id == user_id,
+            UserLibrary.book_id == request.book_id,
+            UserLibrary.format == request.format
+        ).first()
+        
+        if existing:
+            skipped_count += 1
+            continue
+        
+        # Create new assignment
+        assignment = UserLibrary(
+            user_id=user_id,
+            book_id=request.book_id,
+            format=request.format,
+            progress=0
+        )
+        db.add(assignment)
+        assigned_count += 1
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Book assigned to {assigned_count} users",
+        "assigned_count": assigned_count,
+        "skipped_count": skipped_count
+    }
+
+@router.get("/library-stats")
+def get_library_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get library statistics"""
+    check_admin_access(current_user)
+    
+    from sqlalchemy import func, distinct
+    
+    # Total assignments
+    total_assignments = db.query(func.count(UserLibrary.id)).scalar() or 0
+    
+    # Active readers (users with reading status)
+    active_readers = db.query(func.count(distinct(UserLibrary.user_id))).filter(
+        UserLibrary.status == 'reading'
+    ).scalar() or 0
+    
+    # Completion rate
+    completed = db.query(func.count(UserLibrary.id)).filter(
+        UserLibrary.status == 'completed'
+    ).scalar() or 0
+    completion_rate = round((completed / total_assignments * 100) if total_assignments > 0 else 0, 1)
+    
+    # Average progress
+    avg_progress = db.query(func.avg(UserLibrary.progress)).scalar() or 0
+    avg_progress = round(float(avg_progress), 1)
+    
+    return {
+        "total_assignments": total_assignments,
+        "active_readers": active_readers,
+        "completion_rate": completion_rate,
+        "avg_progress": avg_progress
+    }
+
+@router.get("/library-assignment/{assignment_id}/analytics")
+def get_assignment_analytics(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get reading analytics and goals for an assignment"""
+    check_admin_access(current_user)
+    
+    from models.reading_session import ReadingSession
+    from models.reading_goal import ReadingGoal
+    from sqlalchemy import func
+    from datetime import timedelta
+    
+    assignment = db.query(UserLibrary).filter(UserLibrary.id == assignment_id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    # Get reading sessions
+    sessions = db.query(ReadingSession).filter(
+        ReadingSession.user_id == assignment.user_id,
+        ReadingSession.book_id == assignment.book_id
+    ).all()
+    
+    # Calculate analytics
+    total_sessions = len(sessions)
+    total_minutes = int(sum(s.duration or 0 for s in sessions))
+    total_hours = total_minutes // 60
+    remaining_minutes = total_minutes % 60
+    total_reading_time = f"{total_hours}h {remaining_minutes}m" if total_hours > 0 else f"{remaining_minutes}m"
+    
+    avg_session_minutes = total_minutes // total_sessions if total_sessions > 0 else 0
+    avg_session_time = f"{avg_session_minutes}m"
+    
+    # Calculate reading streak
+    reading_streak = 0
+    if sessions:
+        from datetime import datetime, date
+        session_dates = sorted(set(s.created_at.date() for s in sessions if s.created_at), reverse=True)
+        if session_dates:
+            today = date.today()
+            if session_dates[0] >= today - timedelta(days=1):
+                reading_streak = 1
+                for i in range(len(session_dates) - 1):
+                    if (session_dates[i] - session_dates[i + 1]).days == 1:
+                        reading_streak += 1
+                    else:
+                        break
+    
+    # Get reading goals
+    goals = db.query(ReadingGoal).filter(
+        ReadingGoal.user_id == assignment.user_id
+    ).all()
+    
+    goals_data = []
+    for goal in goals:
+        # Determine status
+        if goal.completed:
+            status = 'completed'
+        elif goal.current_value > 0:
+            status = 'in_progress'
+        else:
+            status = 'not_started'
+        
+        # Create title and description based on goal type
+        goal_type_labels = {
+            'books': 'Books',
+            'pages': 'Pages',
+            'minutes': 'Minutes'
+        }
+        title = f"Read {goal.target_value} {goal_type_labels.get(goal.goal_type, goal.goal_type)}"
+        description = f"Goal to read {goal.target_value} {goal.goal_type}"
+        
+        goals_data.append({
+            "id": goal.id,
+            "title": title,
+            "description": description,
+            "goal_type": goal.goal_type,
+            "target_value": goal.target_value,
+            "current_value": goal.current_value or 0,
+            "status": status,
+            "start_date": goal.start_date.isoformat() if goal.start_date else None,
+            "target_date": goal.end_date.isoformat() if goal.end_date else None
+        })
+    
+    return {
+        "total_reading_time": total_reading_time,
+        "total_sessions": total_sessions,
+        "avg_session_time": avg_session_time,
+        "reading_streak": reading_streak,
+        "goals": goals_data
+    }

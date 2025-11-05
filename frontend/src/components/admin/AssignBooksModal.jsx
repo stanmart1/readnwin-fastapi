@@ -4,38 +4,69 @@ import api from '../../lib/api';
 
 const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
   const [books, setBooks] = useState([]);
-  const [selectedBooks, setSelectedBooks] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedFormat, setSelectedFormat] = useState('ebook');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userLibrary, setUserLibrary] = useState([]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user) {
       fetchBooks();
+      fetchUserLibrary();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   const fetchBooks = async () => {
     try {
-      const response = await api.get('/api/admin/books');
-      if (response.data?.success) {
-        setBooks(response.data.books || []);
-      }
+      const response = await api.get('/admin/books');
+      setBooks(response.data.books || []);
     } catch (error) {
       console.error('Error fetching books:', error);
     }
   };
 
-  const handleAssign = async () => {
-    setLoading(true);
-    await onSubmit(user.id, selectedBooks);
-    setLoading(false);
-    setSelectedBooks([]);
+  const fetchUserLibrary = async () => {
+    try {
+      const response = await api.get('/admin/library-assignments', {
+        params: { user_id: user.id, limit: 1000 }
+      });
+      setUserLibrary(response.data.assignments || []);
+    } catch (error) {
+      console.error('Error fetching user library:', error);
+    }
   };
 
-  const filteredBooks = books.filter(book =>
-    book.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.author?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleAssign = async () => {
+    if (!selectedBook) return;
+    
+    setLoading(true);
+    try {
+      await api.post('/admin/user-library', {
+        user_id: user.id,
+        book_id: selectedBook,
+        format: selectedFormat
+      });
+      alert('Book assigned successfully!');
+      setSelectedBook(null);
+      setSelectedFormat('ebook');
+      await fetchUserLibrary();
+    } catch (error) {
+      alert('Failed to assign book: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.author_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  const isBookAssigned = (bookId) => {
+    return userLibrary.some(item => item.book_id === bookId);
+  };
 
   if (!isOpen || !user) return null;
 
@@ -55,7 +86,10 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
 
         <div className="mb-4 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-gray-700">
-            Assigning books to: <span className="font-semibold">{user.first_name} {user.last_name}</span>
+            Assigning book to: <span className="font-semibold">{user.first_name} {user.last_name}</span>
+          </p>
+          <p className="text-xs text-gray-600 mt-1">
+            Current library: {userLibrary.length} book(s)
           </p>
         </div>
 
@@ -73,46 +107,87 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
           </div>
         </div>
 
-        {/* Selected Count */}
-        {selectedBooks.length > 0 && (
-          <div className="mb-4 p-3 bg-green-50 rounded-lg">
-            <p className="text-sm text-green-800">
-              {selectedBooks.length} book(s) selected
-            </p>
+        {/* Format Selection */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-800 mb-2">
+            Book Format
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedFormat('ebook')}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                selectedFormat === 'ebook'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <i className="ri-smartphone-line text-xl mb-1 block"></i>
+              <span className="text-sm font-medium">Ebook</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFormat('physical')}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                selectedFormat === 'physical'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <i className="ri-book-line text-xl mb-1 block"></i>
+              <span className="text-sm font-medium">Physical</span>
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Books List */}
         <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
-          {filteredBooks.map((book) => (
-            <div
-              key={book.id}
-              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                selectedBooks.includes(book.id)
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => {
-                if (selectedBooks.includes(book.id)) {
-                  setSelectedBooks(selectedBooks.filter(id => id !== book.id));
-                } else {
-                  setSelectedBooks([...selectedBooks, book.id]);
-                }
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{book.title}</p>
-                  <p className="text-sm text-gray-500">{book.author}</p>
-                </div>
-                <div className="ml-4">
-                  {selectedBooks.includes(book.id) && (
-                    <i className="ri-checkbox-circle-fill text-blue-600 text-xl"></i>
-                  )}
-                </div>
-              </div>
+          {filteredBooks.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <i className="ri-book-line text-4xl mb-2"></i>
+              <p>No books found</p>
             </div>
-          ))}
+          ) : (
+            filteredBooks.map((book) => {
+              const assigned = isBookAssigned(book.id);
+              return (
+                <div
+                  key={book.id}
+                  className={`p-3 border rounded-lg transition-colors ${
+                    assigned
+                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                      : selectedBook === book.id
+                      ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                      : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                  }`}
+                  onClick={() => {
+                    if (!assigned) {
+                      setSelectedBook(selectedBook === book.id ? null : book.id);
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{book.title}</p>
+                        {assigned && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                            Assigned
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500">{book.author_name}</p>
+                    </div>
+                    <div className="ml-4">
+                      {selectedBook === book.id && !assigned && (
+                        <i className="ri-checkbox-circle-fill text-blue-600 text-xl"></i>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         <div className="flex justify-end space-x-3">
@@ -125,10 +200,20 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
           </button>
           <button
             onClick={handleAssign}
-            disabled={loading || selectedBooks.length === 0}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !selectedBook}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {loading ? 'Assigning...' : `Assign ${selectedBooks.length} Book(s)`}
+            {loading ? (
+              <>
+                <i className="ri-loader-4-line animate-spin"></i>
+                Assigning...
+              </>
+            ) : (
+              <>
+                <i className="ri-check-line"></i>
+                Assign Book
+              </>
+            )}
           </button>
         </div>
       </motion.div>
