@@ -32,7 +32,15 @@ const UserDetailModal = ({ isOpen, onClose, user, onEdit }) => {
             {user.first_name?.[0]}{user.last_name?.[0]}
           </div>
           <div>
-            <h4 className="text-xl font-bold text-gray-900">{user.first_name} {user.last_name}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-xl font-bold text-gray-900">{user.first_name} {user.last_name}</h4>
+              {user.school_name && (
+                <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded" title="Student">
+                  <i className="ri-graduation-cap-line mr-1"></i>
+                  Student
+                </span>
+              )}
+            </div>
             <p className="text-gray-600">@{user.username}</p>
             <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full text-white mt-2 ${getRoleColor(user.role?.name)}`}>
               {user.role?.display_name || 'No Role'}
@@ -54,47 +62,38 @@ const UserDetailModal = ({ isOpen, onClose, user, onEdit }) => {
                 <p className="text-sm text-gray-600 mb-1">Username</p>
                 <p className="font-medium text-gray-900">{user.username}</p>
               </div>
-              {user.phone_number && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Phone Number</p>
-                  <p className="font-medium text-gray-900">{user.phone_number}</p>
-                </div>
-              )}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Phone Number</p>
+                <p className="font-medium text-gray-900">{user.phone_number || 'N/A'}</p>
+              </div>
             </div>
           </div>
 
           {/* Educational Information */}
-          {(user.school_name || user.school_category) && (
-            <div>
-              <h5 className="text-lg font-semibold text-gray-900 mb-3">Educational Information</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {user.school_name && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">School Name</p>
-                    <p className="font-medium text-gray-900">{user.school_name}</p>
-                  </div>
-                )}
-                {user.school_category && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">School Category</p>
-                    <p className="font-medium text-gray-900">{user.school_category}</p>
-                  </div>
-                )}
-                {user.class_level && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Class Level</p>
-                    <p className="font-medium text-gray-900">{user.class_level}</p>
-                  </div>
-                )}
-                {user.department && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Department</p>
-                    <p className="font-medium text-gray-900">{user.department}</p>
-                  </div>
-                )}
+          <div>
+            <h5 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <i className="ri-graduation-cap-line"></i>
+              Educational Information
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">School Name</p>
+                <p className="font-medium text-gray-900">{user.school_name || 'N/A'}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">School Category</p>
+                <p className="font-medium text-gray-900">{user.school_category || 'N/A'}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Class Level</p>
+                <p className="font-medium text-gray-900">{user.class_level || 'N/A'}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Department</p>
+                <p className="font-medium text-gray-900">{user.department || 'N/A'}</p>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Account Status */}
           <div>

@@ -81,14 +81,24 @@ export default function Signup() {
 
   const nextStep = () => {
     if (currentStep === 1 && validateStep1()) {
-      setCurrentStep(2);
+      // Skip step 2 if user is not a student
+      if (formData.is_student === 'no') {
+        setCurrentStep(3);
+      } else {
+        setCurrentStep(2);
+      }
     } else if (currentStep === 2 && validateStep2()) {
       setCurrentStep(3);
     }
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
+    // If on step 3 and user is not a student, go back to step 1
+    if (currentStep === 3 && formData.is_student === 'no') {
+      setCurrentStep(1);
+    } else {
+      setCurrentStep(prev => prev - 1);
+    }
     setStepErrors({});
   };
 
@@ -145,34 +155,38 @@ export default function Signup() {
           <div className="mb-8">
             <div className="flex items-center justify-center mb-4">
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
-                  currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-all ${
+                  currentStep >= 1 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  1
+                  {currentStep > 1 ? <i className="ri-check-line text-lg"></i> : '1'}
                 </div>
-                <div className={`w-8 sm:w-12 h-1 rounded ${
-                  currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'
+                {formData.is_student === 'yes' && (
+                  <>
+                    <div className={`w-8 sm:w-12 h-1 rounded transition-all ${
+                      currentStep >= 2 ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-200'
+                    }`}></div>
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-all ${
+                      currentStep >= 2 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {currentStep > 2 ? <i className="ri-check-line text-lg"></i> : '2'}
+                    </div>
+                  </>
+                )}
+                <div className={`w-8 sm:w-12 h-1 rounded transition-all ${
+                  currentStep >= 3 ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-200'
                 }`}></div>
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
-                  currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-all ${
+                  currentStep >= 3 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  2
-                </div>
-                <div className={`w-8 sm:w-12 h-1 rounded ${
-                  currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'
-                }`}></div>
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
-                  currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  3
+                  {formData.is_student === 'yes' ? '3' : '2'}
                 </div>
               </div>
             </div>
             <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Step {currentStep} of 3: {
+              <p className="text-sm font-medium text-gray-700">
+                Step {formData.is_student === 'no' && currentStep === 3 ? '2' : currentStep} of {formData.is_student === 'yes' ? '3' : '2'}: {
                   currentStep === 1 ? 'Personal Information' : 
-                  currentStep === 2 ? 'Account & Education' : 
+                  currentStep === 2 ? 'Education Details' : 
                   'Security'
                 }
               </p>
@@ -318,9 +332,9 @@ export default function Signup() {
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
                   >
-                    Continue to Step 2
+                    {formData.is_student === 'yes' ? 'Continue to Education Details' : 'Continue to Security'}
                     <i className="ri-arrow-right-line ml-2"></i>
                   </button>
                 </div>
@@ -431,7 +445,7 @@ export default function Signup() {
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg"
                     >
                       <i className="ri-arrow-left-line mr-2"></i>
                       Back
@@ -439,9 +453,9 @@ export default function Signup() {
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
                     >
-                      Continue to Step 3
+                      Continue to Security
                       <i className="ri-arrow-right-line ml-2"></i>
                     </button>
                   </div>
@@ -535,7 +549,7 @@ export default function Signup() {
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg"
                     >
                       <i className="ri-arrow-left-line mr-2"></i>
                       Back
@@ -543,9 +557,19 @@ export default function Signup() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-green-700 hover:to-teal-700 transition-all disabled:opacity-50 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
-                      {loading ? 'Creating Account...' : 'Create Account'}
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          Creating Account...
+                        </>
+                      ) : (
+                        <>
+                          <i className="ri-check-line"></i>
+                          Create Account
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
