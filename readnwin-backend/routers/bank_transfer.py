@@ -64,12 +64,15 @@ async def get_bank_transfer_details(
             "created_at": payment.created_at.isoformat() if payment.created_at else None
         }
         
-        # Bank account details from environment
-        import os
+        # Bank account details from PaymentGateway system settings
+        from models.payment_settings import PaymentGateway
+        gateway = db.query(PaymentGateway).filter(PaymentGateway.id == "bank_transfer").first()
+        
+        bank_account_data = gateway.bank_account if gateway and gateway.bank_account else {}
         bank_account = {
-            "bank_name": os.getenv("BANK_NAME", "Access Bank"),
-            "account_number": os.getenv("BANK_ACCOUNT_NUMBER", "0101234567"),
-            "account_name": os.getenv("BANK_ACCOUNT_NAME", "Lagsale Online Resources")
+            "bank_name": bank_account_data.get("bank_name", "Access Bank"),
+            "account_number": bank_account_data.get("account_number", "0101234567"),
+            "account_name": bank_account_data.get("account_name", "Lagsale Online Resources")
         }
         
         # Order details
