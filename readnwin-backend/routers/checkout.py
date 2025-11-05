@@ -296,10 +296,10 @@ async def create_order(
                     "bankTransferDetails": {
                         "amount": float(order.total_amount),
                         "bank_account": {
-                            "bank_name": bank_account.get('bank_name', 'Access Bank'),
-                            "account_number": bank_account.get('account_number', '0101234567'),
-                            "account_name": bank_account.get('account_name', 'Lagsale Online Resources'),
-                            "account_type": bank_account.get('account_type', 'Current')
+                            "bank_name": bank_account.get('bank_name'),
+                            "account_number": bank_account.get('account_number'),
+                            "account_name": bank_account.get('account_name'),
+                            "account_type": bank_account.get('account_type')
                         },
                         "payment_instructions": bank_account.get('payment_instructions', 'Please include order number in payment reference')
                     }
