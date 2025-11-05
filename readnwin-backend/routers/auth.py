@@ -379,7 +379,7 @@ async def register(user_data: UserRegister, request: Request, db: Session = Depe
             )
 
         # Get default user role
-        default_role = db.query(Role).filter(Role.name == "reader").first()
+        default_role = db.query(Role).filter(Role.name == "user").first()
         if not default_role:
             logger.error("❌ Default user role not found")
             raise HTTPException(
