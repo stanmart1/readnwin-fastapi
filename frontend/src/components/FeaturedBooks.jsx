@@ -12,6 +12,8 @@ export default function FeaturedBooks() {
   const { addToCart } = useCartContext();
   const carouselRef = useRef(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const scrollTimeoutRef = useRef(null);
 
   const params = {
     page: 1,
@@ -90,39 +92,65 @@ export default function FeaturedBooks() {
     return () => clearInterval(interval);
   }, [isAutoScrolling, books.length]);
 
-  // Handle infinite scroll reset
+  // Handle infinite scroll reset with debouncing
   useEffect(() => {
     const carousel = carouselRef.current;
     if (!carousel || books.length === 0) return;
 
     const handleScroll = () => {
-      const cardWidth = 296;
-      const { scrollLeft } = carousel;
-      const sectionWidth = cardWidth * books.length;
+      // Don't reset while user is actively scrolling
+      if (isUserScrolling) return;
 
-      // Reset without smooth behavior to avoid visual jump
-      if (scrollLeft >= sectionWidth * 2 - cardWidth / 2) {
-        carousel.style.scrollBehavior = 'auto';
-        carousel.scrollLeft = scrollLeft - sectionWidth;
-        carousel.style.scrollBehavior = 'smooth';
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
-      else if (scrollLeft <= cardWidth / 2) {
-        carousel.style.scrollBehavior = 'auto';
-        carousel.scrollLeft = scrollLeft + sectionWidth;
-        carousel.style.scrollBehavior = 'smooth';
-      }
+
+      // Debounce the reset to avoid conflicts with rapid scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        const cardWidth = 296;
+        const { scrollLeft } = carousel;
+        const sectionWidth = cardWidth * books.length;
+
+        // Reset without smooth behavior to avoid visual jump
+        if (scrollLeft >= sectionWidth * 2 - cardWidth / 2) {
+          carousel.style.scrollBehavior = 'auto';
+          carousel.scrollLeft = scrollLeft - sectionWidth;
+          requestAnimationFrame(() => {
+            carousel.style.scrollBehavior = 'smooth';
+          });
+        }
+        else if (scrollLeft <= cardWidth / 2) {
+          carousel.style.scrollBehavior = 'auto';
+          carousel.scrollLeft = scrollLeft + sectionWidth;
+          requestAnimationFrame(() => {
+            carousel.style.scrollBehavior = 'smooth';
+          });
+        }
+      }, 150);
     };
 
     carousel.addEventListener('scroll', handleScroll);
-    return () => carousel.removeEventListener('scroll', handleScroll);
-  }, [books.length]);
+    return () => {
+      carousel.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [books.length, isUserScrolling]);
 
   // Pause auto-scroll on user interaction
   const handleTouchStart = () => {
     setIsAutoScrolling(false);
+    setIsUserScrolling(true);
   };
 
   const handleTouchEnd = () => {
+    // Mark user scrolling as complete after a short delay
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 300);
+    
     // Resume auto-scroll after 5 seconds of inactivity
     setTimeout(() => {
       setIsAutoScrolling(true);

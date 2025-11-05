@@ -48,6 +48,8 @@ export default function EpubReader({ bookId, onClose }) {
   const bookRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const isInitialLoadRef = useRef(true);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -72,6 +74,12 @@ export default function EpubReader({ bookId, onClose }) {
       }
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+      // Remove touch event listeners
+      const viewer = viewerRef.current;
+      if (viewer) {
+        viewer.removeEventListener('touchstart', handleTouchStart);
+        viewer.removeEventListener('touchend', handleTouchEnd);
       }
     };
   }, [bookId]);
@@ -249,6 +257,13 @@ export default function EpubReader({ bookId, onClose }) {
         setTimeout(() => setShowTour(true), 1000);
       }
 
+      // Add touch event listeners for swipe gestures
+      const viewer = viewerRef.current;
+      if (viewer) {
+        viewer.addEventListener('touchstart', handleTouchStart, { passive: true });
+        viewer.addEventListener('touchend', handleTouchEnd, { passive: true });
+      }
+
     } catch (err) {
       console.error('Error loading EPUB:', err);
       console.error('Error stack:', err.stack);
@@ -327,6 +342,30 @@ export default function EpubReader({ bookId, onClose }) {
 
   const prevPage = () => {
     if (rendition) rendition.prev();
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    const swipeThreshold = 50;
+    const diff = touchStartX.current - touchEndX.current;
+
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swipe left - next page
+        nextPage();
+      } else {
+        // Swipe right - previous page
+        prevPage();
+      }
+    }
   };
 
   const goToChapter = (href) => {
@@ -692,18 +731,18 @@ export default function EpubReader({ bookId, onClose }) {
         {/* EPUB Viewer */}
         <div ref={viewerRef} className="w-full h-full"></div>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Desktop Only */}
         <button
           data-tour="prev-button"
           onClick={prevPage}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
+          className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
         >
           <i className="ri-arrow-left-s-line text-2xl"></i>
         </button>
         <button
           data-tour="next-button"
           onClick={nextPage}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
+          className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all z-10"
         >
           <i className="ri-arrow-right-s-line text-2xl"></i>
         </button>
