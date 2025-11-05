@@ -69,6 +69,9 @@ export default function Signup() {
 
   const validateStep3 = () => {
     const errors = {};
+    if (formData.is_student === 'no' && !formData.username.trim()) {
+      errors.username = 'Username is required';
+    }
     if (!formData.password) errors.password = 'Password is required';
     else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
     if (formData.password !== formData.confirm_password) {
@@ -472,6 +475,29 @@ export default function Signup() {
                 transition={{ duration: 0.3 }}
               >
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {formData.is_student === 'no' && (
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2 text-sm">
+                        Username *
+                      </label>
+                      <div className="relative">
+                        <i className="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        <input
+                          type="text"
+                          name="username"
+                          value={formData.username}
+                          onChange={handleChange}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            stepErrors.username ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="johndoe"
+                        />
+                      </div>
+                      {stepErrors.username && (
+                        <p className="text-red-500 text-xs mt-1">{stepErrors.username}</p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2 text-sm">

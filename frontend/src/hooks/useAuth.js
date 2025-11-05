@@ -68,7 +68,7 @@ export const useAuth = () => {
       setError('');
       const response = await api.post('/auth/register', userData);
       
-      if (response.data.success) {
+      if (response.data.message === 'Registration successful') {
         return true;
       }
       return false;
