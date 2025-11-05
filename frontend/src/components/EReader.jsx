@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import api from '../lib/api';
 
 export default function EReader({ bookId, onClose }) {
@@ -7,6 +8,7 @@ export default function EReader({ bookId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fontSize, setFontSize] = useState(18);
+  const [fontFamily, setFontFamily] = useState('Georgia');
   const [theme, setTheme] = useState('light');
   const [progress, setProgress] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -19,17 +21,40 @@ export default function EReader({ bookId, onClose }) {
   const [noteContent, setNoteContent] = useState('');
   const [activeTab, setActiveTab] = useState('notes');
   const [editingNote, setEditingNote] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [toc, setToc] = useState([]);
+  const [showToc, setShowToc] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [totalHeight, setTotalHeight] = useState(0);
 
   const contentRef = useRef(null);
   const saveTimeoutRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
   useEffect(() => {
     loadBook();
     loadHighlights();
     loadNotes();
 
-    // Cleanup styles on unmount
+    // Keyboard navigation
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        scrollDown();
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        scrollUp();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
     return () => {
+      window.removeEventListener('keydown', handleKeyDown);
       const styleElement = document.getElementById(`ereader-styles-${bookId}`);
       if (styleElement) {
         styleElement.remove();
@@ -111,6 +136,24 @@ export default function EReader({ bookId, onClose }) {
 
       setContent(htmlContent);
 
+      // Extract TOC from HTML headings
+      setTimeout(() => {
+        if (contentRef.current) {
+          const headings = contentRef.current.querySelectorAll('h1, h2, h3');
+          const tocItems = Array.from(headings).map((heading, index) => ({
+            id: `heading-${index}`,
+            label: heading.textContent,
+            element: heading
+          }));
+          setToc(tocItems);
+
+          // Add IDs to headings for navigation
+          headings.forEach((heading, index) => {
+            heading.id = `heading-${index}`;
+          });
+        }
+      }, 500);
+
     } catch (err) {
       console.error('Error loading book:', err);
       setError(err.response?.data?.detail || err.message || 'Failed to load book');
@@ -155,15 +198,68 @@ export default function EReader({ bookId, onClose }) {
     }, 2000);
   }, [bookId]);
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleScroll = useCallback((e) => {
     const element = e.target;
     const scrollPercentage = (element.scrollTop / (element.scrollHeight - element.clientHeight)) * 100;
     const newProgress = Math.min(100, Math.max(0, scrollPercentage)) / 100;
 
+    setScrollPosition(element.scrollTop);
+    setTotalHeight(element.scrollHeight - element.clientHeight);
+
     if (Math.abs(newProgress - progress) > 0.02) {
       updateProgress(newProgress);
     }
   }, [progress, updateProgress]);
+
+  const scrollUp = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    touchEndY.current = e.changedTouches[0].clientY;
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    // Only trigger if horizontal swipe is dominant
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        scrollDown();
+      } else {
+        scrollUp();
+      }
+    }
+  };
+
+  const goToHeading = (headingId) => {
+    const element = document.getElementById(headingId);
+    if (element && contentRef.current) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setShowToc(false);
+    }
+  };
 
   const createHighlight = async (color) => {
     if (!selectedText) return;
@@ -181,10 +277,10 @@ export default function EReader({ bookId, onClose }) {
       setHighlights([...highlights, response.data.highlight]);
       setShowSelectionMenu(false);
       setSelectedText(null);
-      alert('Highlight created!');
+      showToast('Highlight created!');
     } catch (err) {
       console.error('Error creating highlight:', err);
-      alert('Failed to create highlight');
+      showToast('Failed to create highlight', 'error');
     }
   };
 
@@ -192,9 +288,10 @@ export default function EReader({ bookId, onClose }) {
     try {
       await api.delete(`/ereader/${bookId}/highlights/${highlightId}`);
       setHighlights(highlights.filter(h => h.id !== highlightId));
+      showToast('Highlight deleted');
     } catch (err) {
       console.error('Error deleting highlight:', err);
-      alert('Failed to delete highlight');
+      showToast('Failed to delete highlight', 'error');
     }
   };
 
@@ -213,10 +310,10 @@ export default function EReader({ bookId, onClose }) {
       setNoteContent('');
       setShowNoteInput(false);
       setShowSelectionMenu(false);
-      alert('Note created!');
+      showToast('Note created!');
     } catch (err) {
       console.error('Error creating note:', err);
-      alert('Failed to create note');
+      showToast('Failed to create note', 'error');
     }
   };
 
@@ -227,10 +324,10 @@ export default function EReader({ bookId, onClose }) {
       });
       setNotes(notes.map(n => n.id === noteId ? { ...n, content } : n));
       setEditingNote(null);
-      alert('Note updated!');
+      showToast('Note updated!');
     } catch (err) {
       console.error('Error updating note:', err);
-      alert('Failed to update note');
+      showToast('Failed to update note', 'error');
     }
   };
 
@@ -240,9 +337,10 @@ export default function EReader({ bookId, onClose }) {
     try {
       await api.delete(`/ereader/${bookId}/notes/${noteId}`);
       setNotes(notes.filter(n => n.id !== noteId));
+      showToast('Note deleted');
     } catch (err) {
       console.error('Error deleting note:', err);
-      alert('Failed to delete note');
+      showToast('Failed to delete note', 'error');
     }
   };
 
@@ -302,10 +400,14 @@ export default function EReader({ bookId, onClose }) {
   console.log('Rendering EReader with book:', book);
   console.log('Content length:', content?.length);
 
+  const currentPage = Math.floor((scrollPosition / totalHeight) * 100) || 0;
+  const estimatedPages = Math.ceil(totalHeight / (window.innerHeight * 0.8)) || 1;
+  const currentEstimatedPage = Math.floor((scrollPosition / (window.innerHeight * 0.8))) + 1;
+
   return (
-    <div className={`fixed inset-0 z-50 ${getThemeClasses()} transition-colors duration-200`}>
+    <div className={`fixed inset-0 z-50 ${getThemeClasses()} transition-colors duration-200 flex flex-col`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center space-x-4">
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <i className="ri-close-line text-xl"></i>
@@ -318,41 +420,33 @@ export default function EReader({ bookId, onClose }) {
 
         {/* Controls */}
         <div className="flex items-center space-x-2">
-          {/* Font Size */}
-          <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2">
-            <button
-              onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            >
-              <i className="ri-font-size-2 text-lg"></i>
-            </button>
-            <span className="text-sm px-2 min-w-[3rem] text-center">{fontSize}px</span>
-            <button
-              onClick={() => setFontSize(Math.min(32, fontSize + 2))}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            >
-              <i className="ri-font-size text-lg"></i>
-            </button>
-          </div>
-
-          {/* Theme Selector */}
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <button
+            onClick={() => setShowToc(!showToc)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Table of Contents"
           >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="sepia">Sepia</option>
-          </select>
+            <i className="ri-list-unordered text-xl"></i>
+          </button>
+          
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Settings"
+          >
+            <i className="ri-settings-3-line text-xl"></i>
+          </button>
 
-          {/* Annotations Button */}
           <button
             onClick={() => setShowAnnotations(!showAnnotations)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
             title="Annotations"
           >
             <i className="ri-sticky-note-line text-xl"></i>
+            {(notes.length + highlights.length) > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {notes.length + highlights.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -365,17 +459,19 @@ export default function EReader({ bookId, onClose }) {
         />
       </div>
 
-      <div className="flex h-[calc(100vh-5rem)]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Content */}
         <div
           ref={contentRef}
-          className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-16 lg:px-32 py-8"
+          className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-16 lg:px-32 py-8 pb-24"
           onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {content ? (
             <div
               className="max-w-4xl mx-auto prose prose-lg dark:prose-invert"
-              style={{ fontSize: `${fontSize}px` }}
+              style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
               dangerouslySetInnerHTML={{ __html: content }}
             />
           ) : (
@@ -532,36 +628,188 @@ export default function EReader({ bookId, onClose }) {
         )}
       </div>
 
+      {/* Footer Navigation */}
+      <div className="flex-shrink-0 bg-gradient-to-t from-gray-900 to-gray-900/95 text-white shadow-2xl">
+        <div className="flex items-center justify-between px-4 py-4">
+          <button
+            onClick={scrollUp}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            title="Scroll up"
+          >
+            <i className="ri-arrow-up-s-line text-2xl"></i>
+          </button>
+          
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-300">Page</span>
+            <span className="font-semibold text-lg">{currentEstimatedPage}</span>
+            <span className="text-gray-400">of</span>
+            <span className="font-semibold text-lg">{estimatedPages}</span>
+            <span className="mx-2 text-gray-600">•</span>
+            <span className="text-gray-300">{currentPage}%</span>
+          </div>
+          
+          <button
+            onClick={scrollDown}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            title="Scroll down"
+          >
+            <i className="ri-arrow-down-s-line text-2xl"></i>
+          </button>
+        </div>
+      </div>
+
+      {/* TOC Sidebar */}
+      {showToc && (
+        <div className="absolute top-0 left-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-10 overflow-y-auto">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 className="text-lg font-bold">Table of Contents</h2>
+            <button
+              onClick={() => setShowToc(false)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            >
+              <i className="ri-close-line text-xl"></i>
+            </button>
+          </div>
+          <div className="p-2">
+            {toc.length > 0 ? toc.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => goToHeading(item.id)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <p className="font-medium">{item.label}</p>
+              </button>
+            )) : (
+              <p className="text-center text-gray-500 py-8 text-sm">No chapters found</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="absolute top-16 right-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-10 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold">Reading Settings</h3>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            >
+              <i className="ri-close-line text-xl"></i>
+            </button>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-3">Font Size</label>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+              >
+                <i className="ri-subtract-line"></i>
+              </button>
+              <span className="flex-1 text-center font-medium">{fontSize}px</span>
+              <button
+                onClick={() => setFontSize(Math.min(32, fontSize + 2))}
+                className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+              >
+                <i className="ri-add-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-3">Font Family</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Georgia', 'Arial', 'Times New Roman', 'Verdana'].map(font => (
+                <button
+                  key={font}
+                  onClick={() => setFontFamily(font)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                    fontFamily === font
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                  }`}
+                  style={{ fontFamily: font }}
+                >
+                  {font}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-3">Theme</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setTheme('light')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 dark:border-gray-600'
+                }`}
+              >
+                <div className="w-full h-8 bg-white border border-gray-300 rounded mb-2"></div>
+                <p className="text-xs font-medium">Light</p>
+              </button>
+              <button
+                onClick={() => setTheme('sepia')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  theme === 'sepia' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 dark:border-gray-600'
+                }`}
+              >
+                <div className="w-full h-8 bg-amber-50 border border-amber-200 rounded mb-2"></div>
+                <p className="text-xs font-medium">Sepia</p>
+              </button>
+              <button
+                onClick={() => setTheme('dark')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 dark:border-gray-600'
+                }`}
+              >
+                <div className="w-full h-8 bg-gray-900 border border-gray-700 rounded mb-2"></div>
+                <p className="text-xs font-medium">Dark</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Selection Menu */}
       {showSelectionMenu && selectedText && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 flex gap-2 z-50">
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 flex gap-2 z-50">
           <button
-            onClick={() => createHighlight('yellow')}
+            onClick={() => createHighlight('#ffeb3b')}
             className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Yellow highlight"
+            title="Yellow"
           >
             <div className="w-6 h-6 bg-yellow-300 rounded"></div>
           </button>
           <button
-            onClick={() => createHighlight('green')}
+            onClick={() => createHighlight('#4caf50')}
             className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Green highlight"
+            title="Green"
           >
-            <div className="w-6 h-6 bg-green-300 rounded"></div>
+            <div className="w-6 h-6 bg-green-400 rounded"></div>
           </button>
           <button
-            onClick={() => createHighlight('blue')}
+            onClick={() => createHighlight('#2196f3')}
             className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Blue highlight"
+            title="Blue"
           >
-            <div className="w-6 h-6 bg-blue-300 rounded"></div>
+            <div className="w-6 h-6 bg-blue-400 rounded"></div>
           </button>
           <button
-            onClick={() => createHighlight('pink')}
+            onClick={() => createHighlight('#f44336')}
             className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Pink highlight"
+            title="Red"
           >
-            <div className="w-6 h-6 bg-pink-300 rounded"></div>
+            <div className="w-6 h-6 bg-red-400 rounded"></div>
+          </button>
+          <button
+            onClick={() => createHighlight('#9c27b0')}
+            className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            title="Purple"
+          >
+            <div className="w-6 h-6 bg-purple-400 rounded"></div>
           </button>
           <div className="w-px bg-gray-300 dark:bg-gray-600"></div>
           <button
@@ -577,6 +825,21 @@ export default function EReader({ bookId, onClose }) {
             <i className="ri-sticky-note-line text-lg"></i>
           </button>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+            toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}
+        >
+          <i className={`${toast.type === 'success' ? 'ri-check-line' : 'ri-error-warning-line'} text-xl`}></i>
+          <span>{toast.message}</span>
+        </motion.div>
       )}
     </div>
   );
