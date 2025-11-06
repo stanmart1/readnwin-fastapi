@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
 from models.blog import BlogPost

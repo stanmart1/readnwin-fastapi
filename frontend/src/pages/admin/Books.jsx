@@ -282,7 +282,7 @@ const AdminBooks = () => {
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gray-50">
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-1.5 sm:py-3 lg:py-4">
           <div className="mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight break-words">
               Book Management
