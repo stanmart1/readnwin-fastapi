@@ -102,12 +102,23 @@ def create_blog_post(
     check_admin_access(current_user)
     
     try:
+        # Validate required fields
+        if not post_data.get('title'):
+            raise HTTPException(status_code=400, detail="Title is required")
+        if not post_data.get('slug'):
+            raise HTTPException(status_code=400, detail="Slug is required")
+        
+        # Check if slug already exists
+        existing = db.query(BlogPost).filter(BlogPost.slug == post_data.get('slug')).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Slug already exists")
+        
         # Create new blog post
         new_post = BlogPost(
             title=post_data.get('title'),
             slug=post_data.get('slug'),
-            content=post_data.get('content'),
-            excerpt=post_data.get('excerpt'),
+            content=post_data.get('content', ''),
+            excerpt=post_data.get('excerpt', ''),
             author_id=current_user.id,
             featured_image=post_data.get('featured_image'),
             featured=post_data.get('featured', False),
@@ -129,10 +140,14 @@ def create_blog_post(
             "message": "Blog post created successfully",
             "post_id": new_post.id
         }
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         print(f"Error creating blog post: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create blog post")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to create blog post: {str(e)}")
 
 @router.put("/posts/{post_id}")
 def update_blog_post(

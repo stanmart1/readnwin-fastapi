@@ -9,7 +9,7 @@ class BlogPost(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(Text)
     excerpt = Column(Text)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     featured_image = Column(String)

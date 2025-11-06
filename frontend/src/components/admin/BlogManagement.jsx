@@ -49,6 +49,7 @@ const BlogManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState('content');
+  const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState({});
   const hasFetched = useRef(false);
   const filtersInitialized = useRef(false);
@@ -654,8 +655,350 @@ const BlogManagement = () => {
           </div>
         )}
 
-        {/* Create/Edit Modal */}
-        {(showCreateModal || showEditModal) && (
+        {/* Create Modal - Multi-Stage */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+              <div className="p-3 xs:p-4 sm:p-6">
+                {/* Header with Steps */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Create Blog Post</h2>
+                    <button
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setCurrentStep(1);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <i className="ri-close-line text-2xl"></i>
+                    </button>
+                  </div>
+                  
+                  {/* Step Indicator */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center flex-1">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        {currentStep > 1 ? <i className="ri-check-line"></i> : '1'}
+                      </div>
+                      <div className={`flex-1 h-1 mx-2 ${currentStep > 1 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    </div>
+                    <div className="flex items-center flex-1">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        {currentStep > 2 ? <i className="ri-check-line"></i> : '2'}
+                      </div>
+                      <div className={`flex-1 h-1 mx-2 ${currentStep > 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    </div>
+                    <div className="flex items-center">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        3
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Step Labels */}
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span className={currentStep === 1 ? 'font-semibold text-blue-600' : ''}>Basic Info</span>
+                    <span className={currentStep === 2 ? 'font-semibold text-blue-600' : ''}>Content</span>
+                    <span className={currentStep === 3 ? 'font-semibold text-blue-600' : ''}>Settings & SEO</span>
+                  </div>
+                </div>
+
+                {/* Step 1: Basic Info */}
+                {currentStep === 1 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Title *</label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => handleTitleChange(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.title ? 'border-red-500' : ''}`}
+                        placeholder="Enter post title"
+                      />
+                      {validationErrors.title && <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Slug *</label>
+                      <input
+                        type="text"
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.slug ? 'border-red-500' : ''}`}
+                        placeholder="auto-generated-slug"
+                      />
+                      {validationErrors.slug && <p className="text-red-500 text-xs mt-1">{validationErrors.slug}</p>}
+                      <p className="text-xs text-gray-500 mt-1">URL: /blog/{formData.slug || 'post-slug'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Category</label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat.slug || cat.name} value={cat.name}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Featured Image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Max 5MB. Recommended: 1200x630px</p>
+                      {imagePreview && (
+                        <div className="mt-2 relative inline-block">
+                          <img src={imagePreview} alt="Preview" className="h-32 object-cover rounded" />
+                          <button
+                            onClick={() => { setImagePreview(null); setFormData({ ...formData, featured_image: null }); }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                            type="button"
+                          >
+                            <i className="ri-close-line text-sm"></i>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Content */}
+                {currentStep === 2 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Excerpt</label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.excerpt}
+                        onChange={(value) => setFormData({ ...formData, excerpt: value })}
+                        className="bg-white rounded-lg"
+                        placeholder="Brief description"
+                        modules={{
+                          toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            ['clean']
+                          ]
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Tags</label>
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                          className="flex-1 px-3 py-2 border rounded-lg"
+                          placeholder="Add tag and press Enter"
+                        />
+                        <button onClick={addTag} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                          Add
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1 text-sm">
+                            {tag}
+                            <button onClick={() => removeTag(tag)} type="button" className="text-blue-600 hover:text-blue-800">
+                              <i className="ri-close-line"></i>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Content *</label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.content}
+                        onChange={(value) => setFormData({ ...formData, content: value })}
+                        className={`bg-white rounded-lg ${validationErrors.content ? 'border-2 border-red-500' : ''}`}
+                        placeholder="Write your post content here..."
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['blockquote', 'code-block'],
+                            ['link', 'image'],
+                            ['clean']
+                          ]
+                        }}
+                        style={{ height: '300px', marginBottom: '60px' }}
+                      />
+                      {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Settings & SEO */}
+                {currentStep === 3 && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Status</label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center pt-6">
+                        <input
+                          type="checkbox"
+                          checked={formData.featured}
+                          onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <label className="ml-2 text-sm">Featured Post</label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">SEO Title</label>
+                      <input
+                        type="text"
+                        value={formData.seo_title}
+                        onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg ${validationErrors.seo_title ? 'border-red-500' : ''}`}
+                        placeholder="SEO optimized title"
+                        maxLength="60"
+                      />
+                      <div className="flex justify-between text-xs mt-1">
+                        <span className={formData.seo_title.length > 60 ? 'text-red-500' : 'text-gray-500'}>
+                          {formData.seo_title.length}/60 characters
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">SEO Description</label>
+                      <textarea
+                        value={formData.seo_description}
+                        onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg ${validationErrors.seo_description ? 'border-red-500' : ''}`}
+                        rows="3"
+                        placeholder="Meta description for search engines"
+                        maxLength="160"
+                      />
+                      <div className="flex justify-between text-xs mt-1">
+                        <span className={formData.seo_description.length > 160 ? 'text-red-500' : 'text-gray-500'}>
+                          {formData.seo_description.length}/160 characters
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">SEO Keywords</label>
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={keywordInput}
+                          onChange={(e) => setKeywordInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
+                          className="flex-1 px-3 py-2 border rounded-lg"
+                          placeholder="Add keyword and press Enter"
+                        />
+                        <button onClick={addKeyword} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                          Add
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.seo_keywords.map(keyword => (
+                          <span key={keyword} className="px-3 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1 text-sm">
+                            {keyword}
+                            <button onClick={() => removeKeyword(keyword)} type="button" className="text-green-600 hover:text-green-800">
+                              <i className="ri-close-line"></i>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 pt-6 border-t mt-6">
+                  {currentStep > 1 && (
+                    <button
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                    >
+                      <i className="ri-arrow-left-line mr-2"></i>
+                      Back
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setCurrentStep(1);
+                    }}
+                    className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex-1"></div>
+                  {currentStep < 3 ? (
+                    <button
+                      onClick={() => {
+                        // Validate current step
+                        if (currentStep === 1) {
+                          if (!formData.title.trim()) {
+                            setValidationErrors({ title: 'Title is required' });
+                            return;
+                          }
+                          if (!formData.slug.trim()) {
+                            setValidationErrors({ slug: 'Slug is required' });
+                            return;
+                          }
+                        }
+                        if (currentStep === 2) {
+                          if (!formData.content.trim()) {
+                            setValidationErrors({ content: 'Content is required' });
+                            return;
+                          }
+                        }
+                        setValidationErrors({});
+                        setCurrentStep(currentStep + 1);
+                      }}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Next
+                      <i className="ri-arrow-right-line ml-2"></i>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCreatePost}
+                      disabled={isSaving}
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
+                      {isSaving ? 'Creating...' : 'Create Post'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal - Keep Tabbed */}
+        {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
               <div className="p-3 xs:p-4 sm:p-6">
