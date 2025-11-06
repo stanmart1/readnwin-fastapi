@@ -72,7 +72,7 @@ export const useAdminBlog = () => {
 
   const createPost = async (data) => {
     try {
-      await api.post('/admin/blog', data);
+      await api.post('/api/blog/posts', data);
       return { success: true };
     } catch (err) {
       console.error('Error creating post:', err);
@@ -82,7 +82,7 @@ export const useAdminBlog = () => {
 
   const updatePost = async (id, data) => {
     try {
-      await api.put(`/admin/blog/${id}`, data);
+      await api.put(`/api/blog/posts/${id}`, data);
       return { success: true };
     } catch (err) {
       console.error('Error updating post:', err);

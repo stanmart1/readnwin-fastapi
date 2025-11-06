@@ -33,12 +33,16 @@ def get_blog_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
                 "slug": post.slug,
                 "content": post.content,
                 "excerpt": post.excerpt or (post.content[:200] + "..." if len(post.content) > 200 else post.content),
-                "author_name": getattr(post, 'author_name', 'Admin'),
-                "category": "general",
-                "featured": False,
+                "author_name": post.author.full_name if post.author else 'Admin',
+                "category": post.category or "general",
+                "featured": post.featured or False,
+                "featured_image": post.featured_image,
+                "cover_image": post.featured_image,
+                "tags": post.tags or [],
                 "read_time": max(1, len(post.content.split()) // 200) if post.content else 5,
                 "created_at": post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
-                "images": []
+                "published_at": post.published_at.isoformat() if post.published_at else post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
+                "images": [post.featured_image] if post.featured_image else []
             }
             for post in posts
         ]
@@ -62,24 +66,29 @@ def get_blog_post(slug: str, db: Session = Depends(get_db)):
                 "slug": post.slug,
                 "content": post.content,
                 "excerpt": post.excerpt or (post.content[:200] + "..." if len(post.content) > 200 else post.content),
-                "author_name": getattr(post, 'author_name', 'Admin'),
-                "category": "general",
-                "featured": False,
+                "author_name": post.author.full_name if post.author else 'Admin',
+                "category": post.category or "general",
+                "featured": post.featured or False,
+                "featured_image": post.featured_image,
+                "cover_image": post.featured_image,
+                "tags": post.tags or [],
+                "seo_title": post.seo_title,
+                "seo_description": post.seo_description,
+                "seo_keywords": post.seo_keywords or [],
                 "read_time": max(1, len(post.content.split()) // 200) if post.content else 5,
                 "views_count": 0,
                 "likes_count": 0,
                 "comments_count": 0,
-                "tags": [],
                 "created_at": post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
-                "published_at": post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
-                "images": []
+                "published_at": post.published_at.isoformat() if post.published_at else post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
+                "images": [post.featured_image] if post.featured_image else []
             }
         }
     except HTTPException:
         raise
     except Exception as e:
         print(f"Database error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch blog post")
+        raise HTTPException(status_code=500, detail="Failed to fetch blog post"}
 
 # Admin endpoints
 @router.post("/posts")
@@ -98,7 +107,16 @@ def create_blog_post(
             slug=post_data.get('slug'),
             content=post_data.get('content'),
             excerpt=post_data.get('excerpt'),
-            is_published=post_data.get('status') == 'published'
+            author_id=current_user.id,
+            featured_image=post_data.get('featured_image'),
+            featured=post_data.get('featured', False),
+            category=post_data.get('category', 'general'),
+            tags=post_data.get('tags', []),
+            seo_title=post_data.get('seo_title'),
+            seo_description=post_data.get('seo_description'),
+            seo_keywords=post_data.get('seo_keywords', []),
+            is_published=post_data.get('status') == 'published',
+            published_at=func.now() if post_data.get('status') == 'published' else None
         )
         
         db.add(new_post)
@@ -135,7 +153,18 @@ def update_blog_post(
         post.slug = post_data.get('slug', post.slug)
         post.content = post_data.get('content', post.content)
         post.excerpt = post_data.get('excerpt', post.excerpt)
+        if 'featured_image' in post_data:
+            post.featured_image = post_data.get('featured_image')
+        post.featured = post_data.get('featured', post.featured)
+        post.category = post_data.get('category', post.category)
+        post.tags = post_data.get('tags', post.tags)
+        post.seo_title = post_data.get('seo_title', post.seo_title)
+        post.seo_description = post_data.get('seo_description', post.seo_description)
+        post.seo_keywords = post_data.get('seo_keywords', post.seo_keywords)
+        was_published = post.is_published
         post.is_published = post_data.get('status') == 'published'
+        if not was_published and post.is_published:
+            post.published_at = func.now()
         
         db.commit()
         

@@ -43,19 +43,34 @@ const AdminContact = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Contact Page Management</h1>
-              <p className="text-gray-600 mt-1">Manage contact methods, FAQs, and office information</p>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="ri-contacts-line text-blue-600"></i>
+                  Contact Page Management
+                </h1>
+                <p className="text-gray-600 mt-1">Manage contact methods and office information</p>
+              </div>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin"></i>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-save-line"></i>
+                    Save Changes
+                  </>
+                )}
+              </button>
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save All Changes'}
-            </button>
           </div>
         </div>
 

@@ -79,6 +79,10 @@ export default function EpubReader({ bookId, onClose }) {
       isMounted = false;
       clearTimeout(timer);
       window.removeEventListener('online', handleOnline);
+      if (viewerRef.current) {
+        viewerRef.current.removeEventListener('touchstart', handleTouchStart);
+        viewerRef.current.removeEventListener('touchend', handleTouchEnd);
+      }
       if (bookRef.current) {
         try {
           bookRef.current.destroy();
@@ -90,7 +94,6 @@ export default function EpubReader({ bookId, onClose }) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      // Touch events are cleaned up when rendition is destroyed
     };
   }, [bookId]);
 
@@ -182,14 +185,12 @@ export default function EpubReader({ bookId, onClose }) {
       const navigation = await epubBook.loaded.navigation;
       setToc(navigation.toc);
 
-      // Create rendition with explicit settings to prevent double-page spread
+      // Create rendition with single-page view
       const renditionInstance = epubBook.renderTo(viewerRef.current, {
         width: '100%',
         height: '100%',
         spread: 'none',
-        flow: 'paginated',
-        minSpreadWidth: 99999, // Force single page by setting impossible spread width
-        snap: true // Snap to page boundaries
+        flow: 'paginated'
       });
 
       setRendition(renditionInstance);
@@ -268,15 +269,11 @@ export default function EpubReader({ bookId, onClose }) {
         setTimeout(() => setShowTour(true), 1000);
       }
 
-      // Add touch event listeners for swipe gestures on the iframe
-      renditionInstance.on('rendered', () => {
-        const iframe = viewerRef.current?.querySelector('iframe');
-        if (iframe && iframe.contentDocument) {
-          const iframeDoc = iframe.contentDocument;
-          iframeDoc.addEventListener('touchstart', handleTouchStart, { passive: true });
-          iframeDoc.addEventListener('touchend', handleTouchEnd, { passive: true });
-        }
-      });
+      // Add touch event listeners for swipe gestures on the viewer container
+      if (viewerRef.current) {
+        viewerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
+        viewerRef.current.addEventListener('touchend', handleTouchEnd, { passive: true });
+      }
 
     } catch (err) {
       console.error('Error loading EPUB:', err);

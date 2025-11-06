@@ -36,8 +36,20 @@ const BlogManagement = () => {
     tags: [],
     seo_title: '',
     seo_description: '',
-    seo_keywords: []
+    seo_keywords: [],
+    featured_image: null,
+    author_id: null,
+    published_at: ''
   });
+  const [tagInput, setTagInput] = useState('');
+  const [keywordInput, setKeywordInput] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedPosts, setSelectedPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(10);
+  const [activeTab, setActiveTab] = useState('content');
+  const [validationErrors, setValidationErrors] = useState({});
   const hasFetched = useRef(false);
   const filtersInitialized = useRef(false);
 
@@ -68,12 +80,18 @@ const BlogManagement = () => {
   };
 
   const handleCreatePost = async () => {
+    if (!validateForm()) {
+      setError('Please fix validation errors');
+      return;
+    }
     setIsSaving(true);
     try {
       const result = await createPost(formData);
       if (result.success) {
         setShowCreateModal(false);
         resetForm();
+        setActiveTab('content');
+        setValidationErrors({});
         loadData();
       } else {
         setError(result.error || 'Failed to create post');
@@ -85,12 +103,18 @@ const BlogManagement = () => {
 
   const handleUpdatePost = async () => {
     if (!selectedPost?.id) return;
+    if (!validateForm()) {
+      setError('Please fix validation errors');
+      return;
+    }
     setIsSaving(true);
     try {
       const result = await updatePost(selectedPost.id, formData);
       if (result.success) {
         setShowEditModal(false);
         setSelectedPost(null);
+        setActiveTab('content');
+        setValidationErrors({});
         loadData();
       } else {
         setError(result.error || 'Failed to update post');
@@ -128,8 +152,12 @@ const BlogManagement = () => {
       tags: post.tags || [],
       seo_title: post.seo_title || '',
       seo_description: post.seo_description || '',
-      seo_keywords: post.seo_keywords || []
+      seo_keywords: post.seo_keywords || [],
+      featured_image: null,
+      author_id: post.author_id || null,
+      published_at: post.published_at || ''
     });
+    setImagePreview(post.featured_image_url || null);
     setShowEditModal(true);
   };
 
@@ -145,8 +173,101 @@ const BlogManagement = () => {
       tags: [],
       seo_title: '',
       seo_description: '',
-      seo_keywords: []
+      seo_keywords: [],
+      featured_image: null,
+      author_id: null,
+      published_at: ''
     });
+    setTagInput('');
+    setKeywordInput('');
+    setImagePreview(null);
+    setActiveTab('content');
+    setValidationErrors({});
+  };
+
+  const generateSlug = (title) => {
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  };
+
+  const handleTitleChange = (title) => {
+    setFormData({ 
+      ...formData, 
+      title,
+      slug: formData.slug || generateSlug(title),
+      seo_title: formData.seo_title || title
+    });
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.title.trim()) errors.title = 'Required';
+    if (!formData.slug.trim()) errors.slug = 'Required';
+    if (!formData.content.trim()) errors.content = 'Required';
+    if (formData.seo_title.length > 60) errors.seo_title = 'Max 60 chars';
+    if (formData.seo_description.length > 160) errors.seo_description = 'Max 160 chars';
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image must be less than 5MB');
+        return;
+      }
+      setFormData({ ...formData, featured_image: file });
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
+  };
+
+  const addKeyword = () => {
+    if (keywordInput.trim() && !formData.seo_keywords.includes(keywordInput.trim())) {
+      setFormData({ ...formData, seo_keywords: [...formData.seo_keywords, keywordInput.trim()] });
+      setKeywordInput('');
+    }
+  };
+
+  const removeKeyword = (keyword) => {
+    setFormData({ ...formData, seo_keywords: formData.seo_keywords.filter(k => k !== keyword) });
+  };
+
+  const toggleSelectPost = (postId) => {
+    setSelectedPosts(prev => 
+      prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedPosts(selectedPosts.length === posts.length ? [] : posts.map(p => p.id));
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedPosts.length} posts?`)) return;
+    for (const id of selectedPosts) {
+      await deletePost(id);
+    }
+    setSelectedPosts([]);
+    loadData();
+  };
+
+  const handleBulkPublish = async () => {
+    for (const id of selectedPosts) {
+      await updatePost(id, { status: 'published' });
+    }
+    setSelectedPosts([]);
+    loadData();
   };
 
   const getStatusColor = (status) => {
@@ -157,6 +278,11 @@ const BlogManagement = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(posts.length / postsPerPage);
 
   if (loading && posts.length === 0) {
     return (
@@ -198,26 +324,27 @@ const BlogManagement = () => {
         )}
 
         {/* Header */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight break-words">
-                Blog Management
-              </h1>
-              <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed break-words">
-                Create and manage blog posts
-              </p>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4 sm:mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="ri-article-line text-blue-600"></i>
+                  Blog Management
+                </h1>
+                <p className="text-gray-600 mt-1">Create and manage blog posts</p>
+              </div>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowCreateModal(true);
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2"
+              >
+                <i className="ri-add-line"></i>
+                <span>Create Post</span>
+              </button>
             </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg sm:rounded-full hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 font-medium flex items-center justify-center gap-2"
-            >
-              <i className="ri-add-line"></i>
-              <span>Create Post</span>
-            </button>
           </div>
         </div>
 
@@ -317,12 +444,49 @@ const BlogManagement = () => {
           </div>
         </div>
 
+        {/* Bulk Actions */}
+        {selectedPosts.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-blue-900">
+              {selectedPosts.length} post{selectedPosts.length > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBulkPublish}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+              >
+                Publish Selected
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+              >
+                Delete Selected
+              </button>
+              <button
+                onClick={() => setSelectedPosts([])}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Posts Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto -mx-3 sm:mx-0">
             <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-2 sm:px-4 lg:px-6 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedPosts.length === posts.length && posts.length > 0}
+                      onChange={toggleSelectAll}
+                      className="rounded"
+                    />
+                  </th>
                   <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Post
                   </th>
@@ -341,9 +505,17 @@ const BlogManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {posts.length > 0 ? (
-                  posts.map((post) => (
+                {currentPosts.length > 0 ? (
+                  currentPosts.map((post) => (
                     <tr key={post.id} className="hover:bg-gray-50">
+                      <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedPosts.includes(post.id)}
+                          onChange={() => toggleSelectPost(post.id)}
+                          className="rounded"
+                        />
+                      </td>
                       <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div>
                           <div className="flex items-center gap-1 sm:gap-2">
@@ -377,6 +549,16 @@ const BlogManagement = () => {
                       <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => {
+                              handleEditPost(post);
+                              setShowPreview(true);
+                            }}
+                            className="text-purple-600 hover:text-purple-900 flex-shrink-0"
+                            title="Preview"
+                          >
+                            <i className="ri-eye-line text-lg"></i>
+                          </button>
+                          <button
                             onClick={() => handleEditPost(post)}
                             className="text-blue-600 hover:text-blue-900 flex-shrink-0"
                             title="Edit"
@@ -401,7 +583,7 @@ const BlogManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
+                    <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
                       <i className="ri-article-line text-4xl sm:text-6xl text-gray-300 mb-3 sm:mb-4"></i>
                       <h3 className="text-sm sm:text-lg font-medium text-gray-900">No posts found</h3>
                       <p className="text-xs sm:text-base text-gray-500 mt-1">Create your first blog post</p>
@@ -411,7 +593,66 @@ const BlogManagement = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="text-sm text-gray-700">
+                Showing {indexOfFirstPost + 1} to {Math.min(indexOfLastPost, posts.length)} of {posts.length} posts
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`px-3 py-1 border rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Preview Modal */}
+        {showPreview && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold">Preview</h2>
+                  <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-gray-600">
+                    <i className="ri-close-line text-2xl"></i>
+                  </button>
+                </div>
+                {imagePreview && <img src={imagePreview} alt="Featured" className="w-full h-64 object-cover rounded-lg mb-4" />}
+                <h1 className="text-3xl font-bold mb-2">{formData.title}</h1>
+                <div className="flex gap-2 mb-4">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{formData.category}</span>
+                  {formData.tags.map(tag => (
+                    <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">{tag}</span>
+                  ))}
+                </div>
+                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: formData.content }} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Create/Edit Modal */}
         {(showCreateModal || showEditModal) && (
@@ -433,29 +674,59 @@ const BlogManagement = () => {
                   </button>
                 </div>
 
+                {/* Tabs */}
+                <div className="flex border-b mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('content')}
+                    className={`px-4 py-2 font-medium ${activeTab === 'content' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+                  >
+                    Content
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-4 py-2 font-medium ${activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('seo')}
+                    className={`px-4 py-2 font-medium ${activeTab === 'seo' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+                  >
+                    SEO
+                  </button>
+                </div>
+
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Title</label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="Post title"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Slug</label>
-                      <input
-                        type="text"
-                        value={formData.slug}
-                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="post-slug"
-                      />
-                    </div>
-                  </div>
+                  {activeTab === 'content' && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Title *</label>
+                          <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => handleTitleChange(e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.title ? 'border-red-500' : ''}`}
+                            placeholder="Enter post title"
+                          />
+                          {validationErrors.title && <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Slug *</label>
+                          <input
+                            type="text"
+                            value={formData.slug}
+                            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.slug ? 'border-red-500' : ''}`}
+                            placeholder="auto-generated-slug"
+                          />
+                          {validationErrors.slug && <p className="text-red-500 text-xs mt-1">{validationErrors.slug}</p>}
+                          <p className="text-xs text-gray-500 mt-1">URL: /blog/{formData.slug || 'post-slug'}</p>
+                        </div>
+                      </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-1">Excerpt</label>
@@ -474,35 +745,93 @@ const BlogManagement = () => {
                     />
                   </div>
 
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Featured Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="w-full px-3 py-2 border rounded-lg"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Max 5MB. Recommended: 1200x630px</p>
+                        {imagePreview && (
+                          <div className="mt-2 relative inline-block">
+                            <img src={imagePreview} alt="Preview" className="h-32 object-cover rounded" />
+                            <button
+                              onClick={() => { setImagePreview(null); setFormData({ ...formData, featured_image: null }); }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                              type="button"
+                            >
+                              <i className="ri-close-line text-sm"></i>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                   <div>
-                    <label className="block text-sm font-medium mb-1">Content</label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.content}
-                      onChange={(value) => setFormData({ ...formData, content: value })}
-                      className="bg-white rounded-lg"
-                      placeholder="Post content"
-                      modules={{
-                        toolbar: [
-                          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                          [{ 'font': [] }],
-                          [{ 'size': ['small', false, 'large', 'huge'] }],
-                          ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
-                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                          [{ 'script': 'sub'}, { 'script': 'super' }],
-                          [{ 'indent': '-1'}, { 'indent': '+1' }],
-                          [{ 'direction': 'rtl' }],
-                          [{ 'align': [] }],
-                          ['link', 'image', 'video', 'formula'],
-                          [{ 'color': [] }, { 'background': [] }],
-                          ['clean']
-                        ]
-                      }}
-                      style={{ height: '300px', marginBottom: '50px' }}
-                    />
+                    <label className="block text-sm font-medium mb-1">Tags</label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                        className="flex-1 px-3 py-2 border rounded-lg"
+                        placeholder="Add tag and press Enter"
+                      />
+                      <button onClick={addTag} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tags.map(tag => (
+                        <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1 text-sm">
+                          {tag}
+                          <button onClick={() => removeTag(tag)} type="button" className="text-blue-600 hover:text-blue-800">
+                            <i className="ri-close-line"></i>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Content *</label>
+                        <ReactQuill
+                          theme="snow"
+                          value={formData.content}
+                          onChange={(value) => setFormData({ ...formData, content: value })}
+                          className={`bg-white rounded-lg ${validationErrors.content ? 'border-2 border-red-500' : ''}`}
+                          placeholder="Write your post content here..."
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, 3, false] }],
+                              ['bold', 'italic', 'underline', 'strike'],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              ['blockquote', 'code-block'],
+                              ['link', 'image'],
+                              ['clean']
+                            ]
+                          }}
+                          style={{ height: '400px', marginBottom: '60px' }}
+                        />
+                        {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab === 'settings' && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Publish Date</label>
+                      <input
+                        type="datetime-local"
+                        value={formData.published_at}
+                        onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Category</label>
                       <select
@@ -515,6 +844,9 @@ const BlogManagement = () => {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Status</label>
                       <select
@@ -527,26 +859,101 @@ const BlogManagement = () => {
                         <option value="archived">Archived</option>
                       </select>
                     </div>
-                    <div className="flex items-center pt-6">
-                      <input
-                        type="checkbox"
-                        checked={formData.featured}
-                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <label className="ml-2 text-sm">Featured</label>
-                    </div>
-                  </div>
+                        <div className="flex items-center pt-6">
+                          <input
+                            type="checkbox"
+                            checked={formData.featured}
+                            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                            className="h-4 w-4 text-blue-600 rounded"
+                          />
+                          <label className="ml-2 text-sm">Featured</label>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab === 'seo' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">SEO Title</label>
+                        <input
+                          type="text"
+                          value={formData.seo_title}
+                          onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg ${validationErrors.seo_title ? 'border-red-500' : ''}`}
+                          placeholder="SEO optimized title"
+                          maxLength="60"
+                        />
+                        <div className="flex justify-between text-xs mt-1">
+                          <span className={formData.seo_title.length > 60 ? 'text-red-500' : 'text-gray-500'}>
+                            {formData.seo_title.length}/60 characters
+                          </span>
+                          {validationErrors.seo_title && <span className="text-red-500">{validationErrors.seo_title}</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">SEO Description</label>
+                        <textarea
+                          value={formData.seo_description}
+                          onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg ${validationErrors.seo_description ? 'border-red-500' : ''}`}
+                          rows="3"
+                          placeholder="Meta description for search engines"
+                          maxLength="160"
+                        />
+                        <div className="flex justify-between text-xs mt-1">
+                          <span className={formData.seo_description.length > 160 ? 'text-red-500' : 'text-gray-500'}>
+                            {formData.seo_description.length}/160 characters
+                          </span>
+                          {validationErrors.seo_description && <span className="text-red-500">{validationErrors.seo_description}</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">SEO Keywords</label>
+                        <div className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={keywordInput}
+                            onChange={(e) => setKeywordInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
+                            className="flex-1 px-3 py-2 border rounded-lg"
+                            placeholder="Add keyword and press Enter"
+                          />
+                          <button onClick={addKeyword} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            Add
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.seo_keywords.map(keyword => (
+                            <span key={keyword} className="px-3 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1 text-sm">
+                              {keyword}
+                              <button onClick={() => removeKeyword(keyword)} type="button" className="text-green-600 hover:text-green-800">
+                                <i className="ri-close-line"></i>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex gap-3 pt-4 border-t">
                     <button
                       onClick={() => {
                         setShowCreateModal(false);
                         setShowEditModal(false);
+                        setShowPreview(false);
                       }}
                       className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
                     >
                       Cancel
+                    </button>
+                    <button
+                      onClick={() => setShowPreview(true)}
+                      type="button"
+                      className="flex-1 px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50"
+                    >
+                      Preview
                     </button>
                     <button
                       onClick={showEditModal ? handleUpdatePost : handleCreatePost}
@@ -554,7 +961,7 @@ const BlogManagement = () => {
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs xs:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
-                      {isSaving ? 'Saving...' : 'Save Template'}
+                      {isSaving ? 'Saving...' : (showEditModal ? 'Update Post' : 'Create Post')}
                     </button>
                   </div>
                 </div>

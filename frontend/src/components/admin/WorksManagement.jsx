@@ -226,26 +226,27 @@ const WorksManagement = () => {
         )}
 
         {/* Header */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight break-words">
-                Works Management
-              </h1>
-              <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed break-words">
-                Manage portfolio works and images
-              </p>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4 sm:mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="ri-gallery-line text-blue-600"></i>
+                  Works Management
+                </h1>
+                <p className="text-gray-600 mt-1">Manage portfolio works and images</p>
+              </div>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowUploadForm(true);
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2"
+              >
+                <i className="ri-upload-line"></i>
+                <span>Upload Work</span>
+              </button>
             </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowUploadForm(true);
-              }}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg sm:rounded-full hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 font-medium flex items-center justify-center gap-2"
-            >
-              <i className="ri-upload-line"></i>
-              <span>Upload Work</span>
-            </button>
           </div>
         </div>
 
