@@ -88,7 +88,7 @@ def get_blog_post(slug: str, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         print(f"Database error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch blog post"}
+        raise HTTPException(status_code=500, detail="Failed to fetch blog post")
 
 # Admin endpoints
 @router.post("/posts")
