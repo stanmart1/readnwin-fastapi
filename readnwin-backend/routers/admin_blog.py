@@ -12,6 +12,9 @@ router = APIRouter(prefix="/admin/blog", tags=["admin", "blog"])
 
 @router.get("/posts")
 def get_admin_blog_posts(
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
@@ -19,7 +22,24 @@ def get_admin_blog_posts(
     check_admin_access(current_user)
     
     try:
-        posts = db.query(BlogPost).all()
+        query = db.query(BlogPost)
+        
+        # Apply filters
+        if status:
+            is_published = status == 'published'
+            query = query.filter(BlogPost.is_published == is_published)
+        
+        if category:
+            query = query.filter(BlogPost.category == category)
+        
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                (BlogPost.title.ilike(search_term)) |
+                (BlogPost.content.ilike(search_term))
+            )
+        
+        posts = query.all()
         
         posts_data = []
         for post in posts:
