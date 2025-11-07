@@ -195,12 +195,12 @@ export default function EpubReader({ bookId, onClose }) {
 
       setRendition(renditionInstance);
 
+      // Apply theme BEFORE displaying content to prevent re-render position shift
+      applyTheme(renditionInstance, theme);
+
       // Load saved location or start from beginning
       const savedLocation = libraryItem.last_read_location;
       if (savedLocation) {
-        // Wait for rendition to be ready
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         // Display the saved location
         await renditionInstance.display(savedLocation);
 
@@ -214,9 +214,6 @@ export default function EpubReader({ bookId, onClose }) {
       } else {
         await renditionInstance.display();
       }
-
-      // Apply theme
-      applyTheme(renditionInstance, theme);
 
       // Track location changes
       renditionInstance.on('relocated', (location) => {
