@@ -1335,8 +1335,7 @@ const BlogManagement = () => {
                 {/* Step 1: Basic Info */}
                 {currentStep === 1 && (
                   <div className="space-y-4">
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">Title *</label>
                           <input
@@ -1456,8 +1455,8 @@ const BlogManagement = () => {
                         />
                         {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
                       </div>
-                    </div>
-                  )}
+                  </div>
+                )}
 
                 {/* Step 2: Content */}
                 {currentStep === 2 && (
@@ -1534,8 +1533,7 @@ const BlogManagement = () => {
                 {/* Step 3: Settings & SEO */}
                 {currentStep === 3 && (
                   <div className="space-y-4">
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">Publish Date</label>
                       <input
@@ -1583,7 +1581,6 @@ const BlogManagement = () => {
                         </div>
                       </div>
 
-                    <>
                       <div>
                         <label className="block text-sm font-medium mb-1">SEO Title</label>
                         <input
@@ -1644,8 +1641,8 @@ const BlogManagement = () => {
                           ))}
                         </div>
                       </div>
-                  </div>
-                )}
+                    </div>
+                  )}
 
                 {/* Navigation Buttons */}
                 <div className="flex gap-3 pt-6 border-t mt-6">
