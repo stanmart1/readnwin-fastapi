@@ -195,8 +195,8 @@ const BlogManagement = () => {
     setFormData({ 
       ...formData, 
       title,
-      slug: formData.slug || generateSlug(title),
-      seo_title: formData.seo_title || title
+      slug: generateSlug(title),
+      seo_title: title
     });
   };
 
@@ -562,7 +562,24 @@ const BlogManagement = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => {
-                              handleEditPost(post);
+                              setSelectedPost(post);
+                              setFormData({
+                                title: post.title,
+                                slug: post.slug,
+                                excerpt: post.excerpt || '',
+                                content: post.content,
+                                status: post.status,
+                                featured: post.featured,
+                                category: post.category,
+                                tags: post.tags || [],
+                                seo_title: post.seo_title || '',
+                                seo_description: post.seo_description || '',
+                                seo_keywords: post.seo_keywords || [],
+                                featured_image: null,
+                                author_id: post.author_id || null,
+                                published_at: post.published_at || ''
+                              });
+                              setImagePreview(post.featured_image_url || null);
                               setShowPreview(true);
                             }}
                             className="text-purple-600 hover:text-purple-900 flex-shrink-0"
@@ -692,7 +709,24 @@ const BlogManagement = () => {
                 <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                   <button
                     onClick={() => {
-                      handleEditPost(post);
+                      setSelectedPost(post);
+                      setFormData({
+                        title: post.title,
+                        slug: post.slug,
+                        excerpt: post.excerpt || '',
+                        content: post.content,
+                        status: post.status,
+                        featured: post.featured,
+                        category: post.category,
+                        tags: post.tags || [],
+                        seo_title: post.seo_title || '',
+                        seo_description: post.seo_description || '',
+                        seo_keywords: post.seo_keywords || [],
+                        featured_image: null,
+                        author_id: post.author_id || null,
+                        published_at: post.published_at || ''
+                      });
+                      setImagePreview(post.featured_image_url || null);
                       setShowPreview(true);
                     }}
                     className="flex-1 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
