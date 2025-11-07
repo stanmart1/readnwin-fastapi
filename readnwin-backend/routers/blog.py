@@ -135,9 +135,21 @@ async def create_blog_post(
         # Handle image upload
         featured_image_path = None
         if featured_image and featured_image.filename:
-            if featured_image.size > storage.MAX_IMAGE_SIZE:
-                raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
-            featured_image_path = await storage.save_cover(featured_image)
+            print(f"📸 Blog image upload - filename: {featured_image.filename}")
+            try:
+                # Validate file size if available
+                if hasattr(featured_image, 'size') and featured_image.size and featured_image.size > storage.MAX_IMAGE_SIZE:
+                    raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+                
+                featured_image_path = await storage.save_cover(featured_image)
+                print(f"✅ Blog image saved: {featured_image_path} -> {storage.get_url(featured_image_path)}")
+            except HTTPException:
+                raise
+            except Exception as upload_error:
+                print(f"❌ Blog image upload failed: {upload_error}")
+                import traceback
+                traceback.print_exc()
+                raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(upload_error)}")
         
         # Parse JSON fields
         tags_list = json.loads(tags) if tags else []
@@ -230,12 +242,24 @@ async def update_blog_post(
         
         # Handle image upload
         if featured_image and featured_image.filename:
-            if featured_image.size > storage.MAX_IMAGE_SIZE:
-                raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
-            # Delete old image if exists
-            if post.featured_image:
-                storage.delete_file(post.featured_image)
-            post.featured_image = await storage.save_cover(featured_image)
+            try:
+                # Validate file size if available
+                if hasattr(featured_image, 'size') and featured_image.size and featured_image.size > storage.MAX_IMAGE_SIZE:
+                    raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+                
+                # Delete old image if exists
+                if post.featured_image:
+                    storage.delete_file(post.featured_image)
+                
+                post.featured_image = await storage.save_cover(featured_image)
+                print(f"✅ Blog image updated: {post.featured_image} -> {storage.get_url(post.featured_image)}")
+            except HTTPException:
+                raise
+            except Exception as upload_error:
+                print(f"❌ Blog image update failed: {upload_error}")
+                import traceback
+                traceback.print_exc()
+                raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(upload_error)}")
         
         # Handle publishing
         if status is not None:
