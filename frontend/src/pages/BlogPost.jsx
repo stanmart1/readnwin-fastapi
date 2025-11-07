@@ -90,11 +90,12 @@ export default function BlogPost() {
 
       {/* Hero Image */}
       <div className="relative h-96 bg-gradient-to-r from-blue-600 to-purple-600">
-        {post.cover_image && (
+        {(post.featured_image || post.cover_image) && (
           <img
-            src={post.cover_image}
+            src={post.featured_image ? `/storage/${post.featured_image}` : post.cover_image}
             alt={post.title}
             className="w-full h-full object-cover opacity-50"
+            onError={(e) => e.target.style.display = 'none'}
           />
         )}
       </div>
@@ -186,16 +187,17 @@ export default function BlogPost() {
                   className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
                 >
                   <img
-                    src={relatedPost.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                    src={relatedPost.featured_image ? `/storage/${relatedPost.featured_image}` : relatedPost.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                     alt={relatedPost.title}
                     className="w-full h-48 object-cover"
+                    onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                   />
                   <div className="p-6">
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">{relatedPost.title}</h3>
                     <p className="text-gray-600 text-sm line-clamp-2">{relatedPost.excerpt}</p>
                   </div>
                 </Link>
-              ))}
+              ))
             </div>
           </div>
         )}

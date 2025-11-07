@@ -158,7 +158,9 @@ const BlogManagement = () => {
       author_id: post.author_id || null,
       published_at: post.published_at || ''
     });
-    setImagePreview(post.featured_image_url || null);
+    // Use featured_image_url or construct URL from featured_image path
+    const imageUrl = post.featured_image_url || (post.featured_image ? `/storage/${post.featured_image}` : null);
+    setImagePreview(imageUrl);
     setShowEditModal(true);
   };
 
@@ -518,17 +520,27 @@ const BlogManagement = () => {
                         />
                       </td>
                       <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                        <div>
-                          <div className="flex items-center gap-1 sm:gap-2">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{post.title}</div>
-                            {post.featured && (
-                              <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded flex-shrink-0">
-                                Featured
-                              </span>
-                            )}
+                        <div className="flex items-center gap-2">
+                          {(post.featured_image_url || post.featured_image) && (
+                            <img 
+                              src={post.featured_image_url || `/storage/${post.featured_image}`} 
+                              alt={post.title}
+                              className="w-12 h-12 object-cover rounded flex-shrink-0"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{post.title}</div>
+                              {post.featured && (
+                                <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded flex-shrink-0">
+                                  Featured
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate hidden sm:block">{post.slug}</div>
+                            <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block">{post.excerpt}</div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate hidden sm:block">{post.slug}</div>
-                          <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block">{post.excerpt}</div>
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">

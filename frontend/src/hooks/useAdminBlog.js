@@ -72,7 +72,30 @@ export const useAdminBlog = () => {
 
   const createPost = async (data) => {
     try {
-      await api.post('/api/blog/posts', data);
+      const formData = new FormData();
+      
+      // Add text fields
+      formData.append('title', data.title);
+      formData.append('slug', data.slug);
+      formData.append('content', data.content);
+      formData.append('excerpt', data.excerpt || '');
+      formData.append('status', data.status);
+      formData.append('featured', String(data.featured));
+      formData.append('category', data.category);
+      formData.append('tags', JSON.stringify(data.tags || []));
+      formData.append('seo_title', data.seo_title || '');
+      formData.append('seo_description', data.seo_description || '');
+      formData.append('seo_keywords', JSON.stringify(data.seo_keywords || []));
+      if (data.published_at) formData.append('published_at', data.published_at);
+      
+      // Add file if present
+      if (data.featured_image instanceof File) {
+        formData.append('featured_image', data.featured_image);
+      }
+      
+      await api.post('/api/blog/posts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return { success: true };
     } catch (err) {
       console.error('Error creating post:', err);
@@ -82,7 +105,30 @@ export const useAdminBlog = () => {
 
   const updatePost = async (id, data) => {
     try {
-      await api.put(`/api/blog/posts/${id}`, data);
+      const formData = new FormData();
+      
+      // Add text fields
+      formData.append('title', data.title);
+      formData.append('slug', data.slug);
+      formData.append('content', data.content);
+      formData.append('excerpt', data.excerpt || '');
+      formData.append('status', data.status);
+      formData.append('featured', String(data.featured));
+      formData.append('category', data.category);
+      formData.append('tags', JSON.stringify(data.tags || []));
+      formData.append('seo_title', data.seo_title || '');
+      formData.append('seo_description', data.seo_description || '');
+      formData.append('seo_keywords', JSON.stringify(data.seo_keywords || []));
+      if (data.published_at) formData.append('published_at', data.published_at);
+      
+      // Add file if present
+      if (data.featured_image instanceof File) {
+        formData.append('featured_image', data.featured_image);
+      }
+      
+      await api.put(`/api/blog/posts/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return { success: true };
     } catch (err) {
       console.error('Error updating post:', err);

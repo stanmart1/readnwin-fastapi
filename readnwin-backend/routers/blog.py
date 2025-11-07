@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from models.blog import BlogPost
 from models.user import User
 from pydantic import BaseModel
 from typing import List, Optional
+import json
 
 router = APIRouter()
 
@@ -38,12 +40,13 @@ def get_blog_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
                 "category": post.category or "general",
                 "featured": post.featured or False,
                 "featured_image": post.featured_image,
-                "cover_image": post.featured_image,
+                "featured_image_url": storage.get_url(post.featured_image) if post.featured_image else None,
+                "cover_image": storage.get_url(post.featured_image) if post.featured_image else None,
                 "tags": post.tags or [],
                 "read_time": max(1, len(post.content.split()) // 200) if post.content else 5,
                 "created_at": post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
                 "published_at": post.published_at.isoformat() if post.published_at else post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
-                "images": [post.featured_image] if post.featured_image else []
+                "images": [storage.get_url(post.featured_image)] if post.featured_image else []
             }
             for post in posts
         ]
@@ -71,7 +74,8 @@ def get_blog_post(slug: str, db: Session = Depends(get_db)):
                 "category": post.category or "general",
                 "featured": post.featured or False,
                 "featured_image": post.featured_image,
-                "cover_image": post.featured_image,
+                "featured_image_url": storage.get_url(post.featured_image) if post.featured_image else None,
+                "cover_image": storage.get_url(post.featured_image) if post.featured_image else None,
                 "tags": post.tags or [],
                 "seo_title": post.seo_title,
                 "seo_description": post.seo_description,
@@ -82,7 +86,7 @@ def get_blog_post(slug: str, db: Session = Depends(get_db)):
                 "comments_count": 0,
                 "created_at": post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
                 "published_at": post.published_at.isoformat() if post.published_at else post.created_at.isoformat() if post.created_at else "2024-01-01T00:00:00Z",
-                "images": [post.featured_image] if post.featured_image else []
+                "images": [storage.get_url(post.featured_image)] if post.featured_image else []
             }
         }
     except HTTPException:
@@ -93,8 +97,20 @@ def get_blog_post(slug: str, db: Session = Depends(get_db)):
 
 # Admin endpoints
 @router.post("/posts")
-def create_blog_post(
-    post_data: dict,
+async def create_blog_post(
+    title: str = Form(...),
+    slug: str = Form(...),
+    content: str = Form(...),
+    excerpt: str = Form(""),
+    status: str = Form("draft"),
+    featured: str = Form("false"),
+    category: str = Form("general"),
+    tags: str = Form("[]"),
+    seo_title: str = Form(""),
+    seo_description: str = Form(""),
+    seo_keywords: str = Form("[]"),
+    published_at: Optional[str] = Form(None),
+    featured_image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
@@ -102,33 +118,38 @@ def create_blog_post(
     check_admin_access(current_user)
     
     try:
-        # Validate required fields
-        if not post_data.get('title'):
-            raise HTTPException(status_code=400, detail="Title is required")
-        if not post_data.get('slug'):
-            raise HTTPException(status_code=400, detail="Slug is required")
-        
         # Check if slug already exists
-        existing = db.query(BlogPost).filter(BlogPost.slug == post_data.get('slug')).first()
+        existing = db.query(BlogPost).filter(BlogPost.slug == slug).first()
         if existing:
             raise HTTPException(status_code=400, detail="Slug already exists")
         
+        # Handle image upload
+        featured_image_path = None
+        if featured_image and featured_image.filename:
+            if featured_image.size > storage.MAX_IMAGE_SIZE:
+                raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+            featured_image_path = await storage.save_cover(featured_image)
+        
+        # Parse JSON fields
+        tags_list = json.loads(tags) if tags else []
+        seo_keywords_list = json.loads(seo_keywords) if seo_keywords else []
+        
         # Create new blog post
         new_post = BlogPost(
-            title=post_data.get('title'),
-            slug=post_data.get('slug'),
-            content=post_data.get('content', ''),
-            excerpt=post_data.get('excerpt', ''),
+            title=title,
+            slug=slug,
+            content=content,
+            excerpt=excerpt,
             author_id=current_user.id,
-            featured_image=post_data.get('featured_image'),
-            featured=post_data.get('featured', False),
-            category=post_data.get('category', 'general'),
-            tags=post_data.get('tags', []),
-            seo_title=post_data.get('seo_title'),
-            seo_description=post_data.get('seo_description'),
-            seo_keywords=post_data.get('seo_keywords', []),
-            is_published=post_data.get('status') == 'published',
-            published_at=func.now() if post_data.get('status') == 'published' else None
+            featured_image=featured_image_path,
+            featured=featured.lower() == 'true',
+            category=category,
+            tags=tags_list,
+            seo_title=seo_title,
+            seo_description=seo_description,
+            seo_keywords=seo_keywords_list,
+            is_published=status == 'published',
+            published_at=func.now() if status == 'published' else None
         )
         
         db.add(new_post)
@@ -150,9 +171,21 @@ def create_blog_post(
         raise HTTPException(status_code=500, detail=f"Failed to create blog post: {str(e)}")
 
 @router.put("/posts/{post_id}")
-def update_blog_post(
+async def update_blog_post(
     post_id: int,
-    post_data: dict,
+    title: Optional[str] = Form(None),
+    slug: Optional[str] = Form(None),
+    content: Optional[str] = Form(None),
+    excerpt: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    featured: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    seo_title: Optional[str] = Form(None),
+    seo_description: Optional[str] = Form(None),
+    seo_keywords: Optional[str] = Form(None),
+    published_at: Optional[str] = Form(None),
+    featured_image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
@@ -164,23 +197,43 @@ def update_blog_post(
         if not post:
             raise HTTPException(status_code=404, detail="Blog post not found")
         
-        # Update post fields
-        post.title = post_data.get('title', post.title)
-        post.slug = post_data.get('slug', post.slug)
-        post.content = post_data.get('content', post.content)
-        post.excerpt = post_data.get('excerpt', post.excerpt)
-        if 'featured_image' in post_data:
-            post.featured_image = post_data.get('featured_image')
-        post.featured = post_data.get('featured', post.featured)
-        post.category = post_data.get('category', post.category)
-        post.tags = post_data.get('tags', post.tags)
-        post.seo_title = post_data.get('seo_title', post.seo_title)
-        post.seo_description = post_data.get('seo_description', post.seo_description)
-        post.seo_keywords = post_data.get('seo_keywords', post.seo_keywords)
-        was_published = post.is_published
-        post.is_published = post_data.get('status') == 'published'
-        if not was_published and post.is_published:
-            post.published_at = func.now()
+        # Update fields if provided
+        if title is not None:
+            post.title = title
+        if slug is not None:
+            post.slug = slug
+        if content is not None:
+            post.content = content
+        if excerpt is not None:
+            post.excerpt = excerpt
+        if featured is not None:
+            post.featured = featured.lower() == 'true'
+        if category is not None:
+            post.category = category
+        if tags is not None:
+            post.tags = json.loads(tags)
+        if seo_title is not None:
+            post.seo_title = seo_title
+        if seo_description is not None:
+            post.seo_description = seo_description
+        if seo_keywords is not None:
+            post.seo_keywords = json.loads(seo_keywords)
+        
+        # Handle image upload
+        if featured_image and featured_image.filename:
+            if featured_image.size > storage.MAX_IMAGE_SIZE:
+                raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+            # Delete old image if exists
+            if post.featured_image:
+                storage.delete_file(post.featured_image)
+            post.featured_image = await storage.save_cover(featured_image)
+        
+        # Handle publishing
+        if status is not None:
+            was_published = post.is_published
+            post.is_published = status == 'published'
+            if not was_published and post.is_published:
+                post.published_at = func.now()
         
         db.commit()
         

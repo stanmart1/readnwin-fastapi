@@ -70,9 +70,10 @@ export default function Blog() {
                 >
                   <div className="relative h-48">
                     <img
-                      src={post.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                      src={post.featured_image ? `/storage/${post.featured_image}` : post.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                       alt={post.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                     />
                     <div className="absolute top-4 left-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(post.category)}`}>

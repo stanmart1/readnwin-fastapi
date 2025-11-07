@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.security import get_current_user_from_token, check_admin_access
+from core.storage import storage
 from models.user import User
 from models.blog import BlogPost
 from pydantic import BaseModel
@@ -33,7 +34,7 @@ def get_admin_blog_posts(
                 "status": "published" if post.is_published else "draft",
                 "featured": post.featured or False,
                 "featured_image": post.featured_image,
-                "featured_image_url": post.featured_image,
+                "featured_image_url": storage.get_url(post.featured_image) if post.featured_image else None,
                 "category": post.category or "general",
                 "tags": post.tags or [],
                 "seo_title": post.seo_title,
