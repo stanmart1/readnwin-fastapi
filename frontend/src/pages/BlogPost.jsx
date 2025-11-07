@@ -148,28 +148,28 @@ export default function BlogPost() {
 
           {/* Share Buttons */}
           <div className="pt-8 border-t">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share this post</h3>
-            <div className="flex gap-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Share this post</h3>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={() => sharePost('twitter')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500"
+                className="flex items-center justify-center sm:justify-start gap-2 px-4 py-3 sm:py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors font-medium text-sm sm:text-base"
               >
-                <i className="ri-twitter-fill"></i>
-                Twitter
+                <i className="ri-twitter-fill text-lg"></i>
+                <span>Twitter</span>
               </button>
               <button
                 onClick={() => sharePost('facebook')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center justify-center sm:justify-start gap-2 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
               >
-                <i className="ri-facebook-fill"></i>
-                Facebook
+                <i className="ri-facebook-fill text-lg"></i>
+                <span>Facebook</span>
               </button>
               <button
                 onClick={() => sharePost('linkedin')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+                className="flex items-center justify-center sm:justify-start gap-2 px-4 py-3 sm:py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium text-sm sm:text-base"
               >
-                <i className="ri-linkedin-fill"></i>
-                LinkedIn
+                <i className="ri-linkedin-fill text-lg"></i>
+                <span>LinkedIn</span>
               </button>
             </div>
           </div>
