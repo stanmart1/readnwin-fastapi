@@ -68,45 +68,44 @@ export default function Blog() {
                   transition={{ delay: index * 0.05, duration: 0.3 }}
                   className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
                 >
-                  <div className="relative h-48">
-                    <img
-                      src={(post.featured_image_url || post.cover_image)?.startsWith('http') ? (post.featured_image_url || post.cover_image) : `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url || post.cover_image || ''}` || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(post.category)}`}>
-                        {post.category || 'General'}
+                  <Link to={`/blog/${post.slug || post.id}`} className="block">
+                    <div className="relative h-48">
+                      <img
+                        src={(post.featured_image_url || post.cover_image)?.startsWith('http') ? (post.featured_image_url || post.cover_image) : `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url || post.cover_image || ''}` || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(post.category)}`}>
+                          {post.category || 'General'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      <div className="flex items-center text-sm text-gray-500 mb-3">
+                        <i className="ri-calendar-line mr-1"></i>
+                        <span>{formatDate(post.created_at)}</span>
+                        <span className="mx-2">•</span>
+                        <i className="ri-time-line mr-1"></i>
+                        <span>{post.read_time || 5} min read</span>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                        {post.title}
+                      </h3>
+
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        {(post.excerpt || post.content)?.replace(/<[^>]*>/g, '').substring(0, 150) + '...'}
+                      </p>
+
+                      <span className="inline-flex items-center text-blue-600 hover:text-purple-600 font-semibold">
+                        Read More
+                        <i className="ri-arrow-right-line ml-2"></i>
                       </span>
                     </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-center text-sm text-gray-500 mb-3">
-                      <i className="ri-calendar-line mr-1"></i>
-                      <span>{formatDate(post.created_at)}</span>
-                      <span className="mx-2">•</span>
-                      <i className="ri-time-line mr-1"></i>
-                      <span>{post.read_time || 5} min read</span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                      {post.title}
-                    </h3>
-
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {(post.excerpt || post.content)?.replace(/<[^>]*>/g, '').substring(0, 150) + '...'}
-                    </p>
-
-                    <Link
-                      to={`/blog/${post.slug || post.id}`}
-                      className="inline-flex items-center text-blue-600 hover:text-purple-600 font-semibold"
-                    >
-                      Read More
-                      <i className="ri-arrow-right-line ml-2"></i>
-                    </Link>
-                  </div>
+                  </Link>
                 </motion.article>
               ))}
             </div>
