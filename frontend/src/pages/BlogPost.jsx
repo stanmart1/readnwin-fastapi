@@ -197,7 +197,7 @@ export default function BlogPost() {
                     <p className="text-gray-600 text-sm line-clamp-2">{relatedPost.excerpt}</p>
                   </div>
                 </Link>
-              ))
+              ))}
             </div>
           </div>
         )}
