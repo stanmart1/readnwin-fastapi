@@ -92,7 +92,7 @@ export default function BlogPost() {
       <div className="relative h-96 bg-gradient-to-r from-blue-600 to-purple-600">
         {(post.featured_image_url || post.cover_image) && (
           <img
-            src={post.featured_image_url || post.cover_image}
+            src={(post.featured_image_url || post.cover_image)?.startsWith('http') ? (post.featured_image_url || post.cover_image) : `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url || post.cover_image}`}
             alt={post.title}
             className="w-full h-full object-cover opacity-50"
             onError={(e) => e.target.style.display = 'none'}
@@ -187,7 +187,7 @@ export default function BlogPost() {
                   className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
                 >
                   <img
-                    src={relatedPost.featured_image_url || relatedPost.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                    src={(relatedPost.featured_image_url || relatedPost.cover_image)?.startsWith('http') ? (relatedPost.featured_image_url || relatedPost.cover_image) : `${import.meta.env.VITE_API_BASE_URL}${relatedPost.featured_image_url || relatedPost.cover_image || ''}` || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                     alt={relatedPost.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}

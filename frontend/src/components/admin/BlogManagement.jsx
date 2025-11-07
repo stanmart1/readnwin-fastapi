@@ -522,7 +522,7 @@ const BlogManagement = () => {
                         <div className="flex items-center gap-2">
                           {post.featured_image_url && (
                             <img 
-                              src={post.featured_image_url} 
+                              src={post.featured_image_url.startsWith('http') ? post.featured_image_url : `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url}`}
                               alt={post.title}
                               className="w-12 h-12 object-cover rounded flex-shrink-0"
                               onError={(e) => e.target.style.display = 'none'}
@@ -650,7 +650,7 @@ const BlogManagement = () => {
                 <div className="flex items-start gap-3 mb-3">
                   {post.featured_image_url && (
                     <img 
-                      src={post.featured_image_url} 
+                      src={post.featured_image_url.startsWith('http') ? post.featured_image_url : `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url}`}
                       alt={post.title}
                       className="w-20 h-20 object-cover rounded flex-shrink-0"
                       onError={(e) => e.target.style.display = 'none'}
@@ -740,7 +740,7 @@ const BlogManagement = () => {
                 </div>
                 {imagePreview && (
                   <img 
-                    src={imagePreview} 
+                    src={imagePreview.startsWith('blob:') || imagePreview.startsWith('http') ? imagePreview : `${import.meta.env.VITE_API_BASE_URL}${imagePreview}`}
                     alt="Featured" 
                     className="w-full h-64 object-cover rounded-lg mb-4"
                     onError={(e) => {
