@@ -7,6 +7,9 @@ from models.about_content import AboutContent
 from models.user import User
 from typing import Dict, Any
 import bleach
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -72,14 +75,34 @@ async def upload_image(
     check_admin_access(current_user)
     
     try:
+        print(f"📸 Uploading about image: {image.filename}")
+        
+        # Read file content first for validation
+        file_content = await image.read()
+        file_size = len(file_content)
+        print(f"📏 File size: {file_size} bytes")
+        
+        # Validate file size (max 5MB)
+        if file_size > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size exceeds 5MB limit")
+        
+        # CRITICAL: Reset file pointer after reading
+        await image.seek(0)
+        print(f"🔄 File pointer reset to position 0")
+        
         # Save image using storage manager
         image_path = await storage.save_image(image, subfolder="about")
+        print(f"✅ Image saved successfully: {image_path}")
         
         # Return full URL
-        return {"url": storage.get_url(image_path)}
+        url = storage.get_url(image_path)
+        print(f"🔗 Image URL: {url}")
+        return {"url": url}
     
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error uploading image: {e}")
+        print(f"❌ Error uploading image: {e}")
         raise HTTPException(status_code=500, detail="Failed to upload image")
 
 @router.put("/admin")

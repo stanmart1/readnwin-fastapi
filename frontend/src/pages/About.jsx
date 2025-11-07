@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -9,20 +9,96 @@ import { createHTMLProps } from '../utils/htmlUtils';
 export default function About() {
   const { content, loading } = useAbout();
   const [selectedMember, setSelectedMember] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const carouselRef = useRef(null);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const scrollTimeoutRef = useRef(null);
 
   const aboutData = content || {};
+  
+  // Create infinite loop array by tripling the team members
+  const infiniteTeam = aboutData.team && aboutData.team.length > 0 ? [...aboutData.team, ...aboutData.team, ...aboutData.team] : [];
 
-  // Auto-rotate carousel every 5 seconds
+  // Initialize scroll position to middle section
   useEffect(() => {
-    if (!aboutData.team || aboutData.team.length <= 1) return;
-    
+    if (carouselRef.current && aboutData.team && aboutData.team.length > 0) {
+      const cardWidth = 376; // 360px width + 16px gap
+      carouselRef.current.scrollLeft = cardWidth * aboutData.team.length;
+    }
+  }, [aboutData.team]);
+
+  // Auto-scroll effect with infinite loop
+  useEffect(() => {
+    if (!isAutoScrolling || !carouselRef.current || !aboutData.team || aboutData.team.length === 0) return;
+
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev === aboutData.team.length - 1 ? 0 : prev + 1));
-    }, 5000);
+      if (carouselRef.current) {
+        const cardWidth = 376;
+        carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [aboutData.team]);
+  }, [isAutoScrolling, aboutData.team]);
+
+  // Handle infinite scroll reset with debouncing
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel || !aboutData.team || aboutData.team.length === 0) return;
+
+    const handleScroll = () => {
+      if (isUserScrolling) return;
+
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      scrollTimeoutRef.current = setTimeout(() => {
+        const cardWidth = 376;
+        const { scrollLeft } = carousel;
+        const sectionWidth = cardWidth * aboutData.team.length;
+
+        if (scrollLeft >= sectionWidth * 2 - cardWidth / 2) {
+          carousel.style.scrollBehavior = 'auto';
+          carousel.scrollLeft = scrollLeft - sectionWidth;
+          requestAnimationFrame(() => {
+            carousel.style.scrollBehavior = 'smooth';
+          });
+        }
+        else if (scrollLeft <= cardWidth / 2) {
+          carousel.style.scrollBehavior = 'auto';
+          carousel.scrollLeft = scrollLeft + sectionWidth;
+          requestAnimationFrame(() => {
+            carousel.style.scrollBehavior = 'smooth';
+          });
+        }
+      }, 150);
+    };
+
+    carousel.addEventListener('scroll', handleScroll);
+    return () => {
+      carousel.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [aboutData.team, isUserScrolling]);
+
+  // Pause auto-scroll on user interaction
+  const handleTouchStart = () => {
+    setIsAutoScrolling(false);
+    setIsUserScrolling(true);
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 300);
+    
+    setTimeout(() => {
+      setIsAutoScrolling(true);
+    }, 5000);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -172,75 +248,59 @@ export default function About() {
 
             {/* Carousel */}
             <div className="relative">
-              <div className="overflow-hidden">
-                <AnimatePresence mode="wait">
+              <div
+                ref={carouselRef}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleTouchStart}
+                onMouseUp={handleTouchEnd}
+                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2 snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {infiniteTeam.map((member, index) => (
                   <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex justify-center"
+                    key={`${member.name}-${index}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: (index % aboutData.team.length) * 0.1 }}
+                    className="flex-shrink-0 w-[360px] bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer snap-center"
+                    onClick={() => setSelectedMember(member)}
                   >
-                    <div className="w-full max-w-sm">
-                      <div
-                        className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                        onClick={() => setSelectedMember(aboutData.team[currentIndex])}
-                      >
-                        {aboutData.team[currentIndex].image && (
-                          <img
-                            src={getFileUrl(aboutData.team[currentIndex].image)}
-                            alt={aboutData.team[currentIndex].name}
-                            className="w-full h-80 object-cover"
-                          />
-                        )}
-                        <div className="p-6">
-                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                            {aboutData.team[currentIndex].name}
-                          </h3>
-                          <p className="text-lg text-purple-600 font-medium mb-4">
-                            {aboutData.team[currentIndex].role}
-                          </p>
-                          <button className="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
-                            <span>View Bio</span>
-                            <i className="ri-arrow-right-line"></i>
-                          </button>
-                        </div>
-                      </div>
+                    {member.image && (
+                      <img
+                        src={getFileUrl(member.image)}
+                        alt={member.name}
+                        className="w-full h-80 object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        {member.name}
+                      </h3>
+                      <p className="text-lg text-purple-600 font-medium mb-4">
+                        {member.role}
+                      </p>
+                      <span className="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+                        <span>View Bio</span>
+                        <i className="ri-arrow-right-line"></i>
+                      </span>
                     </div>
                   </motion.div>
-                </AnimatePresence>
+                ))}
               </div>
 
-              {/* Navigation Arrows */}
-              {aboutData.team.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentIndex((prev) => (prev === 0 ? aboutData.team.length - 1 : prev - 1))}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-                  >
-                    <i className="ri-arrow-left-line text-2xl text-gray-700"></i>
-                  </button>
-                  <button
-                    onClick={() => setCurrentIndex((prev) => (prev === aboutData.team.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-                  >
-                    <i className="ri-arrow-right-line text-2xl text-gray-700"></i>
-                  </button>
-                </>
-              )}
-
-              {/* Dots Indicator */}
-              <div className="flex justify-center gap-2 mt-8">
-                {aboutData.team.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-colors ${
-                      index === currentIndex ? 'bg-purple-600' : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                  />
-                ))}
+              {/* Auto-scroll indicator */}
+              <div className="flex justify-center mt-8 gap-3 items-center">
+                <button
+                  onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors shadow-md"
+                >
+                  <i className={`ri-${isAutoScrolling ? 'pause' : 'play'}-circle-line text-lg`}></i>
+                  {isAutoScrolling ? 'Auto-scroll' : 'Paused'}
+                </button>
               </div>
             </div>
           </div>
@@ -322,3 +382,14 @@ export default function About() {
     </div>
   );
 }
+
+// Add scrollbar hide styles
+const styles = `
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
