@@ -101,7 +101,13 @@ export default function BlogSection() {
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
                     <ProgressiveImage
-                      src={post.cover_image || post.images?.[0] || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                      src={
+                        (post.featured_image_url || post.cover_image)?.startsWith('http') 
+                          ? (post.featured_image_url || post.cover_image)
+                          : post.featured_image_url || post.cover_image
+                            ? `${import.meta.env.VITE_API_BASE_URL}${post.featured_image_url || post.cover_image}`
+                            : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'
+                      }
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       loading="lazy"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAdminBlog } from '../../hooks/useAdminBlog';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -51,8 +51,14 @@ const BlogManagement = () => {
   const [activeTab, setActiveTab] = useState('content');
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState({});
+  const [toast, setToast] = useState(null);
+  const [slugEditable, setSlugEditable] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const hasFetched = useRef(false);
   const filtersInitialized = useRef(false);
+  const autoSaveTimer = useRef(null);
+  const searchDebounce = useRef(null);
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -64,8 +70,14 @@ const BlogManagement = () => {
 
   useEffect(() => {
     if (filtersInitialized.current && hasFetched.current) {
-      fetchPosts(filters);
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
+      searchDebounce.current = setTimeout(() => {
+        fetchPosts(filters);
+      }, 300);
     }
+    return () => {
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    };
   }, [filters]);
 
   useEffect(() => {
@@ -74,10 +86,46 @@ const BlogManagement = () => {
     }
   }, [hookError]);
 
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if ((showCreateModal || showEditModal) && hasUnsavedChanges) {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = setTimeout(() => {
+        localStorage.setItem('blog_draft', JSON.stringify(formData));
+        showToast('Draft auto-saved', 'info');
+      }, 30000);
+    }
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [formData, showCreateModal, showEditModal, hasUnsavedChanges]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (showCreateModal) handleCreatePost();
+        if (showEditModal) handleUpdatePost();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateModal, showEditModal]);
+
   const loadData = async () => {
     await fetchPosts(filters);
     fetchCategories().catch(err => console.warn('Categories fetch failed:', err));
     fetchStats().catch(err => console.warn('Stats fetch failed:', err));
+  };
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
   };
 
   const handleCreatePost = async () => {
@@ -86,19 +134,28 @@ const BlogManagement = () => {
       return;
     }
     setIsSaving(true);
+    setUploadProgress(10);
     try {
+      setUploadProgress(50);
       const result = await createPost(formData);
+      setUploadProgress(100);
       if (result.success) {
         setShowCreateModal(false);
         resetForm();
+        setCurrentStep(1);
         setActiveTab('content');
         setValidationErrors({});
+        setHasUnsavedChanges(false);
+        localStorage.removeItem('blog_draft');
         loadData();
+        showToast('Blog post created successfully!', 'success');
       } else {
         setError(result.error || 'Failed to create post');
+        showToast('Failed to create post', 'error');
       }
     } finally {
       setIsSaving(false);
+      setUploadProgress(0);
     }
   };
 
@@ -109,19 +166,26 @@ const BlogManagement = () => {
       return;
     }
     setIsSaving(true);
+    setUploadProgress(10);
     try {
+      setUploadProgress(50);
       const result = await updatePost(selectedPost.id, formData);
+      setUploadProgress(100);
       if (result.success) {
         setShowEditModal(false);
         setSelectedPost(null);
         setActiveTab('content');
         setValidationErrors({});
+        setHasUnsavedChanges(false);
         loadData();
+        showToast('Blog post updated successfully!', 'success');
       } else {
         setError(result.error || 'Failed to update post');
+        showToast('Failed to update post', 'error');
       }
     } finally {
       setIsSaving(false);
+      setUploadProgress(0);
     }
   };
 
@@ -132,8 +196,10 @@ const BlogManagement = () => {
       const result = await deletePost(id);
       if (result.success) {
         loadData();
+        showToast('Blog post deleted successfully', 'success');
       } else {
         setError(result.error || 'Failed to delete post');
+        showToast('Failed to delete post', 'error');
       }
     } finally {
       setIsDeleting(false);
@@ -158,8 +224,9 @@ const BlogManagement = () => {
       author_id: post.author_id || null,
       published_at: post.published_at || ''
     });
-    // Only set preview if image exists on server
     setImagePreview(post.featured_image_url || null);
+    setCurrentStep(1);
+    setHasUnsavedChanges(false);
     setShowEditModal(true);
   };
 
@@ -184,7 +251,10 @@ const BlogManagement = () => {
     setKeywordInput('');
     setImagePreview(null);
     setActiveTab('content');
+    setCurrentStep(1);
     setValidationErrors({});
+    setSlugEditable(false);
+    setHasUnsavedChanges(false);
   };
 
   const generateSlug = (title) => {
@@ -195,9 +265,10 @@ const BlogManagement = () => {
     setFormData({ 
       ...formData, 
       title,
-      slug: generateSlug(title),
+      slug: slugEditable ? formData.slug : generateSlug(title),
       seo_title: title
     });
+    setHasUnsavedChanges(true);
   };
 
   const validateForm = () => {
@@ -216,10 +287,14 @@ const BlogManagement = () => {
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         setError('Image must be less than 5MB');
+        showToast('Image must be less than 5MB', 'error');
         return;
       }
+      setUploadProgress(30);
       setFormData({ ...formData, featured_image: file });
       setImagePreview(URL.createObjectURL(file));
+      setHasUnsavedChanges(true);
+      setTimeout(() => setUploadProgress(0), 1000);
     }
   };
 
@@ -285,6 +360,23 @@ const BlogManagement = () => {
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(posts.length / postsPerPage);
+  
+  const getPageNumbers = () => {
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    
+    const pages = [];
+    if (currentPage <= 3) {
+      for (let i = 1; i <= Math.min(maxVisible, totalPages); i++) pages.push(i);
+      if (totalPages > maxVisible) pages.push('...');
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(1, '...');
+      for (let i = totalPages - maxVisible + 2; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+    }
+    return pages;
+  };
 
   if (loading && posts.length === 0) {
     return (
@@ -306,6 +398,32 @@ const BlogManagement = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-1.5 sm:py-3 lg:py-4">
+        {/* Toast Notification */}
+        {toast && (
+          <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in ${
+            toast.type === 'success' ? 'bg-green-500 text-white' :
+            toast.type === 'error' ? 'bg-red-500 text-white' :
+            'bg-blue-500 text-white'
+          }`}>
+            <i className={`text-xl ${
+              toast.type === 'success' ? 'ri-checkbox-circle-line' :
+              toast.type === 'error' ? 'ri-error-warning-line' :
+              'ri-information-line'
+            }`}></i>
+            <span className="font-medium">{toast.message}</span>
+            <button onClick={() => setToast(null)} className="ml-2 hover:opacity-80">
+              <i className="ri-close-line text-xl"></i>
+            </button>
+          </div>
+        )}
+
+        {/* Upload Progress */}
+        {uploadProgress > 0 && (
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <div className="h-1 bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
@@ -580,6 +698,7 @@ const BlogManagement = () => {
                                 published_at: post.published_at || ''
                               });
                               setImagePreview(post.featured_image_url || null);
+                              setShowEditModal(false);
                               setShowPreview(true);
                             }}
                             className="text-purple-600 hover:text-purple-900 flex-shrink-0"
@@ -637,14 +756,18 @@ const BlogManagement = () => {
                 >
                   Previous
                 </button>
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`px-3 py-1 border rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
-                  >
-                    {i + 1}
-                  </button>
+                {getPageNumbers().map((page, i) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${i}`} className="px-3 py-1">...</span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 border rounded ${currentPage === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
+                    >
+                      {page}
+                    </button>
+                  )
                 ))}
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -727,6 +850,7 @@ const BlogManagement = () => {
                         published_at: post.published_at || ''
                       });
                       setImagePreview(post.featured_image_url || null);
+                      setShowEditModal(false);
                       setShowPreview(true);
                     }}
                     className="flex-1 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
@@ -807,8 +931,10 @@ const BlogManagement = () => {
                     <h2 className="text-xl font-bold text-gray-900">Create Blog Post</h2>
                     <button
                       onClick={() => {
+                        if (hasUnsavedChanges && !confirm('You have unsaved changes. Are you sure you want to close?')) return;
                         setShowCreateModal(false);
                         setCurrentStep(1);
+                        setHasUnsavedChanges(false);
                       }}
                       className="text-gray-400 hover:text-gray-600"
                     >
@@ -862,13 +988,23 @@ const BlogManagement = () => {
                     
                     <div>
                       <label className="block text-sm font-medium mb-1">Slug *</label>
-                      <input
-                        type="text"
-                        value={formData.slug}
-                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.slug ? 'border-red-500' : ''}`}
-                        placeholder="auto-generated-slug"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={formData.slug}
+                          onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                          disabled={!slugEditable}
+                          className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.slug ? 'border-red-500' : ''} ${!slugEditable ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                          placeholder="auto-generated-slug"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSlugEditable(!slugEditable)}
+                          className="px-3 py-2 border rounded-lg hover:bg-gray-50 text-sm"
+                        >
+                          <i className={slugEditable ? 'ri-lock-line' : 'ri-edit-line'}></i>
+                        </button>
+                      </div>
                       {validationErrors.slug && <p className="text-red-500 text-xs mt-1">{validationErrors.slug}</p>}
                       <p className="text-xs text-gray-500 mt-1">URL: /blog/{formData.slug || 'post-slug'}</p>
                     </div>
@@ -897,7 +1033,12 @@ const BlogManagement = () => {
                       <p className="text-xs text-gray-500 mt-1">Max 5MB. Recommended: 1200x630px</p>
                       {imagePreview && (
                         <div className="mt-2 relative inline-block">
-                          <img src={imagePreview} alt="Preview" className="h-32 object-cover rounded" />
+                          <img 
+                            src={imagePreview.startsWith('blob:') || imagePreview.startsWith('http') ? imagePreview : `${import.meta.env.VITE_API_BASE_URL}${imagePreview}`}
+                            alt="Preview" 
+                            className="h-32 object-cover rounded"
+                            onError={(e) => e.target.style.display = 'none'}
+                          />
                           <button
                             onClick={() => { setImagePreview(null); setFormData({ ...formData, featured_image: null }); }}
                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
@@ -919,7 +1060,7 @@ const BlogManagement = () => {
                       <ReactQuill
                         theme="snow"
                         value={formData.excerpt}
-                        onChange={(value) => setFormData({ ...formData, excerpt: value })}
+                        onChange={(value) => { setFormData({ ...formData, excerpt: value }); setHasUnsavedChanges(true); }}
                         className="bg-white rounded-lg"
                         placeholder="Brief description"
                         modules={{
@@ -963,7 +1104,7 @@ const BlogManagement = () => {
                       <ReactQuill
                         theme="snow"
                         value={formData.content}
-                        onChange={(value) => setFormData({ ...formData, content: value })}
+                        onChange={(value) => { setFormData({ ...formData, content: value }); setHasUnsavedChanges(true); }}
                         className={`bg-white rounded-lg ${validationErrors.content ? 'border-2 border-red-500' : ''}`}
                         placeholder="Write your post content here..."
                         modules={{
@@ -1086,8 +1227,10 @@ const BlogManagement = () => {
                   )}
                   <button
                     onClick={() => {
+                      if (hasUnsavedChanges && !confirm('You have unsaved changes. Are you sure you want to cancel?')) return;
                       setShowCreateModal(false);
                       setCurrentStep(1);
+                      setHasUnsavedChanges(false);
                     }}
                     className="px-6 py-2 border rounded-lg hover:bg-gray-50"
                   >
@@ -1138,53 +1281,60 @@ const BlogManagement = () => {
           </div>
         )}
 
-        {/* Edit Modal - Keep Tabbed */}
+        {/* Edit Modal - Same 3-Step Flow */}
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
               <div className="p-3 xs:p-4 sm:p-6">
-                <div className="flex items-start xs:items-center justify-between mb-4 xs:mb-6">
-                  <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-gray-900 leading-tight break-words pr-2">
-                    {showEditModal ? 'Edit Blog Post' : 'Create Blog Post'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setShowEditModal(false);
-                    }}
-                    className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1"
-                  >
-                    <i className="ri-close-line text-lg xs:text-xl sm:text-2xl"></i>
-                  </button>
+                {/* Header with Steps */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Edit Blog Post</h2>
+                    <button
+                      onClick={() => {
+                        if (hasUnsavedChanges && !confirm('You have unsaved changes. Are you sure you want to close?')) return;
+                        setShowEditModal(false);
+                        setCurrentStep(1);
+                        setHasUnsavedChanges(false);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <i className="ri-close-line text-2xl"></i>
+                    </button>
+                  </div>
+                  
+                  {/* Step Indicator */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center flex-1">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        {currentStep > 1 ? <i className="ri-check-line"></i> : '1'}
+                      </div>
+                      <div className={`flex-1 h-1 mx-2 ${currentStep > 1 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    </div>
+                    <div className="flex items-center flex-1">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        {currentStep > 2 ? <i className="ri-check-line"></i> : '2'}
+                      </div>
+                      <div className={`flex-1 h-1 mx-2 ${currentStep > 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                    </div>
+                    <div className="flex items-center">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        3
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Step Labels */}
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span className={currentStep === 1 ? 'font-semibold text-blue-600' : ''}>Basic Info</span>
+                    <span className={currentStep === 2 ? 'font-semibold text-blue-600' : ''}>Content</span>
+                    <span className={currentStep === 3 ? 'font-semibold text-blue-600' : ''}>Settings & SEO</span>
+                  </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('content')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'content' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                  >
-                    Content
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('settings')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                  >
-                    Settings
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('seo')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'seo' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                  >
-                    SEO
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {activeTab === 'content' && (
+                {/* Step 1: Basic Info */}
+                {currentStep === 1 && (
+                  <div className="space-y-4">
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -1240,7 +1390,12 @@ const BlogManagement = () => {
                         <p className="text-xs text-gray-500 mt-1">Max 5MB. Recommended: 1200x630px</p>
                         {imagePreview && (
                           <div className="mt-2 relative inline-block">
-                            <img src={imagePreview} alt="Preview" className="h-32 object-cover rounded" />
+                            <img 
+                              src={imagePreview.startsWith('blob:') || imagePreview.startsWith('http') ? imagePreview : `${import.meta.env.VITE_API_BASE_URL}${imagePreview}`}
+                              alt="Preview" 
+                              className="h-32 object-cover rounded"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
                             <button
                               onClick={() => { setImagePreview(null); setFormData({ ...formData, featured_image: null }); }}
                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
@@ -1301,10 +1456,85 @@ const BlogManagement = () => {
                         />
                         {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
                       </div>
-                    </>
-                  )}
+                    </div>
+                  </div>
+                )}
 
-                  {activeTab === 'settings' && (
+                {/* Step 2: Content */}
+                {currentStep === 2 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Excerpt</label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.excerpt}
+                        onChange={(value) => { setFormData({ ...formData, excerpt: value }); setHasUnsavedChanges(true); }}
+                        className="bg-white rounded-lg"
+                        placeholder="Brief description"
+                        modules={{
+                          toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            ['clean']
+                          ]
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Tags</label>
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                          className="flex-1 px-3 py-2 border rounded-lg"
+                          placeholder="Add tag and press Enter"
+                        />
+                        <button onClick={addTag} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                          Add
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1 text-sm">
+                            {tag}
+                            <button onClick={() => removeTag(tag)} type="button" className="text-blue-600 hover:text-blue-800">
+                              <i className="ri-close-line"></i>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Content *</label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.content}
+                        onChange={(value) => { setFormData({ ...formData, content: value }); setHasUnsavedChanges(true); }}
+                        className={`bg-white rounded-lg ${validationErrors.content ? 'border-2 border-red-500' : ''}`}
+                        placeholder="Write your post content here..."
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['blockquote', 'code-block'],
+                            ['link', 'image'],
+                            ['clean']
+                          ]
+                        }}
+                        style={{ height: '300px', marginBottom: '60px' }}
+                      />
+                      {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Settings & SEO */}
+                {currentStep === 3 && (
+                  <div className="space-y-4">
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -1353,10 +1583,7 @@ const BlogManagement = () => {
                           <label className="ml-2 text-sm">Featured</label>
                         </div>
                       </div>
-                    </>
-                  )}
 
-                  {activeTab === 'seo' && (
                     <>
                       <div>
                         <label className="block text-sm font-medium mb-1">SEO Title</label>
@@ -1418,36 +1645,69 @@ const BlogManagement = () => {
                           ))}
                         </div>
                       </div>
-                    </>
-                  )}
+                  </div>
+                )}
 
-                  <div className="flex gap-3 pt-4 border-t">
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 pt-6 border-t mt-6">
+                  {currentStep > 1 && (
+                    <button
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                    >
+                      <i className="ri-arrow-left-line mr-2"></i>
+                      Back
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (hasUnsavedChanges && !confirm('You have unsaved changes. Are you sure you want to cancel?')) return;
+                      setShowEditModal(false);
+                      setCurrentStep(1);
+                      setHasUnsavedChanges(false);
+                    }}
+                    className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex-1"></div>
+                  {currentStep < 3 ? (
                     <button
                       onClick={() => {
-                        setShowCreateModal(false);
-                        setShowEditModal(false);
-                        setShowPreview(false);
+                        if (currentStep === 1) {
+                          if (!formData.title.trim()) {
+                            setValidationErrors({ title: 'Title is required' });
+                            return;
+                          }
+                          if (!formData.slug.trim()) {
+                            setValidationErrors({ slug: 'Slug is required' });
+                            return;
+                          }
+                        }
+                        if (currentStep === 2) {
+                          if (!formData.content.trim()) {
+                            setValidationErrors({ content: 'Content is required' });
+                            return;
+                          }
+                        }
+                        setValidationErrors({});
+                        setCurrentStep(currentStep + 1);
                       }}
-                      className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
-                      Cancel
+                      Next
+                      <i className="ri-arrow-right-line ml-2"></i>
                     </button>
+                  ) : (
                     <button
-                      onClick={() => setShowPreview(true)}
-                      type="button"
-                      className="flex-1 px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50"
-                    >
-                      Preview
-                    </button>
-                    <button
-                      onClick={showEditModal ? handleUpdatePost : handleCreatePost}
+                      onClick={handleUpdatePost}
                       disabled={isSaving}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs xs:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       {isSaving && <i className="ri-loader-4-line animate-spin"></i>}
-                      {isSaving ? 'Saving...' : (showEditModal ? 'Update Post' : 'Create Post')}
+                      {isSaving ? 'Updating...' : 'Update Post'}
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
