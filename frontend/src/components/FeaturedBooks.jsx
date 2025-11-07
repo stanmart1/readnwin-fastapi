@@ -10,7 +10,8 @@ export default function FeaturedBooks() {
   const [selectedCategory, setSelectedCategory] = useState('featured');
   const [addedToCart, setAddedToCart] = useState(new Set());
   const { addToCart } = useCartContext();
-  const carouselRef = useRef(null);
+  const desktopCarouselRef = useRef(null);
+  const mobileCarouselRef = useRef(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const scrollTimeoutRef = useRef(null);
@@ -61,9 +62,10 @@ export default function FeaturedBooks() {
   };
 
   const scroll = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = carouselRef.current.offsetWidth * 0.8;
-      carouselRef.current.scrollBy({
+    const carousel = window.innerWidth >= 640 ? desktopCarouselRef.current : mobileCarouselRef.current;
+    if (carousel) {
+      const scrollAmount = carousel.offsetWidth * 0.8;
+      carousel.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
@@ -72,20 +74,26 @@ export default function FeaturedBooks() {
 
   // Initialize scroll position to middle section
   useEffect(() => {
-    if (carouselRef.current && books.length > 0) {
-      const cardWidth = 296; // 280px width + 16px gap
-      carouselRef.current.scrollLeft = cardWidth * books.length;
+    if (books.length > 0) {
+      const cardWidth = 296;
+      if (desktopCarouselRef.current) {
+        desktopCarouselRef.current.scrollLeft = cardWidth * books.length;
+      }
+      if (mobileCarouselRef.current) {
+        mobileCarouselRef.current.scrollLeft = cardWidth * books.length;
+      }
     }
   }, [books.length]);
 
   // Auto-scroll effect with infinite loop
   useEffect(() => {
-    if (!isAutoScrolling || !carouselRef.current || books.length === 0) return;
+    if (!isAutoScrolling || books.length === 0) return;
 
     const interval = setInterval(() => {
-      if (carouselRef.current) {
+      const carousel = window.innerWidth >= 640 ? desktopCarouselRef.current : mobileCarouselRef.current;
+      if (carousel) {
         const cardWidth = 296;
-        carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+        carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
       }
     }, 3000);
 
@@ -94,25 +102,22 @@ export default function FeaturedBooks() {
 
   // Handle infinite scroll reset with debouncing
   useEffect(() => {
-    const carousel = carouselRef.current;
-    if (!carousel || books.length === 0) return;
+    const desktopCarousel = desktopCarouselRef.current;
+    const mobileCarousel = mobileCarouselRef.current;
+    if (books.length === 0) return;
 
-    const handleScroll = () => {
-      // Don't reset while user is actively scrolling
+    const handleScroll = (carousel) => () => {
       if (isUserScrolling) return;
 
-      // Clear existing timeout
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      // Debounce the reset to avoid conflicts with rapid scrolling
       scrollTimeoutRef.current = setTimeout(() => {
         const cardWidth = 296;
         const { scrollLeft } = carousel;
         const sectionWidth = cardWidth * books.length;
 
-        // Reset without smooth behavior to avoid visual jump
         if (scrollLeft >= sectionWidth * 2 - cardWidth / 2) {
           carousel.style.scrollBehavior = 'auto';
           carousel.scrollLeft = scrollLeft - sectionWidth;
@@ -130,9 +135,22 @@ export default function FeaturedBooks() {
       }, 150);
     };
 
-    carousel.addEventListener('scroll', handleScroll);
+    if (desktopCarousel) {
+      const handler = handleScroll(desktopCarousel);
+      desktopCarousel.addEventListener('scroll', handler);
+    }
+    if (mobileCarousel) {
+      const handler = handleScroll(mobileCarousel);
+      mobileCarousel.addEventListener('scroll', handler);
+    }
+
     return () => {
-      carousel.removeEventListener('scroll', handleScroll);
+      if (desktopCarousel) {
+        desktopCarousel.removeEventListener('scroll', handleScroll(desktopCarousel));
+      }
+      if (mobileCarousel) {
+        mobileCarousel.removeEventListener('scroll', handleScroll(mobileCarousel));
+      }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
@@ -217,10 +235,7 @@ export default function FeaturedBooks() {
             {/* Desktop Carousel View */}
             <div className="hidden sm:block relative">
               <div
-                ref={carouselRef}
-                onMouseDown={handleTouchStart}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={handleTouchEnd}
+                ref={desktopCarouselRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
@@ -365,7 +380,7 @@ export default function FeaturedBooks() {
             {/* Mobile Carousel View */}
             <div className="sm:hidden relative">
               <div
-                ref={carouselRef}
+                ref={mobileCarouselRef}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2 snap-x snap-mandatory"
