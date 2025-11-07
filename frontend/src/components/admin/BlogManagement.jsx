@@ -158,9 +158,8 @@ const BlogManagement = () => {
       author_id: post.author_id || null,
       published_at: post.published_at || ''
     });
-    // Use featured_image_url or construct URL from featured_image path
-    const imageUrl = post.featured_image_url || (post.featured_image ? `/storage/${post.featured_image}` : null);
-    setImagePreview(imageUrl);
+    // Only set preview if image exists on server
+    setImagePreview(post.featured_image_url || null);
     setShowEditModal(true);
   };
 
@@ -476,9 +475,9 @@ const BlogManagement = () => {
           </div>
         )}
 
-        {/* Posts Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto -mx-3 sm:mx-0">
+        {/* Desktop Table View */}
+        <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -642,6 +641,92 @@ const BlogManagement = () => {
           )}
         </div>
 
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {currentPosts.length > 0 ? (
+            currentPosts.map((post) => (
+              <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                {/* Post Header */}
+                <div className="flex items-start gap-3 mb-3">
+                  {(post.featured_image_url || post.featured_image) && (
+                    <img 
+                      src={post.featured_image_url || `/storage/${post.featured_image}`} 
+                      alt={post.title}
+                      className="w-20 h-20 object-cover rounded flex-shrink-0"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">{post.title}</h3>
+                      <input
+                        type="checkbox"
+                        checked={selectedPosts.includes(post.id)}
+                        onChange={() => toggleSelectPost(post.id)}
+                        className="rounded flex-shrink-0 mt-1"
+                      />
+                    </div>
+                    {post.featured && (
+                      <span className="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded mb-1">
+                        Featured
+                      </span>
+                    )}
+                    <p className="text-xs text-gray-500 line-clamp-2">{post.excerpt}</p>
+                  </div>
+                </div>
+
+                {/* Post Meta */}
+                <div className="flex items-center gap-2 mb-3 text-xs">
+                  <span className={`px-2 py-1 rounded-full font-medium ${getStatusColor(post.status)}`}>
+                    {post.status}
+                  </span>
+                  <span className="px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
+                    {post.category}
+                  </span>
+                  <span className="text-gray-500">
+                    {post.views_count || 0} views
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() => {
+                      handleEditPost(post);
+                      setShowPreview(true);
+                    }}
+                    className="flex-1 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                  >
+                    <i className="ri-eye-line"></i>
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => handleEditPost(post)}
+                    className="flex-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                  >
+                    <i className="ri-edit-line"></i>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    disabled={isDeleting}
+                    className="flex-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    <i className={isDeleting ? "ri-loader-4-line animate-spin" : "ri-delete-bin-line"}></i>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+              <i className="ri-article-line text-5xl text-gray-300 mb-3"></i>
+              <h3 className="text-base font-medium text-gray-900">No posts found</h3>
+              <p className="text-sm text-gray-500 mt-1">Create your first blog post</p>
+            </div>
+          )}
+        </div>
+
         {/* Preview Modal */}
         {showPreview && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -653,7 +738,17 @@ const BlogManagement = () => {
                     <i className="ri-close-line text-2xl"></i>
                   </button>
                 </div>
-                {imagePreview && <img src={imagePreview} alt="Featured" className="w-full h-64 object-cover rounded-lg mb-4" />}
+                {imagePreview && (
+                  <img 
+                    src={imagePreview} 
+                    alt="Featured" 
+                    className="w-full h-64 object-cover rounded-lg mb-4"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      console.error('Failed to load image:', imagePreview);
+                    }}
+                  />
+                )}
                 <h1 className="text-3xl font-bold mb-2">{formData.title}</h1>
                 <div className="flex gap-2 mb-4">
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{formData.category}</span>
