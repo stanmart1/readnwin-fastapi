@@ -132,17 +132,29 @@ async def create_blog_post(
         if existing:
             raise HTTPException(status_code=400, detail="Slug already exists")
         
-        # Handle image upload
+        # Handle image upload - same logic as book covers
         featured_image_path = None
-        if featured_image and featured_image.filename:
-            print(f"📸 Blog image upload - filename: {featured_image.filename}")
+        if featured_image and featured_image.filename and featured_image.filename.strip():
+            print(f"🖼️ Blog image upload started - filename: {featured_image.filename}")
             try:
-                # Validate file size if available
-                if hasattr(featured_image, 'size') and featured_image.size and featured_image.size > storage.MAX_IMAGE_SIZE:
+                # Read file content to check size
+                file_content = await featured_image.read()
+                file_size = len(file_content)
+                print(f"📊 File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+                
+                # Validate file size
+                if file_size > storage.MAX_IMAGE_SIZE:
                     raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
                 
+                # Reset file pointer for save_cover
+                await featured_image.seek(0)
+                
+                # Save using storage manager (same as books)
                 featured_image_path = await storage.save_cover(featured_image)
-                print(f"✅ Blog image saved: {featured_image_path} -> {storage.get_url(featured_image_path)}")
+                print(f"✅ Blog image saved successfully!")
+                print(f"   - Path: {featured_image_path}")
+                print(f"   - URL: {storage.get_url(featured_image_path)}")
+                print(f"   - Full path: {storage.get_absolute_path(featured_image_path)}")
             except HTTPException:
                 raise
             except Exception as upload_error:
@@ -150,6 +162,8 @@ async def create_blog_post(
                 import traceback
                 traceback.print_exc()
                 raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(upload_error)}")
+        else:
+            print("ℹ️ No image uploaded with this blog post")
         
         # Parse JSON fields
         tags_list = json.loads(tags) if tags else []
@@ -177,16 +191,19 @@ async def create_blog_post(
         db.commit()
         db.refresh(new_post)
         
+        print(f"✅ Blog post created with ID: {new_post.id}")
+        
         return {
             "success": True,
             "message": "Blog post created successfully",
-            "post_id": new_post.id
+            "post_id": new_post.id,
+            "featured_image_url": storage.get_url(featured_image_path) if featured_image_path else None
         }
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        print(f"Error creating blog post: {e}")
+        print(f"❌ Error creating blog post: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to create blog post: {str(e)}")
@@ -218,6 +235,8 @@ async def update_blog_post(
         if not post:
             raise HTTPException(status_code=404, detail="Blog post not found")
         
+        print(f"📝 Updating blog post ID: {post_id}")
+        
         # Update fields if provided
         if title is not None:
             post.title = title
@@ -240,19 +259,32 @@ async def update_blog_post(
         if seo_keywords is not None:
             post.seo_keywords = json.loads(seo_keywords)
         
-        # Handle image upload
-        if featured_image and featured_image.filename:
+        # Handle image upload - same logic as book covers
+        if featured_image and featured_image.filename and featured_image.filename.strip():
+            print(f"🖼️ Blog image update started - filename: {featured_image.filename}")
             try:
-                # Validate file size if available
-                if hasattr(featured_image, 'size') and featured_image.size and featured_image.size > storage.MAX_IMAGE_SIZE:
+                # Read file content to check size
+                file_content = await featured_image.read()
+                file_size = len(file_content)
+                print(f"📊 File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+                
+                # Validate file size
+                if file_size > storage.MAX_IMAGE_SIZE:
                     raise HTTPException(status_code=400, detail=f"Image too large (max {storage.MAX_IMAGE_SIZE // 1024 // 1024}MB)")
+                
+                # Reset file pointer for save_cover
+                await featured_image.seek(0)
                 
                 # Delete old image if exists
                 if post.featured_image:
+                    print(f"🗑️ Deleting old image: {post.featured_image}")
                     storage.delete_file(post.featured_image)
                 
+                # Save new image
                 post.featured_image = await storage.save_cover(featured_image)
-                print(f"✅ Blog image updated: {post.featured_image} -> {storage.get_url(post.featured_image)}")
+                print(f"✅ Blog image updated successfully!")
+                print(f"   - Path: {post.featured_image}")
+                print(f"   - URL: {storage.get_url(post.featured_image)}")
             except HTTPException:
                 raise
             except Exception as upload_error:
@@ -270,15 +302,20 @@ async def update_blog_post(
         
         db.commit()
         
+        print(f"✅ Blog post {post_id} updated successfully")
+        
         return {
             "success": True,
-            "message": "Blog post updated successfully"
+            "message": "Blog post updated successfully",
+            "featured_image_url": storage.get_url(post.featured_image) if post.featured_image else None
         }
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        print(f"Error updating blog post: {e}")
+        print(f"❌ Error updating blog post: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Failed to update blog post")
 
 @router.delete("/posts/{post_id}")

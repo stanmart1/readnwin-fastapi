@@ -88,18 +88,21 @@ export const useAdminBlog = () => {
       formData.append('seo_keywords', JSON.stringify(data.seo_keywords || []));
       if (data.published_at) formData.append('published_at', data.published_at);
       
-      // Add file if present
-      if (data.featured_image instanceof File) {
+      // ONLY add file if it's actually a File object
+      if (data.featured_image && data.featured_image instanceof File) {
+        console.log('📤 Uploading blog image:', data.featured_image.name, data.featured_image.size, 'bytes');
         formData.append('featured_image', data.featured_image);
       }
       
-      await api.post('/api/blog/posts', formData, {
+      const response = await api.post('/api/blog/posts', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      console.log('✅ Blog post created:', response.data);
       return { success: true };
     } catch (err) {
-      console.error('Error creating post:', err);
-      return { success: false, error: err.message };
+      console.error('❌ Error creating post:', err);
+      console.error('Error details:', err.response?.data);
+      return { success: false, error: err.response?.data?.detail || err.message };
     }
   };
 
@@ -121,18 +124,21 @@ export const useAdminBlog = () => {
       formData.append('seo_keywords', JSON.stringify(data.seo_keywords || []));
       if (data.published_at) formData.append('published_at', data.published_at);
       
-      // Add file if present
-      if (data.featured_image instanceof File) {
+      // ONLY add file if it's actually a File object
+      if (data.featured_image && data.featured_image instanceof File) {
+        console.log('📤 Updating blog image:', data.featured_image.name, data.featured_image.size, 'bytes');
         formData.append('featured_image', data.featured_image);
       }
       
-      await api.put(`/api/blog/posts/${id}`, formData, {
+      const response = await api.put(`/api/blog/posts/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      console.log('✅ Blog post updated:', response.data);
       return { success: true };
     } catch (err) {
-      console.error('Error updating post:', err);
-      return { success: false, error: err.message };
+      console.error('❌ Error updating post:', err);
+      console.error('Error details:', err.response?.data);
+      return { success: false, error: err.response?.data?.detail || err.message };
     }
   };
 
