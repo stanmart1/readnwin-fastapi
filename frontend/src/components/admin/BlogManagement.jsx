@@ -1362,22 +1362,22 @@ const BlogManagement = () => {
                         </div>
                       </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Excerpt</label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.excerpt}
-                      onChange={(value) => setFormData({ ...formData, excerpt: value })}
-                      className="bg-white rounded-lg"
-                      placeholder="Brief description"
-                      modules={{
-                        toolbar: [
-                          ['bold', 'italic', 'underline'],
-                          ['clean']
-                        ]
-                      }}
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Excerpt</label>
+                        <ReactQuill
+                          theme="snow"
+                          value={formData.excerpt}
+                          onChange={(value) => setFormData({ ...formData, excerpt: value })}
+                          className="bg-white rounded-lg"
+                          placeholder="Brief description"
+                          modules={{
+                            toolbar: [
+                              ['bold', 'italic', 'underline'],
+                              ['clean']
+                            ]
+                          }}
+                        />
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium mb-1">Featured Image</label>
@@ -1407,32 +1407,32 @@ const BlogManagement = () => {
                         )}
                       </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Tags</label>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                        className="flex-1 px-3 py-2 border rounded-lg"
-                        placeholder="Add tag and press Enter"
-                      />
-                      <button onClick={addTag} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                        Add
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1 text-sm">
-                          {tag}
-                          <button onClick={() => removeTag(tag)} type="button" className="text-blue-600 hover:text-blue-800">
-                            <i className="ri-close-line"></i>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Tags</label>
+                        <div className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                            className="flex-1 px-3 py-2 border rounded-lg"
+                            placeholder="Add tag and press Enter"
+                          />
+                          <button onClick={addTag} type="button" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            Add
                           </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.tags.map(tag => (
+                            <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1 text-sm">
+                              {tag}
+                              <button onClick={() => removeTag(tag)} type="button" className="text-blue-600 hover:text-blue-800">
+                                <i className="ri-close-line"></i>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium mb-1">Content *</label>
@@ -1457,8 +1457,7 @@ const BlogManagement = () => {
                         {validationErrors.content && <p className="text-red-500 text-xs mt-1">{validationErrors.content}</p>}
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Step 2: Content */}
                 {currentStep === 2 && (
