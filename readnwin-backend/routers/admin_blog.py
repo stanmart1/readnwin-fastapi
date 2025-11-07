@@ -43,6 +43,16 @@ def get_admin_blog_posts(
         
         posts_data = []
         for post in posts:
+            # Get author name from first_name and last_name
+            author_name = 'Admin'
+            if post.author:
+                if post.author.first_name and post.author.last_name:
+                    author_name = f"{post.author.first_name} {post.author.last_name}"
+                elif post.author.first_name:
+                    author_name = post.author.first_name
+                elif post.author.username:
+                    author_name = post.author.username
+            
             posts_data.append({
                 "id": post.id,
                 "title": post.title,
@@ -50,7 +60,7 @@ def get_admin_blog_posts(
                 "excerpt": post.excerpt,
                 "content": post.content,
                 "author_id": post.author_id,
-                "author_name": post.author.full_name if post.author else 'Admin',
+                "author_name": author_name,
                 "status": "published" if post.is_published else "draft",
                 "featured": post.featured or False,
                 "featured_image": post.featured_image,
