@@ -966,12 +966,15 @@ async def get_reading_progress(
         
         progress_data = []
         for item in currently_reading:
+            # Convert progress from 0-1 decimal to 0-100 percentage
+            progress_percentage = (item.progress or 0) * 100
+            
             progress_data.append({
                 "book_id": item.book_id,
                 "title": item.book.title if item.book else "Unknown",
                 "author": item.book.author if item.book else "Unknown",
                 "cover_image": storage.get_url(item.book.cover_image) if item.book and item.book.cover_image else None,
-                "progress": item.progress or 0,
+                "progress": progress_percentage,
                 "last_read_at": item.last_read_at.isoformat() if item.last_read_at else None
             })
         
