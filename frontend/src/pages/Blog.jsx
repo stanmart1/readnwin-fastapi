@@ -70,7 +70,7 @@ export default function Blog() {
                 >
                   <div className="relative h-48">
                     <img
-                      src={post.featured_image ? `/storage/${post.featured_image}` : post.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
+                      src={post.featured_image_url || post.cover_image || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
                       alt={post.title}
                       className="w-full h-full object-cover"
                       onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800'}
@@ -96,7 +96,7 @@ export default function Blog() {
                     </h3>
 
                     <p className="text-gray-600 mb-4 line-clamp-3">
-                      {post.excerpt || post.content?.substring(0, 150) + '...'}
+                      {(post.excerpt || post.content)?.replace(/<[^>]*>/g, '').substring(0, 150) + '...'}
                     </p>
 
                     <Link

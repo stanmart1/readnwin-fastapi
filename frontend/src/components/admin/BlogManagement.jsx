@@ -520,9 +520,9 @@ const BlogManagement = () => {
                       </td>
                       <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                         <div className="flex items-center gap-2">
-                          {(post.featured_image_url || post.featured_image) && (
+                          {post.featured_image_url && (
                             <img 
-                              src={post.featured_image_url || `/storage/${post.featured_image}`} 
+                              src={post.featured_image_url} 
                               alt={post.title}
                               className="w-12 h-12 object-cover rounded flex-shrink-0"
                               onError={(e) => e.target.style.display = 'none'}
@@ -538,7 +538,7 @@ const BlogManagement = () => {
                               )}
                             </div>
                             <div className="text-xs text-gray-500 truncate hidden sm:block">{post.slug}</div>
-                            <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block">{post.excerpt}</div>
+                            <div className="text-xs text-gray-400 mt-0.5 line-clamp-1 hidden md:block" dangerouslySetInnerHTML={{ __html: post.excerpt?.replace(/<[^>]*>/g, '') || '' }}></div>
                           </div>
                         </div>
                       </td>
@@ -648,9 +648,9 @@ const BlogManagement = () => {
               <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 {/* Post Header */}
                 <div className="flex items-start gap-3 mb-3">
-                  {(post.featured_image_url || post.featured_image) && (
+                  {post.featured_image_url && (
                     <img 
-                      src={post.featured_image_url || `/storage/${post.featured_image}`} 
+                      src={post.featured_image_url} 
                       alt={post.title}
                       className="w-20 h-20 object-cover rounded flex-shrink-0"
                       onError={(e) => e.target.style.display = 'none'}
@@ -671,7 +671,7 @@ const BlogManagement = () => {
                         Featured
                       </span>
                     )}
-                    <p className="text-xs text-gray-500 line-clamp-2">{post.excerpt}</p>
+                    <p className="text-xs text-gray-500 line-clamp-2" dangerouslySetInnerHTML={{ __html: post.excerpt?.replace(/<[^>]*>/g, '') || '' }}></p>
                   </div>
                 </div>
 
