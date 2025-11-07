@@ -214,22 +214,26 @@ export default function FeaturedBooks() {
           </div>
         ) : (
           <>
-            {/* Desktop Grid View */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-              {books.map((book, index) => (
-                <motion.div
-                  key={book.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -10 }}
-                  className="bg-white rounded-xl shadow-md overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
-                >
+            {/* Desktop Carousel View */}
+            <div className="hidden sm:block relative">
+              <div
+                ref={carouselRef}
+                onMouseDown={handleTouchStart}
+                onMouseUp={handleTouchEnd}
+                onMouseLeave={handleTouchEnd}
+                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {infiniteBooks.map((book, index) => (
+                  <motion.div
+                    key={`${book.id}-${index}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: (index % books.length) * 0.05 }}
+                    className="flex-shrink-0 w-[280px] bg-white rounded-xl shadow-md overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
+                  >
+
                   {/* Book Image */}
                   <div className="relative overflow-hidden h-64">
                     <ProgressiveImage
@@ -328,9 +332,35 @@ export default function FeaturedBooks() {
                       </span>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </motion.div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Navigation Arrows */}
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors z-10"
+              >
+                <i className="ri-arrow-left-line text-2xl text-gray-700"></i>
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors z-10"
+              >
+                <i className="ri-arrow-right-line text-2xl text-gray-700"></i>
+              </button>
+
+              {/* Auto-scroll indicator */}
+              <div className="flex justify-center mt-6 gap-3 items-center">
+                <button
+                  onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors shadow-md"
+                >
+                  <i className={`ri-${isAutoScrolling ? 'pause' : 'play'}-circle-line text-lg`}></i>
+                  {isAutoScrolling ? 'Auto-scroll' : 'Paused'}
+                </button>
+              </div>
+            </div>
 
             {/* Mobile Carousel View */}
             <div className="sm:hidden relative">
