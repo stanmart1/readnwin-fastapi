@@ -4,12 +4,30 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookCard from '../components/BookCard';
+import Pagination from '../components/Pagination';
 import { useBooks } from '../hooks';
 
 export default function Books() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
+
+  // Reset to page 1 when search or category changes
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleCategoryChange = (value) => {
+    setCategory(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    // Scroll to top of books section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const params = {
     page,
@@ -19,7 +37,7 @@ export default function Books() {
     ...(search && { search })
   };
 
-  const { books, loading } = useBooks(params);
+  const { books, pagination, loading } = useBooks(params);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,7 +66,7 @@ export default function Books() {
                   type="text"
                   placeholder="Search books, authors, or genres..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full px-6 py-4 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-blue-300"
                 />
                 <button className="absolute right-2 top-2 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700">
@@ -68,18 +86,35 @@ export default function Books() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : books.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {books.map((book, index) => (
-                <motion.div
-                  key={book.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.03, duration: 0.3 }}
-                >
-                  <BookCard book={book} />
-                </motion.div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {books.map((book, index) => (
+                  <motion.div
+                    key={book.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                  >
+                    <BookCard book={book} />
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {pagination.pages > 1 && (
+                <div className="mt-12">
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.pages}
+                    onPageChange={handlePageChange}
+                    loading={loading}
+                  />
+                  <div className="text-center mt-4 text-sm text-gray-600">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} books
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-20">
               <i className="ri-book-line text-6xl text-gray-300 mb-4"></i>
