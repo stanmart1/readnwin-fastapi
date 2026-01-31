@@ -103,13 +103,13 @@ export default function Books() {
                   placeholder="Search by title, author, ISBN, or description..."
                   value={searchInput}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-14 pr-24 py-4 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg"
+                  className="w-full pl-14 pr-32 py-4 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg"
                 />
                 {searchInput && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-16 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-20 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
                   >
                     <i className="ri-close-line text-xl"></i>
                   </button>
