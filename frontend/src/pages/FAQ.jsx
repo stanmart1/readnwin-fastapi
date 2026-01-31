@@ -57,7 +57,7 @@ export default function FAQ() {
                     className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                   >
                     <span className="font-semibold text-lg text-gray-900">
-                      {faq.question}
+                      <div dangerouslySetInnerHTML={{ __html: faq.question }} />
                     </span>
                     <i className={`ri-arrow-${openIndex === index ? 'up' : 'down'}-s-line text-2xl text-blue-600`}></i>
                   </button>
@@ -72,7 +72,7 @@ export default function FAQ() {
                         className="overflow-hidden"
                       >
                         <div className="px-6 pb-4 text-gray-600">
-                          {faq.answer}
+                          <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
                         </div>
                       </motion.div>
                     )}

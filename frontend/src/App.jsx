@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { useEffect, lazy, Suspense } from 'react';
 import { CartProvider } from './context/CartContext';
 import SessionTimeoutWarning from './components/SessionTimeoutWarning';
+import ScrollToTopButton from './components/ScrollToTopButton';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
 
 { /* Scroll to top on route change*/}
@@ -144,6 +145,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
+      <ScrollToTopButton />
     </Router>
     </CartProvider>
   );
