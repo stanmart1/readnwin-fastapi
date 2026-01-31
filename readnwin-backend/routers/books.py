@@ -46,7 +46,13 @@ def get_books(
         if category_id:
             query = query.filter(Book.category_id == category_id)
         if search:
-            query = query.filter(or_(Book.title.contains(search), Book.author.contains(search)))
+            search_term = f"%{search.lower()}%"
+            query = query.filter(or_(
+                Book.title.ilike(search_term),
+                Book.author.ilike(search_term),
+                Book.description.ilike(search_term),
+                Book.isbn.ilike(search_term)
+            ))
         if featured is not None:
             query = query.filter(Book.is_featured == featured)
         if is_featured is not None:
