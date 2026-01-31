@@ -39,6 +39,10 @@ export default function Books() {
 
   const { books, pagination, loading } = useBooks(params);
 
+  // Debug pagination
+  console.log('Books component - pagination:', pagination);
+  console.log('Books component - should show pagination:', pagination.pages > 1);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />

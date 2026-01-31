@@ -15,8 +15,11 @@ export const useBooks = (params = {}) => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching books with params:', params);
       const response = await api.get('/api/books/', { params });
       const data = response.data;
+      console.log('API Response:', data);
+      console.log('Pagination data:', { total: data.total, page: data.page, pages: data.pages, limit: data.limit });
       setBooks(data.books || []);
       setPagination({
         total: data.total || 0,
