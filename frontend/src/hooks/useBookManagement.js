@@ -96,10 +96,11 @@ export const useBookManagement = () => {
     }
   };
 
-  // Only load on mount
+  // Reload on mount and whenever filters/pagination change
   useEffect(() => {
     loadBooks();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, pagination.limit, filters]);
 
   return {
     books,
