@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../../lib/fileService';
 import api from '../../lib/api';
@@ -105,9 +105,60 @@ const AdminBooks = () => {
     ]);
   };
 
+  // Search state and ref for debouncing
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
   const loadUsers = async () => {
     await fetchUsers();
   };
+
+  // Search users via backend API with debouncing
+  const searchUsers = useCallback(async (query) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await api.get('/admin/users', {
+        params: {
+          search: query.trim(),
+          return_all: true,
+          limit: 1000
+        }
+      });
+      setSearchResults(response.data.users || []);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Debounced search handler
+  const handleUserSearch = useCallback((value) => {
+    setForms(prev => ({ ...prev, userSearch: value }));
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // If search is empty, clear results immediately
+    if (!value || value.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Debounce the search
+    searchTimeoutRef.current = setTimeout(() => {
+      searchUsers(value);
+    }, 300);
+  }, [searchUsers]);
 
   const loadBookAssignments = async (bookId) => {
     try {
@@ -139,6 +190,15 @@ const AdminBooks = () => {
   useEffect(() => {
     setData(prev => ({ ...prev, users }));
   }, [users]);
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleDeleteBook = async (bookId) => {
     setForms(prev => ({ ...prev, bookToDelete: bookId }));
@@ -675,6 +735,7 @@ const AdminBooks = () => {
                         setErrors({});
                         setUserAssignments({});
                         setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
+                        setSearchResults([]);
                       }}
                       className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
                     >
@@ -691,63 +752,103 @@ const AdminBooks = () => {
                       <i className="ri-user-line mr-1"></i>
                       Select Users *
                     </label>
+                    <div className="relative">
                       <div className="relative">
+                        <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input
                           type="text"
                           value={forms.userSearch}
-                          onChange={(e) => setForms(prev => ({ ...prev, userSearch: e.target.value }))}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                          onChange={(e) => handleUserSearch(e.target.value)}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                             errors.users ? 'border-red-500' : 'border-gray-300'
                           }`}
-                          placeholder="Search and select users..."
+                          placeholder="Search by name or email..."
                         />
-                        {forms.userSearch && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {data.users
-                              .filter(u => {
-                                const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-                                return (fullName.toLowerCase().includes(forms.userSearch.toLowerCase()) ||
-                                  u.email?.toLowerCase().includes(forms.userSearch.toLowerCase())) &&
-                                  !selection.users.find(su => su.id === u.id);
-                              })
-                              .map(user => {
+                        {isSearching && (
+                          <i className="ri-loader-4-line animate-spin absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500"></i>
+                        )}
+                      </div>
+                      
+                      {/* Search Results Dropdown */}
+                      {forms.userSearch && forms.userSearch.length >= 2 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                          {isSearching ? (
+                            <div className="px-4 py-6 text-center text-gray-500">
+                              <i className="ri-loader-4-line animate-spin text-2xl text-blue-500"></i>
+                              <p className="mt-2">Searching users...</p>
+                            </div>
+                          ) : searchResults.length === 0 ? (
+                            <div className="px-4 py-6 text-center text-gray-500">
+                              <i className="ri-user-search-line text-2xl"></i>
+                              <p className="mt-2">No users found</p>
+                              <p className="text-xs">Try a different search term</p>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="px-3 py-2 bg-gray-50 border-b text-xs text-gray-500">
+                                Found {searchResults.length} user{searchResults.length !== 1 ? 's' : ''}
+                              </div>
+                              {searchResults.map(user => {
                                 const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
                                 const alreadyAssigned = userAssignments[user.id];
+                                const alreadySelected = selection.users.find(su => su.id === user.id);
                                 return (
                                   <button
                                     key={user.id}
                                     onClick={() => {
-                                      if (alreadyAssigned) return;
+                                      if (alreadyAssigned || alreadySelected) return;
                                       setSelection(prev => ({ 
                                         ...prev, 
                                         users: [...prev.users, user] 
                                       }));
                                       setForms(prev => ({ ...prev, userSearch: '' }));
+                                      setSearchResults([]);
                                       setErrors(prev => ({ ...prev, users: '' }));
                                     }}
-                                    className={`w-full text-left px-3 py-2 border-b border-gray-100 last:border-b-0 ${
-                                      alreadyAssigned ? 'bg-gray-50 opacity-60 cursor-not-allowed' : 'hover:bg-blue-50'
+                                    disabled={alreadyAssigned || alreadySelected}
+                                    className={`w-full text-left px-3 py-2 border-b border-gray-100 last:border-b-0 transition-colors ${
+                                      alreadyAssigned || alreadySelected 
+                                        ? 'bg-gray-50 opacity-60 cursor-not-allowed' 
+                                        : 'hover:bg-blue-50 cursor-pointer'
                                     }`}
                                   >
                                     <div className="flex items-center justify-between">
-                                      <div className="flex-1">
-                                        <div className="font-medium text-gray-900">{fullName}</div>
-                                        <div className="text-sm text-gray-500">{user.email}</div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-gray-900 truncate">
+                                          {fullName || user.email}
+                                        </div>
+                                        <div className="text-sm text-gray-500 truncate">{user.email}</div>
                                       </div>
-                                      {alreadyAssigned && (
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
-                                          Assigned ({alreadyAssigned})
-                                        </span>
-                                      )}
+                                      <div className="ml-2 flex-shrink-0">
+                                        {alreadyAssigned ? (
+                                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                                            Assigned ({alreadyAssigned})
+                                          </span>
+                                        ) : alreadySelected ? (
+                                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                            Selected
+                                          </span>
+                                        ) : (
+                                          <i className="ri-add-circle-line text-blue-500 text-xl"></i>
+                                        )}
+                                      </div>
                                     </div>
                                   </button>
                                 );
-                              })
-                            }
-                          </div>
-                        )}
-                      </div>
-                      {errors.users && <p className="text-red-500 text-sm mt-1">{errors.users}</p>}
+                              })}
+                            </>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Helper text */}
+                      {(!forms.userSearch || forms.userSearch.length < 2) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Type at least 2 characters to search by name or email
+                        </p>
+                      )}
+                    </div>
+                    {errors.users && <p className="text-red-500 text-sm mt-1">{errors.users}</p>}
                       
                       {/* Selected Users */}
                       {selection.users.length > 0 && (
@@ -862,6 +963,7 @@ const AdminBooks = () => {
                         setAssignmentResult(null);
                         setUserAssignments({});
                         setForms(prev => ({ ...prev, selectedFormat: 'ebook', userSearch: '' }));
+                        setSearchResults([]);
                       }}
                       disabled={loadingStates.assign}
                       className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
