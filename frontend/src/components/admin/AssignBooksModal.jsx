@@ -1,30 +1,27 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../lib/api';
 
 const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
-  const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState('ebook');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [userLibrary, setUserLibrary] = useState([]);
+  
+  // Search states
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && user) {
-      fetchBooks();
       fetchUserLibrary();
+      setSearchTerm('');
+      setSearchResults([]);
+      setSelectedBook(null);
     }
   }, [isOpen, user]);
-
-  const fetchBooks = async () => {
-    try {
-      const response = await api.get('/admin/books');
-      setBooks(response.data.books || []);
-    } catch (error) {
-      console.error('Error fetching books:', error);
-    }
-  };
 
   const fetchUserLibrary = async () => {
     try {
@@ -36,6 +33,58 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
       console.error('Error fetching user library:', error);
     }
   };
+
+  // Search books via backend API
+  const searchBooks = useCallback(async (query) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await api.get('/admin/books', {
+        params: {
+          search: query.trim(),
+          limit: 100,
+          status: 'published'
+        }
+      });
+      setSearchResults(response.data.books || []);
+    } catch (error) {
+      console.error('Error searching books:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Debounced search handler
+  const handleBookSearch = useCallback((value) => {
+    setSearchTerm(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!value || value.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchBooks(value);
+    }, 300);
+  }, [searchBooks]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleAssign = async () => {
     if (!selectedBook) return;
@@ -50,6 +99,8 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
       alert('Book assigned successfully!');
       setSelectedBook(null);
       setSelectedFormat('ebook');
+      setSearchTerm('');
+      setSearchResults([]);
       await fetchUserLibrary();
     } catch (error) {
       alert('Failed to assign book: ' + (error.response?.data?.detail || error.message));
@@ -58,17 +109,15 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
     }
   };
 
-  const filteredBooks = books.filter(book => {
-    const matchesSearch = book.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
-
   const isBookAssigned = (bookId) => {
     return userLibrary.some(item => item.book_id === bookId);
   };
 
   if (!isOpen || !user) return null;
+
+  const displayBooks = searchTerm.length >= 2 ? searchResults : [];
+  const showSearchPrompt = searchTerm.length > 0 && searchTerm.length < 2;
+  const showNoResults = searchTerm.length >= 2 && !isSearching && searchResults.length === 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -99,11 +148,14 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
             <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             <input
               type="text"
-              placeholder="Search books..."
+              placeholder="Search by title, author, or ISBN..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleBookSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            {isSearching && (
+              <i className="ri-loader-4-line animate-spin absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500"></i>
+            )}
           </div>
         </div>
 
@@ -142,51 +194,74 @@ const AssignBooksModal = ({ isOpen, onClose, user, onSubmit }) => {
 
         {/* Books List */}
         <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
-          {filteredBooks.length === 0 ? (
+          {showSearchPrompt ? (
+            <div className="text-center py-8 text-gray-500">
+              <i className="ri-search-line text-4xl mb-2"></i>
+              <p>Type at least 2 characters to search</p>
+              <p className="text-xs mt-1">Search by title, author, or ISBN</p>
+            </div>
+          ) : isSearching ? (
+            <div className="text-center py-8 text-gray-500">
+              <i className="ri-loader-4-line animate-spin text-4xl text-blue-500 mb-2"></i>
+              <p>Searching books...</p>
+            </div>
+          ) : showNoResults ? (
             <div className="text-center py-8 text-gray-500">
               <i className="ri-book-line text-4xl mb-2"></i>
               <p>No books found</p>
+              <p className="text-xs mt-1">Try a different search term</p>
             </div>
-          ) : (
-            filteredBooks.map((book) => {
-              const assigned = isBookAssigned(book.id);
-              return (
-                <div
-                  key={book.id}
-                  className={`p-3 border rounded-lg transition-colors ${
-                    assigned
-                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                      : selectedBook === book.id
-                      ? 'border-blue-500 bg-blue-50 cursor-pointer'
-                      : 'border-gray-200 hover:border-gray-300 cursor-pointer'
-                  }`}
-                  onClick={() => {
-                    if (!assigned) {
-                      setSelectedBook(selectedBook === book.id ? null : book.id);
-                    }
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{book.title}</p>
-                        {assigned && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
-                            Assigned
-                          </span>
+          ) : searchTerm.length >= 2 ? (
+            <>
+              <div className="px-3 py-2 bg-gray-50 rounded-lg text-xs text-gray-500 mb-2">
+                Found {searchResults.length} book{searchResults.length !== 1 ? 's' : ''}
+              </div>
+              {displayBooks.map((book) => {
+                const assigned = isBookAssigned(book.id);
+                return (
+                  <div
+                    key={book.id}
+                    className={`p-3 border rounded-lg transition-colors ${
+                      assigned
+                        ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                        : selectedBook === book.id
+                        ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                        : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      if (!assigned) {
+                        setSelectedBook(selectedBook === book.id ? null : book.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 truncate">{book.title}</p>
+                          {assigned && (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full flex-shrink-0">
+                              Assigned
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">{book.author_name}</p>
+                      </div>
+                      <div className="ml-4 flex-shrink-0">
+                        {selectedBook === book.id && !assigned && (
+                          <i className="ri-checkbox-circle-fill text-blue-600 text-xl"></i>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">{book.author_name}</p>
-                    </div>
-                    <div className="ml-4">
-                      {selectedBook === book.id && !assigned && (
-                        <i className="ri-checkbox-circle-fill text-blue-600 text-xl"></i>
-                      )}
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <i className="ri-book-line text-4xl mb-2"></i>
+              <p>Start typing to search books</p>
+              <p className="text-xs mt-1">Search by title, author, or ISBN</p>
+            </div>
           )}
         </div>
 
