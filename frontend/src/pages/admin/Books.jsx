@@ -126,8 +126,7 @@ const AdminBooks = () => {
       const response = await api.get('/admin/users', {
         params: {
           search: query.trim(),
-          return_all: true,
-          limit: 1000
+          return_all: true
         }
       });
       setSearchResults(response.data.users || []);
